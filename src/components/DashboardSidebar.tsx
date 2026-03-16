@@ -1,7 +1,9 @@
 import { LayoutDashboard, Calendar, Scissors, User, Clock, Image } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Business } from "@/lib/types";
+import { getCurrentBusiness } from "@/lib/store";
 import {
   Sidebar,
   SidebarContent,
@@ -26,6 +28,13 @@ const items = [
 export function DashboardSidebar({ business }: { business: Business }) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const [subdomain, setSubdomain] = useState<string | null>(null);
+
+  useEffect(() => {
+    getCurrentBusiness().then(biz => {
+      if (biz?.subdomain) setSubdomain(biz.subdomain);
+    });
+  }, []);
 
   return (
     <Sidebar collapsible="icon">
@@ -61,14 +70,16 @@ export function DashboardSidebar({ business }: { business: Business }) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {!collapsed && (
+        {!collapsed && subdomain && (
           <div className="mt-auto p-4 border-t">
-            <p className="text-xs text-muted-foreground">
-              Public site:
-              <a href={`/biz/${business.subdomain}`} className="text-primary ml-1 underline" target="_blank">
-                /{business.subdomain}
-              </a>
-            </p>
+            <a
+              href={`/${subdomain}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-primary hover:underline font-medium"
+            >
+              View my website
+            </a>
           </div>
         )}
       </SidebarContent>

@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import LandingPage from "./pages/LandingPage";
 import RegisterPage from "./pages/RegisterPage";
+import RegisterSuccessPage from "./pages/RegisterSuccessPage";
 import DashboardLayout from "./pages/DashboardLayout";
 import OverviewPage from "./pages/dashboard/OverviewPage";
 import BookingsPage from "./pages/dashboard/BookingsPage";
@@ -26,6 +27,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/register/success" element={<RegisterSuccessPage />} />
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<OverviewPage />} />
             <Route path="bookings" element={<BookingsPage />} />
@@ -34,7 +36,7 @@ const App = () => (
             <Route path="gallery" element={<GalleryPage />} />
             <Route path="profile" element={<ProfilePage />} />
           </Route>
-          <Route path="/biz/:subdomain" element={<PublicBusinessPage />} />
+          <Route path="/:subdomain" element={<PublicBusinessPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

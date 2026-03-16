@@ -34,8 +34,8 @@ export default function RegisterPage() {
   const handleSubmit = async () => {
     if (!form.name || !form.subdomain || !form.industry) return;
     try {
-      await registerBusiness(form);
-      navigate("/dashboard");
+      const business = await registerBusiness(form);
+      navigate('/register/success', { state: { business } });
     } catch (err) {
       console.error("Failed to register business", err);
     }
@@ -127,9 +127,8 @@ export default function RegisterPage() {
                       key={c.value}
                       type="button"
                       onClick={() => setForm(f => ({ ...f, accentColor: c.value }))}
-                      className={`h-12 w-12 rounded-xl border-2 transition-all flex items-center justify-center ${
-                        form.accentColor === c.value ? "border-foreground scale-110" : "border-transparent"
-                      }`}
+                      className={`h-12 w-12 rounded-xl border-2 transition-all flex items-center justify-center ${form.accentColor === c.value ? "border-foreground scale-110" : "border-transparent"
+                        }`}
                       style={{ backgroundColor: c.value }}
                     >
                       {form.accentColor === c.value && <Check className="h-5 w-5 text-white" />}

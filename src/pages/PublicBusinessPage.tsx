@@ -73,6 +73,7 @@ function generateTimeSlots(hours: BusinessHours[], durationMinutes: number, book
 export default function PublicBusinessPage() {
   const { subdomain } = useParams<{ subdomain: string }>();
   const [business, setBusiness] = useState<Business | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [hours, setHours] = useState<BusinessHours[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -94,19 +95,22 @@ export default function PublicBusinessPage() {
       (async () => {
         try {
           const biz = await getBusinessBySubdomain(subdomain);
-          if (biz) {
-            setBusiness(biz);
-            const [svc, hrs, bks] = await Promise.all([
-              getServices(biz.id),
-              getBusinessHours(biz.id),
-              getBookings(biz.id),
-            ]);
-            setServices(svc);
-            setHours(hrs);
-            setBookings(bks);
+          if (!biz) {
+            setNotFound(true);
+            return;
           }
+          setBusiness(biz);
+          const [svc, hrs, bks] = await Promise.all([
+            getServices(biz.id),
+            getBusinessHours(biz.id),
+            getBookings(biz.id),
+          ]);
+          setServices(svc);
+          setHours(hrs);
+          setBookings(bks);
         } catch (err) {
           console.error("Failed to load business data", err);
+          setNotFound(true);
         }
       })();
     }
@@ -145,12 +149,23 @@ export default function PublicBusinessPage() {
     }
   };
 
-  if (!business) {
+  if (notFound) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-2">Business not found</h1>
           <p className="text-muted-foreground">This business page doesn't exist yet.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!business) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-foreground mb-2">Loading...</h1>
+          <p className="text-muted-foreground">Please wait a moment.</p>
         </div>
       </div>
     );
@@ -312,13 +327,12 @@ export default function PublicBusinessPage() {
                           key={slot.time}
                           disabled={slot.booked}
                           onClick={() => setSelectedTime(slot.time)}
-                          className={`py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
-                            slot.booked
+                          className={`py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${slot.booked
                               ? "bg-muted text-muted-foreground border-border cursor-not-allowed opacity-50 line-through"
                               : selectedTime === slot.time
                                 ? "bg-primary text-primary-foreground border-primary"
                                 : "bg-card text-foreground border-border hover:border-primary/50"
-                          }`}
+                            }`}
                         >
                           {slot.time}
                         </button>

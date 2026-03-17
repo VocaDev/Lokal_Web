@@ -1,5 +1,7 @@
 'use client'
 
+import React from 'react';
+
 import { useState, useEffect, useMemo } from "react";
 import { getBusinessBySubdomain, addBooking, getServices, getBusinessHours, getBookings } from "@/lib/store";
 import { Business, Service, BusinessHours, Booking } from "@/lib/types";
@@ -71,8 +73,8 @@ function generateTimeSlots(hours: BusinessHours[], durationMinutes: number, book
   return slots;
 }
 
-export default function PublicBusinessPage({ params }: { params: { subdomain: string } }) {
-  const { subdomain } = params;
+export default function PublicBusinessPage({ params }: { params: Promise<{ subdomain: string }> }) {
+  const { subdomain } = React.use(params);
   const [business, setBusiness] = useState<Business | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [services, setServices] = useState<Service[]>([]);

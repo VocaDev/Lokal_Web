@@ -1,6 +1,5 @@
 import { LayoutDashboard, Calendar, Scissors, User, Clock, Image } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Business } from "@/lib/types";
 import { getCurrentBusiness } from "@/lib/store";
@@ -55,7 +54,7 @@ export function DashboardSidebar({ business }: { business: Business }) {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
-                      to={item.url}
+                      href={item.url}
                       end={item.url === "/dashboard"}
                       className="hover:bg-muted/50"
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"

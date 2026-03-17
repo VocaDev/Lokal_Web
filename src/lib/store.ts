@@ -1,5 +1,7 @@
 import { Business, Booking, Service, BusinessHours } from './types';
-import { supabase } from './supabase';
+import { createClient } from './supabase/client';
+
+const supabase = createClient();
 
 const BIZ_KEY = 'lokalweb_businesses';
 const SVC_KEY = 'lokalweb_services';

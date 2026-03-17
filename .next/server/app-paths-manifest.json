@@ -1,0 +1,14 @@
+{
+  "/[subdomain]/page": "app/[subdomain]/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/dashboard/bookings/page": "app/dashboard/bookings/page.js",
+  "/dashboard/gallery/page": "app/dashboard/gallery/page.js",
+  "/dashboard/hours/page": "app/dashboard/hours/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/profile/page": "app/dashboard/profile/page.js",
+  "/dashboard/services/page": "app/dashboard/services/page.js",
+  "/page": "app/page.js",
+  "/register/page": "app/register/page.js",
+  "/register/success/page": "app/register/success/page.js"
+}

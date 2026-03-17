@@ -1,0 +1,14 @@
+{
+  "/[subdomain]/page": "/[subdomain]",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/dashboard/bookings/page": "/dashboard/bookings",
+  "/dashboard/gallery/page": "/dashboard/gallery",
+  "/dashboard/hours/page": "/dashboard/hours",
+  "/dashboard/page": "/dashboard",
+  "/dashboard/profile/page": "/dashboard/profile",
+  "/dashboard/services/page": "/dashboard/services",
+  "/page": "/",
+  "/register/page": "/register",
+  "/register/success/page": "/register/success"
+}

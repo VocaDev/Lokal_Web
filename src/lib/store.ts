@@ -70,7 +70,7 @@ function fromSnakeBusiness(row: any): Business {
 export async function getBusinesses(): Promise<Business[]> {
   const { data, error } = await supabase.from('businesses').select('*');
   if (error) {
-    console.error('[Supabase] Error fetching businesses', error);
+    console.error('[Supabase] Error fetching businesses', error.message, error.details, error.hint);
     throw error;
   }
   return (data ?? []).map(fromSnakeBusiness);
@@ -79,7 +79,7 @@ export async function getBusinesses(): Promise<Business[]> {
 export async function saveBusiness(business: Business): Promise<void> {
   const { error } = await supabase.from('businesses').upsert(toSnakeBusiness(business));
   if (error) {
-    console.error('[Supabase] Error saving business', error);
+    console.error('[Supabase] Error saving business', error.message, error.details, error.hint);
     throw error;
   }
 }
@@ -92,7 +92,7 @@ export async function getBusinessBySubdomain(subdomain: string): Promise<Busines
     .maybeSingle();
 
   if (error) {
-    console.error('[Supabase] Error fetching business by subdomain', error);
+    console.error('[Supabase] Error fetching business by subdomain', error.message, error.details, error.hint);
     throw error;
   }
 
@@ -108,7 +108,7 @@ export async function getCurrentBusiness(): Promise<Business | null> {
     .eq('id', id)
     .maybeSingle();
   if (error) {
-    console.error('[Supabase] Error fetching current business', error);
+    console.error('[Supabase] Error fetching current business', error.message, error.details, error.hint);
     return null;
   }
   return data ? fromSnakeBusiness(data) : null;
@@ -142,7 +142,7 @@ export async function getServices(businessId: string): Promise<Service[]> {
     .eq('business_id', businessId);
 
   if (error) {
-    console.error('[Supabase] Error fetching services', error);
+    console.error('[Supabase] Error fetching services', error.message, error.details, error.hint);
     throw error;
   }
 
@@ -161,14 +161,14 @@ export async function updateService(businessId: string, service: Service): Promi
     id: service.id,
     business_id: businessId,
     name: service.name,
-    description: service.description,
+    description: service.description ?? '',
     price: service.price,
     duration_minutes: service.durationMinutes,
   };
 
   const { error } = await supabase.from('services').upsert(payload);
   if (error) {
-    console.error('[Supabase] Error updating service', error);
+    console.error('[Supabase] Error updating service', error.message, error.details, error.hint);
     throw error;
   }
 }
@@ -180,7 +180,7 @@ export async function deleteService(_businessId: string, serviceId: string): Pro
     .eq('id', serviceId);
 
   if (error) {
-    console.error('[Supabase] Error deleting service', error);
+    console.error('[Supabase] Error deleting service', error.message, error.details, error.hint);
     throw error;
   }
 }
@@ -226,7 +226,7 @@ export async function getBusinessHours(businessId: string): Promise<BusinessHour
     .order('day_of_week');
 
   if (error) {
-    console.error('[Supabase] Error fetching business hours', error);
+    console.error('[Supabase] Error fetching business hours', error.message, error.details, error.hint);
     throw error;
   }
 
@@ -258,7 +258,7 @@ export async function getBusinessHours(businessId: string): Promise<BusinessHour
     .order('day_of_week');
 
   if (insertError) {
-    console.error('[Supabase] Error seeding business hours', insertError);
+    console.error('[Supabase] Error seeding business hours', insertError.message, insertError.details, insertError.hint);
     throw insertError;
   }
 
@@ -284,7 +284,7 @@ export async function saveBusinessHours(hours: BusinessHours[]): Promise<void> {
 
   const { error } = await supabase.from('business_hours').upsert(payload);
   if (error) {
-    console.error('[Supabase] Error saving business hours', error);
+    console.error('[Supabase] Error saving business hours', error.message, error.details, error.hint);
     throw error;
   }
 }
@@ -308,7 +308,7 @@ export async function getBookings(businessId: string): Promise<Booking[]> {
     .eq('business_id', businessId);
 
   if (error) {
-    console.error('[Supabase] Error fetching bookings', error);
+    console.error('[Supabase] Error fetching bookings', error.message, error.details, error.hint);
     throw error;
   }
 
@@ -341,7 +341,7 @@ export async function addBooking(
 
   const { error } = await supabase.from('bookings').insert(payload);
   if (error) {
-    console.error('[Supabase] Error adding booking', error);
+    console.error('[Supabase] Error adding booking', error.message, error.details, error.hint);
     throw error;
   }
 }
@@ -408,7 +408,7 @@ export async function registerBusiness(
   // 1) Insert business
   const { error: bizError } = await supabase.from('businesses').insert(toSnakeBusiness(business));
   if (bizError) {
-    console.error('[Supabase] Error registering business', bizError);
+    console.error('[Supabase] Error registering business', bizError.message, bizError.details, bizError.hint);
     throw bizError;
   }
 
@@ -428,7 +428,7 @@ export async function registerBusiness(
   }));
   const { error: svcError } = await supabase.from('services').insert(servicePayload);
   if (svcError) {
-    console.error('[Supabase] Error seeding services', svcError);
+    console.error('[Supabase] Error seeding services', svcError.message, svcError.details, svcError.hint);
     throw svcError;
   }
 
@@ -445,7 +445,7 @@ export async function registerBusiness(
   }));
   const { error: bookingsError } = await supabase.from('bookings').insert(bookingsPayload);
   if (bookingsError) {
-    console.error('[Supabase] Error seeding bookings', bookingsError);
+    console.error('[Supabase] Error seeding bookings', bookingsError.message, bookingsError.details, bookingsError.hint);
     throw bookingsError;
   }
 
@@ -460,7 +460,7 @@ export async function registerBusiness(
   }));
   const { error: hoursError } = await supabase.from('business_hours').insert(hoursPayload);
   if (hoursError) {
-    console.error('[Supabase] Error seeding business hours', hoursError);
+    console.error('[Supabase] Error seeding business hours', hoursError.message, hoursError.details, hoursError.hint);
     throw hoursError;
   }
 
@@ -494,7 +494,7 @@ export async function addGalleryImage(businessId: string, imageUrl: string): Pro
     .maybeSingle();
 
   if (error) {
-    console.error('[Supabase] Error fetching business for gallery add', error);
+    console.error('[Supabase] Error fetching business for gallery add', error.message, error.details, error.hint);
     throw error;
   }
 
@@ -511,7 +511,7 @@ export async function addGalleryImage(businessId: string, imageUrl: string): Pro
     });
 
   if (upsertError) {
-    console.error('[Supabase] Error updating gallery images', upsertError);
+    console.error('[Supabase] Error updating gallery images', upsertError.message, upsertError.details, upsertError.hint);
     throw upsertError;
   }
 }
@@ -524,7 +524,7 @@ export async function removeGalleryImage(businessId: string, imageUrl: string): 
     .maybeSingle();
 
   if (error) {
-    console.error('[Supabase] Error fetching business for gallery remove', error);
+    console.error('[Supabase] Error fetching business for gallery remove', error.message, error.details, error.hint);
     throw error;
   }
 
@@ -541,7 +541,7 @@ export async function removeGalleryImage(businessId: string, imageUrl: string): 
     });
 
   if (upsertError) {
-    console.error('[Supabase] Error updating gallery images', upsertError);
+    console.error('[Supabase] Error updating gallery images', upsertError.message, upsertError.details, upsertError.hint);
     throw upsertError;
   }
 }

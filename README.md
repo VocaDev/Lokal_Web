@@ -1,105 +1,169 @@
+<div align="center">
+
 # LokalWeb
 
 **Website-as-a-Service for small businesses in Kosovo.**
 
-LokalWeb is a multi-tenant SaaS platform that allows small businesses — barbershops, restaurants, beauty salons, clinics — to get a professional website and online booking system up and running in minutes, without any technical knowledge or expensive custom development.
+*Get your business online in minutes — no code, no hassle.*
+
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)](https://typescriptlang.org)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green?style=flat-square&logo=supabase)](https://supabase.com)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38bdf8?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
+[![Vercel](https://img.shields.io/badge/Deployed-Vercel-black?style=flat-square&logo=vercel)](https://vercel.com)
+
+</div>
 
 ---
 
-## The Problem
+## What is LokalWeb?
 
-Most small businesses in Kosovo rely entirely on social media for their online presence. This limits them in three key ways: they cannot manage bookings efficiently, they cannot present structured service and pricing information, and they lack a professional digital identity separate from platforms they do not own or control.
+Most small businesses in Kosovo — barbershops, restaurants, beauty salons, clinics — rely entirely on social media for their online presence. They cannot manage bookings efficiently, they cannot present structured service and pricing information, and they lack a professional digital identity they actually own.
 
-## The Solution
+**LokalWeb fixes this.**
 
-LokalWeb gives every registered business a fully functional website hosted at a unique subdomain (`business.lokalweb.com`), a dashboard to manage their content, and an optional booking system that lets customers schedule appointments online — all from one centralized platform.
+Every registered business gets a fully functional website at a unique subdomain (`business.lokalweb.com`), a dashboard to manage their content, and an online booking system — all from one centralized platform, in minutes.
 
 ---
 
 ## Features
 
-### Core (MVP)
+### For Business Owners
+- Instant website at `yourname.lokalweb.com` on registration
+- Dashboard to manage profile, services, hours, gallery, and bookings
+- Industry-specific templates — barbershop, restaurant, clinic, beauty salon
+- Service and pricing management with duration tracking
+- Booking management — confirm, cancel, and complete appointments
+- Image gallery upload
+- Social media links, WhatsApp contact, click-to-call
 
-- **Multi-tenant architecture** — each business gets isolated data and its own website instance
-- **Automatic website generation** — a fully functional public site is created on registration
-- **Industry-specific templates** — tailored layouts for barbershops, restaurants, clinics, and beauty salons
-- **Business owner dashboard** — manage all website content without any technical skills
-- **Business profile management** — name, description, address, phone, logo, social links
-- **Service and pricing management** — add services with price, duration, and description
-- **Business hours configuration** — define opening hours used by the booking system
-- **Online booking system** — customers select a service, pick a time slot, and confirm their appointment
-- **Appointment management** — owners can view, confirm, cancel, and complete bookings
-- **Image gallery** — upload and display photos of the business and services
-- **Customer contact integration** — click-to-call, WhatsApp links, email contact
-- **Google Maps integration** — embedded map on every business website
-- **Responsive design** — all websites work on mobile, tablet, and desktop
-- **Authentication and role-based access control** — business owners see only their own data
-- **Super admin panel** — platform-level management of all registered businesses
+### For Customers
+- Browse services and pricing on a clean public website
+- Book appointments online in 3 steps — pick service, pick time, confirm
+- View business hours and location
+- Contact via phone, WhatsApp, or email
 
-### Planned (Future)
+### For Platform Admins
+- Super admin panel to manage all registered businesses
+- Activate or suspend accounts
+- Monitor platform-wide usage and bookings
 
-- Custom domain support (`www.mybusiness.com`)
+### Coming Soon
+- Custom domain support (`www.mybarbershop.com`)
 - SMS and WhatsApp booking notifications
-- Multi-staff management and scheduling
-- Analytics dashboard (visitors, popular services, booking trends)
-- Subscription and payment management
+- Multi-staff scheduling
+- Analytics dashboard
+- Subscription billing
 - Mobile app for business owners
-- Advanced template customization
-- Customer review and rating system
 - Multi-language support (Albanian, English, Serbian)
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js 14 (App Router) |
-| Language | TypeScript |
-| Styling | Tailwind CSS |
-| Backend & Database | Supabase (PostgreSQL) |
-| Authentication | Supabase Auth |
-| Hosting | Vercel |
+| Layer | Technology | Purpose |
+|---|---|---|
+| Framework | Next.js 14 (App Router) | Server-side rendering, routing, middleware |
+| Language | TypeScript | Type safety across the entire codebase |
+| Styling | Tailwind CSS + shadcn/ui | Utility-first design system |
+| Database | Supabase (PostgreSQL) | Multi-tenant data with Row Level Security |
+| Auth | Supabase Auth | Email/password and OAuth |
+| Storage | Supabase Storage | Business images and logos |
+| Hosting | Vercel | Edge deployment with wildcard subdomain support |
 
 ---
 
 ## Architecture
 
-LokalWeb uses a **shared database, single schema** multi-tenancy model. Every table includes a `business_id` foreign key that ties records to a specific tenant. Supabase Row Level Security (RLS) policies enforce data isolation at the database level — a business owner can never read or write another business's data.
+LokalWeb is built on a **shared database, single schema** multi-tenancy model.
 
-Subdomain routing is handled by Next.js middleware, which reads the incoming hostname, extracts the subdomain, and injects the tenant context into every request.
+Every table has a `business_id` foreign key that ties records to a specific tenant. Supabase **Row Level Security (RLS)** enforces data isolation at the database level — a business owner can never read or write another business's data, even if they try.
 
-### Database Schema (Core Tables)
-
-```
-businesses      id, name, subdomain, owner_id, industry, description, phone, address, logo_url
-profiles        id, user_id, role (owner | admin), business_id
-services        id, business_id, name, description, price, duration_minutes
-business_hours  id, business_id, day_of_week, open_time, close_time
-bookings        id, business_id, service_id, customer_name, customer_phone, appointment_at, status
-```
-
-### User Roles
-
-- **Customer** (anonymous) — visits public business websites, makes bookings
-- **Business Owner** — manages their own business data and bookings via dashboard
-- **Super Admin** — manages the entire platform, all businesses, and system settings
-
----
-
-## Project Structure
+**Subdomain routing** is handled by a Next.js middleware file at the root. When a request comes in for `barbershop.lokalweb.com`, the middleware reads the hostname, extracts `barbershop`, and rewrites the request to `/barbershop` — so the correct tenant data is resolved before anything renders.
 
 ```
-src/
-├── app/
-│   ├── (auth)/           # Login and registration pages
-│   ├── (dashboard)/      # Business owner dashboard
-│   ├── (public)/         # Public-facing business websites
-│   └── layout.tsx
-├── components/           # Shared UI components
-├── lib/
-│   └── supabase/         # Supabase client configuration
-└── types/                # TypeScript type definitions
+Request: barbershop.lokalweb.com
+    ↓
+middleware.ts — reads hostname, extracts subdomain
+    ↓
+Rewrites to: lokalweb.com/barbershop
+    ↓
+app/[subdomain]/page.tsx — fetches business from Supabase
+    ↓
+Public business website renders with correct tenant data
+```
+
+### Database Schema
+
+```sql
+businesses
+  id uuid PK, name text, subdomain text UNIQUE,
+  owner_id uuid FK, industry text, description text,
+  phone text, address text, logo_url text,
+  accent_color text, social_links jsonb, gallery_images text[],
+  created_at timestamptz
+
+services
+  id uuid PK, business_id uuid FK,
+  name text, description text, price numeric,
+  duration_minutes integer, created_at timestamptz
+
+business_hours
+  id uuid PK, business_id uuid FK,
+  day_of_week integer (0–6), is_open boolean,
+  open_time time, close_time time
+
+bookings
+  id uuid PK, business_id uuid FK, service_id uuid FK,
+  customer_name text, customer_phone text,
+  appointment_at timestamptz,
+  status text (pending | confirmed | cancelled | completed),
+  created_at timestamptz
+```
+
+### Supabase Client Architecture
+
+Three separate clients depending on context:
+
+```
+src/lib/supabase/
+├── client.ts      # Browser — used in Client Components ('use client')
+├── server.ts      # Server — used in Server Components and Route Handlers
+└── middleware.ts  # Middleware — used only in middleware.ts
+```
+
+### Project Structure
+
+```
+LokalWeb/
+├── app/                        # Next.js App Router
+│   ├── layout.tsx              # Root layout (providers, fonts)
+│   ├── page.tsx                # Landing page
+│   ├── not-found.tsx           # 404 page
+│   ├── register/
+│   │   ├── page.tsx            # Business registration (multi-step)
+│   │   └── success/page.tsx    # Post-registration success screen
+│   ├── dashboard/
+│   │   ├── layout.tsx          # Dashboard layout with sidebar
+│   │   ├── page.tsx            # Overview + stats
+│   │   ├── bookings/page.tsx   # Booking management
+│   │   ├── services/page.tsx   # Service and pricing management
+│   │   ├── hours/page.tsx      # Business hours configuration
+│   │   ├── gallery/page.tsx    # Image gallery
+│   │   └── profile/page.tsx    # Business profile editor
+│   └── [subdomain]/page.tsx    # Public business website (dynamic tenant)
+├── src/
+│   ├── components/             # Shared UI components + shadcn/ui
+│   ├── hooks/                  # Custom React hooks
+│   └── lib/
+│       ├── supabase/           # Three Supabase client files
+│       ├── store.ts            # All data operations (Supabase queries)
+│       ├── types.ts            # TypeScript types for all entities
+│       └── utils.ts            # Shared utilities
+├── middleware.ts               # Subdomain routing (root level)
+├── next.config.mjs             # Next.js configuration
+├── .env.local                  # Local secrets (not committed)
+└── .env.example                # Environment variable template
 ```
 
 ---
@@ -109,74 +173,131 @@ src/
 ### Prerequisites
 
 - Node.js 18+
-- A Supabase project ([supabase.com](https://supabase.com))
-- A Vercel account for deployment ([vercel.com](https://vercel.com))
+- A [Supabase](https://supabase.com) project
+- A [Vercel](https://vercel.com) account for deployment
 
-### Local Development
-
-1. Clone the repository
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/VocaDev/LokalWeb.git
 cd LokalWeb
 ```
 
-2. Install dependencies
+### 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-3. Set up environment variables — create a `.env.local` file in the root:
+### 3. Configure environment variables
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```bash
+cp .env.example .env.local
 ```
 
-4. Run the development server
+Open `.env.local` and fill in your Supabase credentials (found in **Project Settings → API**):
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+```
+
+### 4. Set up the database
+
+Run the following SQL in your Supabase **SQL Editor**:
+
+```sql
+create table businesses (
+  id uuid primary key default gen_random_uuid(),
+  name text not null, subdomain text unique not null,
+  industry text, phone text, address text, description text,
+  logo_url text, accent_color text default '#2563EB',
+  social_links jsonb default '{}', gallery_images text[] default '{}',
+  owner_id uuid, created_at timestamptz default now()
+);
+
+create table services (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid references businesses(id) on delete cascade,
+  name text not null, description text,
+  price numeric not null, duration_minutes integer not null,
+  created_at timestamptz default now()
+);
+
+create table business_hours (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid references businesses(id) on delete cascade,
+  day_of_week integer check (day_of_week between 0 and 6),
+  is_open boolean default true,
+  open_time time default '09:00', close_time time default '18:00'
+);
+
+create table bookings (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid references businesses(id) on delete cascade,
+  service_id uuid references services(id),
+  customer_name text not null, customer_phone text,
+  appointment_at timestamptz not null,
+  status text default 'pending'
+    check (status in ('pending','confirmed','cancelled','completed')),
+  created_at timestamptz default now()
+);
+
+alter table businesses enable row level security;
+alter table services enable row level security;
+alter table business_hours enable row level security;
+alter table bookings enable row level security;
+
+create policy "Public reads businesses" on businesses for select using (true);
+create policy "Public reads services" on services for select using (true);
+create policy "Public reads hours" on business_hours for select using (true);
+create policy "Public inserts bookings" on bookings for insert with check (true);
+create policy "Anyone manages businesses" on businesses for all using (true);
+create policy "Anyone manages services" on services for all using (true);
+create policy "Anyone manages hours" on business_hours for all using (true);
+create policy "Anyone manages bookings" on bookings for all using (true);
+```
+
+### 5. Start the development server
 
 ```bash
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000) — you should see the LokalWeb landing page.
 
 ---
 
 ## User Flows
 
-### Business Owner
-Registration → auto-generated website + subdomain → dashboard → edit profile, manage services, configure hours, upload images, manage bookings
+**Business Owner** → Register → success page with live website link → dashboard → manage profile, services, hours, gallery, bookings
 
-### Customer
-Visit `business.lokalweb.com` → browse services → pick time slot → enter details → booking confirmed
+**Customer** → Visit `business.lokalweb.com` → browse services → pick time slot → enter details → booking confirmed
 
-### Super Admin
-Admin login → view all registered businesses → activate or suspend accounts → manage platform settings
+**Super Admin** → Login → view all businesses → activate or suspend → manage platform settings
 
 ---
 
-## Development Roadmap
+## Roadmap
 
-This project is being built over 13 weeks as part of a Software Engineering university course.
+Built over 13 weeks as a university Software Engineering project.
 
-| Week | Milestone |
-|---|---|
-| 1–2 | Requirements, architecture design, database schema |
-| 3–4 | Project setup, Supabase integration, authentication |
-| 5–6 | Multi-tenancy, subdomain routing, middleware |
-| 7–8 | Business dashboard — profile, services, hours |
-| 9–10 | Booking system — public flow and owner management |
-| 11 | Image gallery, contact integration, Maps |
-| 12 | Super admin panel |
-| 13 | Testing, polish, deployment |
+| Week | Milestone | Status |
+|---|---|---|
+| 1–2 | Requirements, architecture, database schema | ✅ Done |
+| 3–4 | Next.js setup, Supabase integration, data layer | ✅ Done |
+| 5–6 | Multi-tenancy, subdomain middleware, Vite → Next.js migration | ✅ Done |
+| 7–8 | Authentication — login, register, protected routes, Google OAuth | 🔄 In progress |
+| 9–10 | Booking system — full customer flow and owner management | ⏳ Upcoming |
+| 11 | Image gallery, Google Maps, contact integration | ⏳ Upcoming |
+| 12 | Super admin panel | ⏳ Upcoming |
+| 13 | Testing, polish, Vercel deployment | ⏳ Upcoming |
 
 ---
 
 ## Author
 
-Built by **VocaDev** as a university Software Engineering project — with the goal of making it a real product for the Kosovo market.
+Built by **VocaDev** — second year Software Engineering student — as a university project with the ambition of becoming a real product for the Kosovo market.
 
 ---
 

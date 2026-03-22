@@ -284,19 +284,21 @@ export default function RegisterPage() {
                       />
                       <span className="text-sm text-muted-foreground whitespace-nowrap">.lokalweb.com</span>
                     </div>
-                    {form.subdomain.length >= 3 && (
-                      <div className="absolute -bottom-5 left-0 flex items-center gap-1 text-[10px]">
-                        {checkingSubdomain ? (
-                          <span className="text-muted-foreground flex items-center gap-1"><Loader2 className="h-2 w-2 animate-spin" /> Checking...</span>
-                        ) : subdomainAvailable ? (
-                          <span className="text-green-600 flex items-center gap-1"><Check className="h-2 w-2" /> Available</span>
-                        ) : (
-                          <span className="text-red-500 flex items-center gap-1"><XCircle className="h-2 w-2" /> Already taken</span>
-                        )}
-                      </div>
-                    )}
+                    <div className="flex flex-col gap-1 mt-1">
+                      {form.subdomain.length >= 3 && (
+                        <div className="flex items-center gap-1 text-[10px]">
+                          {checkingSubdomain ? (
+                            <span className="text-muted-foreground flex items-center gap-1"><Loader2 className="h-2 w-2 animate-spin" /> Checking...</span>
+                          ) : subdomainAvailable ? (
+                            <span className="text-green-600 flex items-center gap-1"><Check className="h-2 w-2" /> Available</span>
+                          ) : (
+                            <span className="text-red-500 flex items-center gap-1"><XCircle className="h-2 w-2" /> Already taken</span>
+                          )}
+                        </div>
+                      )}
+                      <span className="text-xs text-[#5a5a7a]">Preview: {form.subdomain || "your-slug"}.lokalweb.com</span>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-1">Preview: <span className="text-primary font-medium">{form.subdomain || "your-slug"}.lokalweb.com</span></p>
                 </div>
                 <div className="space-y-2">
                   <Label>Industry</Label>

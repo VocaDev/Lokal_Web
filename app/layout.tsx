@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import ProviderContext from '@/components/ProviderContext'
 import '@/index.css'
+import { ThemeProvider } from 'next-themes';
 
 export const metadata: Metadata = {
   title: 'LokalWeb',
@@ -13,11 +14,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        <ProviderContext>
-          {children}
-        </ProviderContext>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <ProviderContext>
+            {children}
+          </ProviderContext>
+        </ThemeProvider>
       </body>
     </html>
   )

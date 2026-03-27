@@ -239,15 +239,11 @@ LokalWeb/
 
 ### 🖥️ Services Table View
 
-Displays all available services loaded from the CSV file, including filtering functionality.
-
 ![Services Table](./screenshots/Sc1.png)
 
 ---
 
 ### ➕ Add New Service
-
-Form used to create a new service with validation (name must not be empty, price > 0).
 
 ![Add Service](./screenshots/Sc4.png)
 
@@ -255,15 +251,11 @@ Form used to create a new service with validation (name must not be empty, price
 
 ### ✏️ Edit Service
 
-Existing service is loaded into the form for editing and updating.
-
 ![Edit Service](./screenshots/Sc3.png)
 
 ---
 
 ### 📄 CSV File After Changes
-
-Shows the `services.csv` file after performing CRUD operations, proving persistence.
 
 ![CSV File](./screenshots/Sc2.png)
 

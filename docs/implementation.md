@@ -65,18 +65,21 @@ Implements the **Repository Pattern** using Node.js `fs` module. All data is per
 
 ```typescript
 export class ServiceRepository {
-  constructor(filePath?: string) { /* defaults to lab-crud/data/services.csv */ }
+  constructor(filePath?: string) {
+    /* defaults to lab-crud/data/services.csv */
+  }
 
-  getAll(): Service[]                    // Parse CSV → array
-  getById(id: string): Service | null   // Find by ID
-  add(service: Service): void           // Append + save
-  update(service: Service): void        // Find, replace, save
-  delete(id: string): void              // Filter out + save
-  save(services: Service[]): void       // Write entire array to CSV
+  getAll(): Service[]; // Parse CSV → array
+  getById(id: string): Service | null; // Find by ID
+  add(service: Service): void; // Append + save
+  update(service: Service): void; // Find, replace, save
+  delete(id: string): void; // Filter out + save
+  save(services: Service[]): void; // Write entire array to CSV
 }
 ```
 
 **Key design decisions:**
+
 - Manual CSV parsing (no external libraries)
 - Handles quoted fields with commas
 - Overwrites the entire file on each write (simple and reliable)
@@ -91,15 +94,16 @@ Implements **business logic and validation**. Receives the repository via **cons
 export class ServiceService {
   constructor(private repo: ServiceRepository) {}
 
-  list(filter?: string): Service[]       // Filter by name (case-insensitive)
-  getById(id: string): Service | null
-  add(service: Service): void            // Validates, then delegates
-  update(service: Service): void         // Validates, then delegates
-  delete(id: string): void               // Delegates to repo
+  list(filter?: string): Service[]; // Filter by name (case-insensitive)
+  getById(id: string): Service | null;
+  add(service: Service): void; // Validates, then delegates
+  update(service: Service): void; // Validates, then delegates
+  delete(id: string): void; // Delegates to repo
 }
 ```
 
 **Validation rules (enforced in `add` and `update`):**
+
 - `name` must not be empty
 - `price` must be greater than 0
 
@@ -120,18 +124,19 @@ private validate(service: Service): void {
 
 Next.js Route Handlers that bridge the UI and the Service Layer.
 
-| Method | Route                    | Action                              |
-|--------|--------------------------|-------------------------------------|
-| GET    | `/api/lab-services`      | List all (optional `?filter=...`)   |
-| POST   | `/api/lab-services`      | Add new service                     |
-| PUT    | `/api/lab-services/:id`  | Update existing service             |
-| DELETE | `/api/lab-services/:id`  | Delete service                      |
+| Method | Route                   | Action                            |
+| ------ | ----------------------- | --------------------------------- |
+| GET    | `/api/lab-services`     | List all (optional `?filter=...`) |
+| POST   | `/api/lab-services`     | Add new service                   |
+| PUT    | `/api/lab-services/:id` | Update existing service           |
+| DELETE | `/api/lab-services/:id` | Delete service                    |
 
 Each handler instantiates the full chain:
+
 ```typescript
 function createService() {
-  const repo = new ServiceRepository();        // FileRepository
-  return new ServiceService(repo);             // Injected via constructor
+  const repo = new ServiceRepository(); // FileRepository
+  return new ServiceService(repo); // Injected via constructor
 }
 ```
 
@@ -140,6 +145,7 @@ function createService() {
 ### Layer 5 — UI Page (`app/lab-crud/page.tsx`)
 
 A React client component that provides:
+
 - **Table view** of all services
 - **Filter input** (filters by name)
 - **Add form** (name, description, price, duration)
@@ -204,11 +210,13 @@ LokalWeb/
 ## 5. How to Run
 
 1. Start the development server:
+
    ```bash
    npm run dev
    ```
 
 2. Open the lab CRUD page:
+
    ```
    http://localhost:3000/lab-crud
    ```
@@ -230,6 +238,7 @@ LokalWeb/
 ## 6. Screenshots
 
 ### 🖥️ Services Table View
+
 Displays all available services loaded from the CSV file, including filtering functionality.
 
 ![Services Table](./screenshots/Sc1.png)
@@ -237,13 +246,15 @@ Displays all available services loaded from the CSV file, including filtering fu
 ---
 
 ### ➕ Add New Service
+
 Form used to create a new service with validation (name must not be empty, price > 0).
 
-![Add Service](./screenshots/Sc2.png)
+![Add Service](./screenshots/Sc4.png)
 
 ---
 
 ### ✏️ Edit Service
+
 Existing service is loaded into the form for editing and updating.
 
 ![Edit Service](./screenshots/Sc3.png)
@@ -251,9 +262,10 @@ Existing service is loaded into the form for editing and updating.
 ---
 
 ### 📄 CSV File After Changes
+
 Shows the `services.csv` file after performing CRUD operations, proving persistence.
 
-![CSV File](./screenshots/Sc4.png)
+![CSV File](./screenshots/Sc2.png)
 
 ---
 
@@ -263,17 +275,17 @@ The Service layer receives the Repository through its constructor — this is **
 
 ```typescript
 // In the API route:
-const repo = new ServiceRepository();      // Create the repository
-const service = new ServiceService(repo);  // Inject it into the service
+const repo = new ServiceRepository(); // Create the repository
+const service = new ServiceService(repo); // Inject it into the service
 
 // The service uses the injected repo for all data operations:
-service.list();        // → calls repo.getAll()
-service.add(item);     // → validates, then calls repo.add(item)
-service.update(item);  // → validates, then calls repo.update(item)
-service.delete(id);    // → calls repo.delete(id)
+service.list(); // → calls repo.getAll()
+service.add(item); // → validates, then calls repo.add(item)
+service.update(item); // → validates, then calls repo.update(item)
+service.delete(id); // → calls repo.delete(id)
 ```
 
-This means the `ServiceService` doesn't know or care *how* data is stored — it could be CSV, JSON, or a database. It only depends on the `ServiceRepository` interface.
+This means the `ServiceService` doesn't know or care _how_ data is stored — it could be CSV, JSON, or a database. It only depends on the `ServiceRepository` interface.
 
 ---
 

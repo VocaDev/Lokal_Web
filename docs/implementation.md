@@ -279,6 +279,3 @@ service.delete(id); // → calls repo.delete(id)
 
 This means the `ServiceService` doesn't know or care _how_ data is stored — it could be CSV, JSON, or a database. It only depends on the `ServiceRepository` interface.
 
----
-
-_Last updated: March 2026 — Gentian Voca, Software Engineering Year 2_

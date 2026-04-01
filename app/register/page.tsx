@@ -33,15 +33,12 @@ import {
   PasswordStrength
 } from "@/lib/validators";
 
-const accentColors = [
-  { name: "Blue", value: "#2563eb" },
-  { name: "Emerald", value: "#059669" },
-  { name: "Orange", value: "#ea580c" },
-  { name: "Purple", value: "#7c3aed" },
-  { name: "Rose", value: "#e11d48" },
-  { name: "Amber", value: "#d97706" },
-  { name: "Teal", value: "#0d9488" },
-  { name: "Indigo", value: "#4f46e5" },
+const templates = [
+  { id: "classic", name: "Classic Barbershop", industry: "barbershop", preview: "/classic_barbershop_preview_1774863170934.png" },
+  { id: "bold", name: "Barbershop Bold", industry: "barbershop", preview: "/barbershop_bold_preview_1774863117010.png" },
+  { id: "clinic", name: "Modern Clinic", industry: "clinic", preview: "/modern_clinic_preview_1774863200431.png" },
+  { id: "salon", name: "Elegant Salon", industry: "beauty-salon", preview: "/elegant_salon_preview_modern_restaurant_preview_1774863353896.png" },
+  { id: "restaurant", name: "Minimal Restaurant", industry: "restaurant", preview: "/elegant_salon_preview_modern_restaurant_preview_1774863353896.png" },
 ];
 
 export default function RegisterPage() {
@@ -64,11 +61,12 @@ export default function RegisterPage() {
     name: "",
     subdomain: "",
     industry: "" as IndustryType,
+    template: "classic",
     phone: "",
     description: "",
     address: "",
     logoUrl: "",
-    accentColor: accentColors[0].value,
+    accentColor: "#2563eb",
     socialLinks: { instagram: "", facebook: "", whatsapp: "" } as SocialLinks,
   });
 
@@ -140,6 +138,13 @@ export default function RegisterPage() {
       if (signUpError) throw signUpError;
       if (data.user) {
         setUserId(data.user.id);
+        
+        // Auto-select first matching template for industry
+        const firstMatch = templates.find(t => t.industry === form.industry);
+        if (firstMatch) {
+          setForm(f => ({ ...f, template: firstMatch.id }));
+        }
+        
         setStep(2);
       }
     } catch (err: any) {
@@ -337,21 +342,41 @@ export default function RegisterPage() {
           {step === 2 && (
             <div className="space-y-6">
               <div>
-                <Label className="mb-3 block">Accent Color</Label>
-                <div className="grid grid-cols-4 gap-3">
-                  {accentColors.map(c => (
+                <Label className="mb-3 block">Choose Your Template</Label>
+                <div className="grid grid-cols-1 gap-4">
+                  {templates.filter(t => t.industry === form.industry).map(t => (
                     <button
-                      key={c.value}
+                      key={t.id}
                       type="button"
-                      onClick={() => setForm(f => ({ ...f, accentColor: c.value }))}
-                      className={`h-12 w-full rounded-xl border-2 transition-all flex items-center justify-center ${form.accentColor === c.value ? "border-foreground scale-105" : "border-transparent"
+                      onClick={() => setForm(f => ({ ...f, template: t.id }))}
+                      className={`relative group overflow-hidden rounded-xl border-2 transition-all text-left ${form.template === t.id ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/40"
                         }`}
-                      style={{ backgroundColor: c.value }}
-                      title={c.name}
                     >
-                      {form.accentColor === c.value && <Check className="h-5 w-5 text-white" />}
+                      <div className="aspect-[16/9] w-full overflow-hidden bg-muted">
+                        <img 
+                          src={t.preview} 
+                          alt={t.name} 
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105" 
+                        />
+                      </div>
+                      <div className="p-4 flex items-center justify-between bg-card text-foreground">
+                        <div>
+                          <p className="font-bold text-sm">{t.name}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">Responsive Template</p>
+                        </div>
+                        {form.template === t.id && (
+                          <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">
+                            <Check className="h-3 w-3 text-primary-foreground" />
+                          </div>
+                        )}
+                      </div>
                     </button>
                   ))}
+                  {templates.filter(t => t.industry === form.industry).length === 0 && (
+                    <div className="p-8 text-center border-2 border-dashed rounded-xl text-muted-foreground">
+                      No specific templates for this industry. Default selected.
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="space-y-2">
@@ -404,6 +429,7 @@ export default function RegisterPage() {
                   { label: "Business Name", value: form.name },
                   { label: "Subdomain", value: `${form.subdomain}.lokalweb.com`, color: "text-primary font-medium" },
                   { label: "Industry", value: form.industry.replace("-", " "), className: "capitalize" },
+                  { label: "Selected Template", value: templates.find(t => t.id === form.template)?.name || form.template, className: "font-bold text-primary" },
                   { label: "Phone", value: form.phone || "—" },
                   { label: "Address", value: form.address || "—" },
                 ].map((item, i) => (
@@ -412,10 +438,6 @@ export default function RegisterPage() {
                     <span className={`font-medium text-foreground ${item.color || ""} ${item.className || ""}`}>{item.value}</span>
                   </div>
                 ))}
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted-foreground">Accent Color</span>
-                  <div className="h-5 w-5 rounded-full" style={{ backgroundColor: form.accentColor }} />
-                </div>
               </div>
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>

@@ -45,6 +45,8 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
     name: bizData.name,
     subdomain: bizData.subdomain,
     industry: bizData.industry,
+    template: bizData.template_id || "bold",
+    templateId: bizData.template_id ?? undefined,
     phone: bizData.phone,
     address: bizData.address,
     description: bizData.description,

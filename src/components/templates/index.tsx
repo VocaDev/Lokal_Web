@@ -1,10 +1,21 @@
 'use client'
-
 import { Business, Service, BusinessHours } from '@/lib/types'
-import BarbershopTemplate from '../templates/BarbershopTemplate'
-import BeautySalonTemplate from '../templates/BeautySalonTemplate'
-import RestaurantTemplate from '../templates/RestaurantTemplate'
-import ClinicTemplate from '../templates/ClinicTemplate'
+
+// Industry default templates (existing)
+import BarbershopTemplate from './BarbershopTemplate'
+import BeautySalonTemplate from './BeautySalonTemplate'
+import RestaurantTemplate from './RestaurantTemplate'
+import ClinicTemplate from './ClinicTemplate'
+
+// Custom templates
+import BarberShopFirstTemplate from './custom/BarberShopFirstTemplate'
+import BarbershopMinimal from './custom/BarbershopMinimal'
+import RestaurantElegant from './custom/RestaurantElegant'
+import RestaurantCasual from './custom/RestaurantCasual'
+import ClinicClean from './custom/ClinicClean'
+import ClinicModern from './custom/ClinicModern'
+import BeautyLuxury from './custom/BeautyLuxury'
+import BeautyMinimal from './custom/BeautyMinimal'
 
 type TemplateProps = {
   business: Business
@@ -13,16 +24,31 @@ type TemplateProps = {
 }
 
 export default function TemplateRouter({ business, services, hours }: TemplateProps) {
+  const props = { business, services, hours }
+  const tid = business.templateId ?? 'default'
+
   switch (business.industry) {
     case 'barbershop':
-      return <BarbershopTemplate business={business} services={services} hours={hours} />
-    case 'beauty-salon':
-      return <BeautySalonTemplate business={business} services={services} hours={hours} />
+      if (tid === 'bold') return <BarberShopFirstTemplate {...props} />
+      if (tid === 'minimal') return <BarbershopMinimal {...props} />
+      return <BarberShopFirstTemplate {...props} /> // default for barbershop
+
     case 'restaurant':
-      return <RestaurantTemplate business={business} services={services} hours={hours} />
+      if (tid === 'elegant') return <RestaurantElegant {...props} />
+      if (tid === 'casual') return <RestaurantCasual {...props} />
+      return <RestaurantElegant {...props} /> // default for restaurant
+
     case 'clinic':
-      return <ClinicTemplate business={business} services={services} hours={hours} />
+      if (tid === 'clean') return <ClinicClean {...props} />
+      if (tid === 'modern') return <ClinicModern {...props} />
+      return <ClinicClean {...props} /> // default for clinic
+
+    case 'beauty-salon':
+      if (tid === 'luxury') return <BeautyLuxury {...props} />
+      if (tid === 'minimal') return <BeautyMinimal {...props} />
+      return <BeautyLuxury {...props} /> // default for beauty-salon
+
     default:
-      return <BarbershopTemplate business={business} services={services} hours={hours} />
+      return <BarberShopFirstTemplate {...props} />
   }
 }

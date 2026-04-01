@@ -1,9 +1,10 @@
-import { LayoutDashboard, Calendar, Scissors, User, Clock, Image, LogOut, Loader2 } from "lucide-react";
+import { LayoutDashboard, Calendar, Scissors, User, Clock, Image, LogOut, Loader2, ChevronDown, Building2, Check, UserPlus } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Business } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
+import { clearCurrentBusiness, getUserBusinesses, setCurrentBusiness } from "@/lib/store";
 import {
   Sidebar,
   SidebarContent,
@@ -15,6 +16,14 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const items = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
@@ -32,12 +41,24 @@ export function DashboardSidebar({ business }: { business: Business }) {
   const supabase = createClient();
   const subdomain = business?.subdomain || null;
   const [loggingOut, setLoggingOut] = useState(false);
+  const [allBusinesses, setAllBusinesses] = useState<Business[]>([]);
+
+  useEffect(() => {
+    getUserBusinesses().then(setAllBusinesses);
+  }, []);
 
   const handleLogout = async () => {
     setLoggingOut(true);
     await supabase.auth.signOut();
+    clearCurrentBusiness();
     router.push("/login");
     router.refresh();
+  };
+
+  const handleSwitch = (id: string) => {
+    setCurrentBusiness(id);
+    router.refresh();
+    window.location.reload(); // Force reload to ensure all stores are updated
   };
 
   return (
@@ -51,6 +72,52 @@ export function DashboardSidebar({ business }: { business: Business }) {
             {!collapsed && <span className="font-bold text-sm text-foreground truncate">LokalWeb</span>}
           </div>
         </div>
+
+        {/* Business Switcher */}
+        <div className="px-3 py-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton size="lg" className="w-full justify-start gap-2 px-2 hover:bg-muted/50 border border-border/40">
+                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
+                  <Building2 className="h-3 w-3" />
+                </div>
+                {!collapsed && (
+                  <>
+                    <div className="flex flex-col items-start text-left text-xs">
+                      <span className="font-semibold truncate w-[140px]">{business.name}</span>
+                      <span className="text-[10px] text-muted-foreground">{business.subdomain}.lokalweb.com</span>
+                    </div>
+                    <ChevronDown className="ml-auto h-3 w-3 text-muted-foreground" />
+                  </>
+                )}
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="start">
+              <DropdownMenuLabel>Switch Business</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {allBusinesses.map((b) => (
+                <DropdownMenuItem 
+                  key={b.id} 
+                  onClick={() => handleSwitch(b.id)}
+                  className={b.id === business.id ? "bg-accent" : ""}
+                >
+                  <Building2 className="mr-2 h-4 w-4" />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{b.name}</span>
+                    <span className="text-[10px] text-muted-foreground">{b.subdomain}</span>
+                  </div>
+                  {b.id === business.id && <Check className="ml-auto h-4 w-4" />}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push("/register")}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                <span>Register new business</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
         <SidebarGroup>
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>

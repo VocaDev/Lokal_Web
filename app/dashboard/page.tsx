@@ -35,10 +35,25 @@ export default function OverviewPage() {
     })();
   }, [business?.id]);
 
-  if (loading || !business) {
+  if (loading) {
     return (
       <div className="min-h-[200px] flex items-center justify-center text-muted-foreground text-sm">
         Loading overview...
+      </div>
+    );
+  }
+
+  if (!business) {
+    return (
+      <div className="min-h-[400px] flex flex-col items-center justify-center p-8 text-center border-2 border-dashed rounded-xl border-muted">
+        <AlertCircle className="h-10 w-10 text-muted-foreground mb-4" />
+        <h2 className="text-xl font-bold text-foreground">No Business Profile Found</h2>
+        <p className="text-muted-foreground max-w-sm mt-2">
+          Your account is logged in, but we couldn't find a business record. This usually happens if there was an error during the registration process.
+        </p>
+        <p className="text-xs text-muted-foreground mt-8">
+          Please contact support or try registering again with a different email.
+        </p>
       </div>
     );
   }

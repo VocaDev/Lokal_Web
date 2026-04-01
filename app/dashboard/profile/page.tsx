@@ -1,19 +1,30 @@
 'use client'
 import { useEffect, useState } from "react";
-import { Business } from "@/lib/types";
+import { Business, IndustryType } from "@/lib/types";
 import { saveBusiness, getCurrentBusiness } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Phone, Globe, Building, MapPin, Instagram, Facebook, MessageCircle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Phone, Globe, Building, MapPin, Instagram, Facebook, MessageCircle, Palette } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+const templates = [
+  { id: "classic", name: "Classic Barbershop", industry: "barbershop" },
+  { id: "bold", name: "Barbershop Bold", industry: "barbershop" },
+  { id: "clinic", name: "Modern Clinic", industry: "clinic" },
+  { id: "salon", name: "Elegant Salon", industry: "beauty-salon" },
+  { id: "restaurant", name: "Minimal Restaurant", industry: "restaurant" },
+];
 
 export default function ProfilePage() {
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [form, setForm] = useState({
+    industry: "barbershop" as IndustryType,
+    template: "classic",
     phone: "",
     address: "",
     description: "",
@@ -26,6 +37,8 @@ export default function ProfilePage() {
         if (biz) {
           setBusiness(biz);
           setForm({
+            industry: biz.industry,
+            template: biz.template || "classic",
             phone: biz.phone,
             address: biz.address,
             description: biz.description,
@@ -41,6 +54,7 @@ export default function ProfilePage() {
     const updated = { ...business, ...form };
     try {
       await saveBusiness(updated);
+      setBusiness(updated);
       toast({ title: "Profile updated" });
     } catch (err) {
       console.error("Failed to save business profile", err);
@@ -57,7 +71,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div>
+    <div className="pb-12">
       <h1 className="text-2xl font-bold text-foreground mb-6">Business Profile</h1>
       <div className="grid gap-6 max-w-lg">
         <Card>
@@ -66,12 +80,39 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
-              <Building className="h-4 w-4 text-muted-foreground" />
-              <span className="text-foreground capitalize">{business.industry.replace("-", " ")}</span>
-            </div>
-            <div className="flex items-center gap-3">
               <Globe className="h-4 w-4 text-muted-foreground" />
               <span className="text-primary">{business.subdomain}.lokalweb.com</span>
+            </div>
+            <div className="pt-2 space-y-4 border-t">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><Building className="h-3.5 w-3.5" /> Industry</Label>
+                <Select value={form.industry} onValueChange={v => setForm(f => ({ ...f, industry: v as IndustryType }))}>
+                  <SelectTrigger className="capitalize"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="barbershop">Barbershop</SelectItem>
+                    <SelectItem value="restaurant">Restaurant</SelectItem>
+                    <SelectItem value="clinic">Clinic</SelectItem>
+                    <SelectItem value="beauty-salon">Beauty Salon</SelectItem>
+                    <SelectItem value="custom">Custom (Development)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><Palette className="h-3.5 w-3.5" /> Website Template</Label>
+                <Select value={form.template} onValueChange={v => setForm(f => ({ ...f, template: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {templates.filter(t => t.industry === form.industry).map(t => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                    {form.industry === 'custom' && (
+                      <SelectItem value="bold">Test Template (Custom)</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">Changes apply immediately to your public website.</p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -108,9 +149,8 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        <Button onClick={handleSave} size="lg">Save Changes</Button>
+        <Button onClick={handleSave} size="lg" className="w-full">Save Changes</Button>
       </div>
     </div>
   );
 }
-

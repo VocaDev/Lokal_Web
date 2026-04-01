@@ -1,596 +1,351 @@
-import { Business, Booking, Service, BusinessHours } from './types';
-import { createClient } from './supabase/client';
+import { createClient } from "@/lib/supabase/client";
+import { Business, Service, Booking, BusinessHours } from "@/lib/types";
 
-const supabase = createClient();
-
-const BIZ_KEY = 'lokalweb_businesses';
-const SVC_KEY = 'lokalweb_services';
-const HOURS_KEY = 'lokalweb_hours';
-const BOOKINGS_KEY = 'lokalweb_bookings';
-
-// ── Helpers ──
-
-// NOTE: Legacy localStorage helpers kept for rollback.
-// function getItems<T>(key: string): T[] {
-//   const data = localStorage.getItem(key);
-//   return data ? JSON.parse(data) : [];
-// }
-// function setItems<T>(key: string, items: T[]) {
-//   localStorage.setItem(key, JSON.stringify(items));
-// }
-
-// ── Businesses ──
-
-function toSnakeBusiness(b: Business) {
+// 🔄 helper (nëse e ke tashmë, përdore tënden)
+function fromSnakeBusiness(data: any): Business {
   return {
-    id: b.id,
-    name: b.name,
-    subdomain: b.subdomain,
-    industry: b.industry,
-    phone: b.phone,
-    address: b.address,
-    description: b.description,
-    logo_url: b.logoUrl,
-    accent_color: b.accentColor,
-    social_links: b.socialLinks ?? { instagram: "", facebook: "", whatsapp: "" },
-    gallery_images: b.galleryImages ?? [],
-    owner_id: b.ownerId,
-    created_at: b.createdAt,
+    id: data.id ?? "",
+    name: data.name ?? "",
+    subdomain: data.subdomain ?? "",
+    industry: (data.industry as any) || "barbershop", // Ensure valid IndustryType
+    template: data.template || "classic",
+    phone: data.phone ?? "",
+    address: data.address ?? "",
+    description: data.description ?? "",
+    logoUrl: data.logo_url ?? "",
+    accentColor: data.accent_color ?? "#000000",
+    socialLinks: data.social_links || { instagram: "", facebook: "", whatsapp: "" },
+    galleryImages: data.gallery_images || [],
+    ownerId: data.owner_id,
+    createdAt: data.created_at ?? new Date().toISOString(),
   };
 }
 
-function fromSnakeBusiness(row: any): Business {
-  return {
-    id: row.id,
-    name: row.name,
-    subdomain: row.subdomain,
-    industry: row.industry,
-    phone: row.phone,
-    address: row.address,
-    description: row.description,
-    logoUrl: row.logo_url,
-    accentColor: row.accent_color,
-    socialLinks: row.social_links ?? { instagram: "", facebook: "", whatsapp: "" },
-    galleryImages: row.gallery_images ?? [],
-    ownerId: row.owner_id,
-    createdAt: row.created_at,
-  };
-}
-
-// Legacy localStorage implementations kept for rollback:
-// export function getBusinesses(): Business[] { return getItems<Business>(BIZ_KEY); }
-// export function saveBusiness(business: Business): void {
-//   const list = getBusinesses();
-//   const idx = list.findIndex(b => b.id === business.id);
-//   if (idx >= 0) list[idx] = business; else list.push(business);
-//   setItems(BIZ_KEY, list);
-// }
-// export function getBusinessBySubdomain(subdomain: string): Business | undefined {
-//   return getBusinesses().find(b => b.subdomain === subdomain);
-// }
-
-export async function getBusinesses(): Promise<Business[]> {
-  const { data, error } = await supabase.from('businesses').select('*');
-  if (error) {
-    console.error('[Supabase] Error fetching businesses', error.message, error.details, error.hint);
-    throw error;
-  }
-  return (data ?? []).map(fromSnakeBusiness);
-}
-
-export async function saveBusiness(business: Business): Promise<void> {
-  const { error } = await supabase.from('businesses').upsert(toSnakeBusiness(business));
-  if (error) {
-    console.error('[Supabase] Error saving business', error.message, error.details, error.hint);
-    throw error;
-  }
-}
-
-export async function getBusinessBySubdomain(subdomain: string): Promise<Business | null> {
-  const { data, error } = await supabase
-    .from('businesses')
-    .select('*')
-    .eq('subdomain', subdomain)
-    .maybeSingle();
-
-  if (error) {
-    console.error('[Supabase] Error fetching business by subdomain', error.message, error.details, error.hint);
-    throw error;
-  }
-
-  return data ? fromSnakeBusiness(data) : null;
-}
-
-export async function checkSubdomainAvailability(subdomain: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('businesses')
-    .select('id')
-    .eq('subdomain', subdomain)
-    .maybeSingle();
-
-  if (error) {
-    console.error('[Supabase] Error checking subdomain availability', error.message);
-    return false;
-  }
-
-  return !data;
-}
-
+// ✅ GET CURRENT BUSINESS (FIXED)
 export async function getCurrentBusiness(): Promise<Business | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
   if (!user) return null;
 
-  const { data, error } = await supabase
-    .from('businesses')
-    .select('*')
-    .eq('owner_id', user.id)
-    .limit(1)
-    .maybeSingle();
+  // 🔥 1. kontrollo localStorage (business i zgjedhur)
+  if (typeof window !== "undefined") {
+    const storedId = localStorage.getItem("lokalweb_current");
 
-  if (error) {
-    console.error('[Supabase] getCurrentBusiness error:', error.message, error.code, error.hint);
-    return null;
-  }
-
-  if (data) return fromSnakeBusiness(data);
-
-  // Fallback for older businesses where owner_id might be NULL
-  if (typeof window !== 'undefined') {
-    const legacyId = localStorage.getItem('lokalweb_current');
-    if (legacyId) {
-      const { data: legacyData, error: legacyError } = await supabase
-        .from('businesses')
-        .select('*')
-        .eq('id', legacyId)
+    if (storedId) {
+      const { data } = await supabase
+        .from("businesses")
+        .select("*")
+        .eq("id", storedId)
+        .eq("owner_id", user.id) // 🔥 VERIFY OWNERSHIP
         .maybeSingle();
-      
-      if (legacyError) {
-        console.error('[Supabase] getCurrentBusiness legacy fallback error:', legacyError.message);
-        return null;
-      }
-      return legacyData ? fromSnakeBusiness(legacyData) : null;
+
+      if (data) return fromSnakeBusiness(data);
     }
   }
 
-  return null;
-}
-
-export function setCurrentBusiness(id: string): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('lokalweb_current', id);
-  }
-}
-
-// ── Services ──
-
-// Legacy localStorage implementations kept for rollback:
-// export function getServices(businessId: string): Service[] {
-//   return getItems<Service>(SVC_KEY).filter(s => s.businessId === businessId);
-// }
-// export function updateService(businessId: string, service: Service): void {
-//   const all = getItems<Service>(SVC_KEY);
-//   const svc = { ...service, businessId };
-//   const idx = all.findIndex(s => s.id === svc.id);
-//   if (idx >= 0) all[idx] = svc; else all.push(svc);
-//   setItems(SVC_KEY, all);
-// }
-// export function deleteService(businessId: string, serviceId: string): void {
-//   setItems(SVC_KEY, getItems<Service>(SVC_KEY).filter(s => !(s.id === serviceId && s.businessId === businessId)));
-// }
-
-export async function getServices(businessId: string): Promise<Service[]> {
+  // 🔥 2. merr të gjitha bizneset e user-it
   const { data, error } = await supabase
-    .from('services')
-    .select('*')
-    .eq('business_id', businessId);
+    .from("businesses")
+    .select("*")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: false, nullsFirst: false });
 
   if (error) {
-    console.error('[Supabase] Error fetching services', error.message, error.details, error.hint);
-    throw error;
+    console.error("[Supabase] getCurrentBusiness error:", error.message);
+    return null;
   }
 
-  return (data as any[] | null ?? []).map(row => ({
-    id: row.id as string,
-    businessId: row.business_id as string,
-    name: row.name as string,
-    description: row.description as string,
-    price: row.price as number,
-    durationMinutes: row.duration_minutes as number,
-  }));
+  if (!data || data.length === 0) {
+    console.log("[LokalWeb] No businesses found for user:", user.email);
+    return null;
+  }
+
+  console.log(`[LokalWeb] Found ${data.length} businesses for ${user.email}. Choosing latest:`, data[0].name);
+
+  // 🔥 3. fallback → përdor të parin dhe ruaje
+  const business = data[0];
+
+  if (typeof window !== "undefined") {
+    localStorage.setItem("lokalweb_current", business.id);
+  }
+
+  return fromSnakeBusiness(business);
 }
 
-export async function updateService(businessId: string, service: Service): Promise<void> {
-  const payload = {
-    id: service.id,
-    business_id: businessId,
-    name: service.name,
-    description: service.description ?? '',
-    price: service.price,
-    duration_minutes: service.durationMinutes,
-  };
-
-  const { error } = await supabase.from('services').upsert(payload);
-  if (error) {
-    console.error('[Supabase] Error updating service', error.message, error.details, error.hint);
-    throw error;
+// ✅ SET CURRENT BUSINESS (manual switch)
+export function setCurrentBusiness(businessId: string) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("lokalweb_current", businessId);
   }
 }
 
-export async function deleteService(_businessId: string, serviceId: string): Promise<void> {
-  const { error } = await supabase
-    .from('services')
-    .delete()
-    .eq('id', serviceId);
-
-  if (error) {
-    console.error('[Supabase] Error deleting service', error.message, error.details, error.hint);
-    throw error;
+// ✅ CLEAR (logout / reset)
+export function clearCurrentBusiness() {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("lokalweb_current");
   }
 }
 
-// ── Business Hours ──
+// ✅ Subdomain Availability
+export async function checkSubdomainAvailability(subdomain: string): Promise<boolean> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("subdomain", subdomain)
+    .maybeSingle();
+  return !data;
+}
 
-const defaultHours: Omit<BusinessHours, 'id' | 'businessId'>[] = [
-  { dayOfWeek: 0, isOpen: false, openTime: '09:00', closeTime: '17:00' },
-  { dayOfWeek: 1, isOpen: true, openTime: '09:00', closeTime: '17:00' },
-  { dayOfWeek: 2, isOpen: true, openTime: '09:00', closeTime: '17:00' },
-  { dayOfWeek: 3, isOpen: true, openTime: '09:00', closeTime: '17:00' },
-  { dayOfWeek: 4, isOpen: true, openTime: '09:00', closeTime: '17:00' },
-  { dayOfWeek: 5, isOpen: true, openTime: '09:00', closeTime: '17:00' },
-  { dayOfWeek: 6, isOpen: false, openTime: '09:00', closeTime: '17:00' },
-];
-
-// Legacy localStorage implementations kept for rollback:
-// export function getBusinessHours(businessId: string): BusinessHours[] {
-//   const all = getItems<BusinessHours>(HOURS_KEY).filter(h => h.businessId === businessId);
-//   if (all.length === 0) {
-//     // seed defaults
-//     const hours = defaultHours.map(h => ({ ...h, id: crypto.randomUUID(), businessId }));
-//     const existing = getItems<BusinessHours>(HOURS_KEY);
-//     setItems(HOURS_KEY, [...existing, ...hours]);
-//     return hours;
-//   }
-//   return all.sort((a, b) => a.dayOfWeek - b.dayOfWeek);
-// }
-// export function saveBusinessHours(hours: BusinessHours[]): void {
-//   const all = getItems<BusinessHours>(HOURS_KEY);
-//   hours.forEach(h => {
-//     const idx = all.findIndex(x => x.id === h.id);
-//     if (idx >= 0) all[idx] = h; else all.push(h);
-//   });
-//   setItems(HOURS_KEY, all);
-// }
-
-export async function getBusinessHours(businessId: string): Promise<BusinessHours[]> {
+// ✅ Register Business
+export async function registerBusiness(form: any): Promise<string> {
+  const supabase = createClient();
   const { data, error } = await supabase
-    .from('business_hours')
-    .select('*')
-    .eq('business_id', businessId)
-    .order('day_of_week');
+    .from("businesses")
+    .insert({
+      name: form.name,
+      subdomain: form.subdomain,
+      industry: form.industry,
+      template: form.template || "classic",
+      phone: form.phone,
+      address: form.address,
+      owner_id: form.ownerId,
+      accent_color: form.accentColor,
+      social_links: form.socialLinks,
+    })
+    .select()
+    .single();
 
-  if (error) {
-    console.error('[Supabase] Error fetching business hours', error.message, error.details, error.hint);
-    throw error;
+  if (error) throw error;
+
+  // Set as current immediately if in browser
+  if (typeof window !== "undefined") {
+    localStorage.setItem("lokalweb_current", data.id);
   }
 
-  if (data && data.length > 0) {
-    return (data as any[]).map(row => ({
-      id: row.id as string,
-      businessId: row.business_id as string,
-      dayOfWeek: row.day_of_week as number,
-      isOpen: row.is_open as boolean,
-      openTime: row.open_time as string,
-      closeTime: row.close_time as string,
-    }));
-  }
-
-  // Seed defaults if no hours exist yet
-  const hoursToInsert = defaultHours.map(h => ({
-    id: crypto.randomUUID(),
-    business_id: businessId,
-    day_of_week: h.dayOfWeek,
-    is_open: h.isOpen,
-    open_time: h.openTime,
-    close_time: h.closeTime,
+  // Initialize business hours
+  const days = [1, 2, 3, 4, 5, 6, 0]; // Mon-Sun
+  const hours = days.map(day => ({
+    business_id: data.id,
+    day_of_week: day,
+    is_open: day !== 0,
+    open_time: "09:00",
+    close_time: "18:00"
   }));
+  const { error: hoursError } = await supabase.from("business_hours").insert(hours);
+  if (hoursError) throw hoursError;
 
-  const { data: inserted, error: insertError } = await supabase
-    .from('business_hours')
-    .insert(hoursToInsert)
-    .select('*')
-    .order('day_of_week');
-
-  if (insertError) {
-    console.error('[Supabase] Error seeding business hours', insertError.message, insertError.details, insertError.hint);
-    throw insertError;
-  }
-
-  return (inserted as any[] | null ?? []).map(row => ({
-    id: row.id as string,
-    businessId: row.business_id as string,
-    dayOfWeek: row.day_of_week as number,
-    isOpen: row.is_open as boolean,
-    openTime: row.open_time as string,
-    closeTime: row.close_time as string,
-  }));
+  return data.id;
 }
 
-export async function saveBusinessHours(hours: BusinessHours[]): Promise<void> {
-  const payload = hours.map(h => ({
-    id: h.id,
-    business_id: h.businessId,
-    day_of_week: h.dayOfWeek,
-    is_open: h.isOpen,
-    open_time: h.openTime,
-    close_time: h.closeTime,
-  }));
-
-  const { error } = await supabase.from('business_hours').upsert(payload);
-  if (error) {
-    console.error('[Supabase] Error saving business hours', error.message, error.details, error.hint);
-    throw error;
-  }
-}
-
-// ── Bookings ──
-
-// Legacy localStorage implementations kept for rollback:
-// export function getBookings(businessId: string): Booking[] {
-//   return getItems<Booking>(BOOKINGS_KEY).filter(b => b.businessId === businessId);
-// }
-// export function addBooking(businessId: string, booking: Omit<Booking, 'id' | 'status' | 'createdAt'>): void {
-//   const all = getItems<Booking>(BOOKINGS_KEY);
-//   all.push({ ...booking, businessId, id: crypto.randomUUID(), status: 'pending', createdAt: new Date().toISOString() });
-//   setItems(BOOKINGS_KEY, all);
-// }
-
+// ✅ Get Bookings
 export async function getBookings(businessId: string): Promise<Booking[]> {
+  const supabase = createClient();
   const { data, error } = await supabase
-    .from('bookings')
-    .select('*')
-    .eq('business_id', businessId);
-
-  if (error) {
-    console.error('[Supabase] Error fetching bookings', error.message, error.details, error.hint);
-    throw error;
-  }
-
-  return (data as any[] | null ?? []).map(row => ({
-    id: row.id as string,
-    businessId: row.business_id as string,
-    serviceId: row.service_id as string,
-    customerName: row.customer_name as string,
-    customerPhone: row.customer_phone as string,
-    appointmentAt: row.appointment_at as string,
-    status: row.status as Booking['status'],
-    createdAt: row.created_at as string,
+    .from("bookings")
+    .select("*")
+    .eq("business_id", businessId)
+    .order("appointment_at", { ascending: false });
+  
+  if (error) throw error;
+  return (data || []).map(d => ({
+    id: d.id,
+    businessId: d.business_id,
+    serviceId: d.service_id,
+    customerName: d.customer_name,
+    customerPhone: d.customer_phone,
+    appointmentAt: d.appointment_at,
+    status: d.status,
+    createdAt: d.created_at
   }));
 }
 
-export async function addBooking(
-  businessId: string,
-  booking: Omit<Booking, 'id' | 'status' | 'createdAt'>
-): Promise<void> {
-  const payload = {
-    id: crypto.randomUUID(),
-    business_id: businessId,
-    service_id: booking.serviceId,
-    customer_name: booking.customerName,
-    customer_phone: booking.customerPhone,
-    appointment_at: booking.appointmentAt,
-    status: 'pending',
-    created_at: new Date().toISOString(),
-  };
-
-  const { error } = await supabase.from('bookings').insert(payload);
-  if (error) {
-    console.error('[Supabase] Error adding booking', error.message, error.details, error.hint);
-    throw error;
-  }
+// ✅ Add Booking
+export async function addBooking(businessId: string, booking: Omit<Booking, "id" | "status" | "createdAt">): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("bookings")
+    .insert({
+      business_id: businessId,
+      service_id: booking.serviceId,
+      customer_name: booking.customerName,
+      customer_phone: booking.customerPhone,
+      appointment_at: booking.appointmentAt,
+      status: "pending"
+    });
+  
+  if (error) throw error;
 }
 
-// ── Registration ──
+// ✅ Get Services
+export async function getServices(businessId: string): Promise<Service[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("services")
+    .select("*")
+    .eq("business_id", businessId);
+  
+  if (error) throw error;
+  return (data || []).map(d => ({
+    id: d.id,
+    businessId: d.business_id,
+    name: d.name,
+    description: d.description,
+    price: d.price,
+    durationMinutes: d.duration_minutes
+  }));
+}
 
-const defaultServiceTemplates: Omit<Service, 'id' | 'businessId'>[] = [
-  { name: 'Haircut', description: 'Standard haircut', price: 5, durationMinutes: 30 },
-  { name: 'Beard Trim', description: 'Beard trimming', price: 3, durationMinutes: 15 },
-  { name: 'Full Package', description: 'Haircut + beard', price: 8, durationMinutes: 45 },
-];
+// ✅ Update/Upsert Service
+export async function updateService(businessId: string, service: Service): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("services")
+    .upsert({
+      id: service.id || undefined,
+      business_id: businessId,
+      name: service.name,
+      description: service.description,
+      price: service.price,
+      duration_minutes: service.durationMinutes
+    });
+  if (error) throw error;
+}
 
-const mockBookingTemplates = [
-  { customerName: 'Arben Krasniqi', customerPhone: '+383 44 123 456', appointmentAt: '2026-03-13T09:00:00', status: 'confirmed' as const },
-  { customerName: 'Fjolla Berisha', customerPhone: '+383 44 234 567', appointmentAt: '2026-03-13T10:00:00', status: 'pending' as const },
-  { customerName: 'Driton Hoxha', customerPhone: '+383 44 345 678', appointmentAt: '2026-03-13T11:00:00', status: 'cancelled' as const },
-  { customerName: 'Rina Gashi', customerPhone: '+383 44 456 789', appointmentAt: '2026-03-14T09:00:00', status: 'pending' as const },
-  { customerName: 'Besart Morina', customerPhone: '+383 44 567 890', appointmentAt: '2026-03-14T14:00:00', status: 'confirmed' as const },
-];
+// ✅ Delete Service
+export async function deleteService(businessId: string, serviceId: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("services")
+    .delete()
+    .eq("id", serviceId)
+    .eq("business_id", businessId);
+  if (error) throw error;
+}
 
-// Legacy localStorage implementation kept for rollback:
-// export function registerBusiness(data: Omit<Business, 'id' | 'createdAt' | 'galleryImages'> & { galleryImages?: string[] }): Business {
-//   const business: Business = {
-//     ...data,
-//     id: crypto.randomUUID(),
-//     galleryImages: data.galleryImages || [],
-//     createdAt: new Date().toISOString(),
-//   };
-//   saveBusiness(business);
-//   setCurrentBusiness(business.id);
-//
-//   // Seed services
-//   const services = defaultServiceTemplates.map(s => ({ ...s, id: crypto.randomUUID(), businessId: business.id }));
-//   const existingSvc = getItems<Service>(SVC_KEY);
-//   setItems(SVC_KEY, [...existingSvc, ...services]);
-//
-//   // Seed bookings
-//   const bookings = mockBookingTemplates.map(b => ({
-//     ...b,
-//     id: crypto.randomUUID(),
-//     businessId: business.id,
-//     serviceId: services[0]?.id || '',
-//     createdAt: new Date().toISOString(),
-//   }));
-//   const existingBookings = getItems<Booking>(BOOKINGS_KEY);
-//   setItems(BOOKINGS_KEY, [...existingBookings, ...bookings]);
-//
-//   // Seed hours
-//   getBusinessHours(business.id);
-//
-//   return business;
-// }
+// ✅ Get Business Hours
+export async function getBusinessHours(businessId: string): Promise<BusinessHours[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("business_hours")
+    .select("*")
+    .eq("business_id", businessId)
+    .order("day_of_week", { ascending: true });
+  
+  if (error) throw error;
+  return (data || []).map(d => ({
+    id: d.id,
+    businessId: d.business_id,
+    dayOfWeek: d.day_of_week,
+    isOpen: d.is_open,
+    openTime: d.open_time,
+    closeTime: d.close_time
+  }));
+}
 
-export async function registerBusiness(
-  data: Omit<Business, 'id' | 'createdAt' | 'galleryImages'> & { galleryImages?: string[] }
-): Promise<Business> {
+// ✅ Save Business Hours
+export async function saveBusinessHours(hours: BusinessHours[]): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("business_hours")
+    .upsert(hours.map(h => ({
+      id: h.id,
+      business_id: h.businessId,
+      day_of_week: h.dayOfWeek,
+      is_open: h.isOpen,
+      open_time: h.openTime,
+      close_time: h.closeTime
+    })));
+  if (error) throw error;
+}
+
+// ✅ Save Business Profile
+export async function saveBusiness(business: Business): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("businesses")
+    .update({
+      name: business.name,
+      phone: business.phone,
+      address: business.address,
+      description: business.description,
+      social_links: business.socialLinks,
+      logo_url: business.logoUrl,
+      accent_color: business.accentColor,
+      template: business.template,
+    })
+    .eq("id", business.id);
+  if (error) throw error;
+}
+
+// ✅ Add Gallery Image
+export async function addGalleryImage(businessId: string, url: string): Promise<void> {
+  const supabase = createClient();
+  const { data, error: fetchError } = await supabase
+    .from("businesses")
+    .select("gallery_images")
+    .eq("id", businessId)
+    .maybeSingle();
+  
+  if (fetchError) throw fetchError;
+  const currentImages = data?.gallery_images || [];
+  const { error } = await supabase
+    .from("businesses")
+    .update({
+      gallery_images: [...currentImages, url]
+    })
+    .eq("id", businessId);
+  if (error) throw error;
+}
+
+// ✅ Remove Gallery Image
+export async function removeGalleryImage(businessId: string, url: string): Promise<void> {
+  const supabase = createClient();
+  const { data, error: fetchError } = await supabase
+    .from("businesses")
+    .select("gallery_images")
+    .eq("id", businessId)
+    .maybeSingle();
+  
+  if (fetchError) throw fetchError;
+  if (!data) return;
+  const { error } = await supabase
+    .from("businesses")
+    .update({
+      gallery_images: (data.gallery_images || []).filter((u: string) => u !== url)
+    })
+    .eq("id", businessId);
+  if (error) throw error;
+}
+
+// ✅ Update Booking Status
+export async function updateBookingStatus(bookingId: string, status: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("bookings")
+    .update({ status })
+    .eq("id", bookingId);
+  if (error) throw error;
+}
+
+// ✅ OPTIONAL: merr krejt bizneset e user-it
+export async function getUserBusinesses(): Promise<Business[]> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
 
-  const business: Business = {
-    ...data,
-    id: crypto.randomUUID(),
-    galleryImages: data.galleryImages || [],
-    createdAt: new Date().toISOString(),
-    ownerId: user.id,
-  };
+  if (!user) return [];
 
-  // 1) Insert business
-  const { error: bizError } = await supabase.from('businesses').insert(toSnakeBusiness(business));
-  if (bizError) {
-    console.error('[Supabase] Error registering business', bizError.message, bizError.details, bizError.hint);
-    throw bizError;
-  }
-
-  // 2) Insert default services
-  const services = defaultServiceTemplates.map(s => ({
-    ...s,
-    id: crypto.randomUUID(),
-    businessId: business.id,
-  }));
-  const servicePayload = services.map(s => ({
-    id: s.id,
-    business_id: business.id,
-    name: s.name,
-    description: s.description,
-    price: s.price,
-    duration_minutes: s.durationMinutes,
-  }));
-  const { error: svcError } = await supabase.from('services').insert(servicePayload);
-  if (svcError) {
-    console.error('[Supabase] Error seeding services', svcError.message, svcError.details, svcError.hint);
-    throw svcError;
-  }
-
-  // 3) Insert mock bookings
-  const bookingsPayload = mockBookingTemplates.map(b => ({
-    id: crypto.randomUUID(),
-    business_id: business.id,
-    service_id: services[0]?.id || '',
-    customer_name: b.customerName,
-    customer_phone: b.customerPhone,
-    appointment_at: b.appointmentAt,
-    status: b.status,
-    created_at: new Date().toISOString(),
-  }));
-  const { error: bookingsError } = await supabase.from('bookings').insert(bookingsPayload);
-  if (bookingsError) {
-    console.error('[Supabase] Error seeding bookings', bookingsError.message, bookingsError.details, bookingsError.hint);
-    throw bookingsError;
-  }
-
-  // 4) Insert default 7 hours rows
-  const hoursPayload = defaultHours.map(h => ({
-    id: crypto.randomUUID(),
-    business_id: business.id,
-    day_of_week: h.dayOfWeek,
-    is_open: h.isOpen,
-    open_time: h.openTime,
-    close_time: h.closeTime,
-  }));
-  const { error: hoursError } = await supabase.from('business_hours').insert(hoursPayload);
-  if (hoursError) {
-    console.error('[Supabase] Error seeding business hours', hoursError.message, hoursError.details, hoursError.hint);
-    throw hoursError;
-  }
-
-  // 5) Save current business ID in localStorage
-  setCurrentBusiness(business.id);
-
-  return business;
-}
-
-// ── Gallery ──
-
-// Legacy localStorage implementations kept for rollback:
-// export function addGalleryImage(businessId: string, imageUrl: string): void {
-//   const biz = getBusinesses().find(b => b.id === businessId);
-//   if (!biz) return;
-//   biz.galleryImages = [...(biz.galleryImages || []), imageUrl];
-//   saveBusiness(biz);
-// }
-// export function removeGalleryImage(businessId: string, imageUrl: string): void {
-//   const biz = getBusinesses().find(b => b.id === businessId);
-//   if (!biz) return;
-//   biz.galleryImages = (biz.galleryImages || []).filter(u => u !== imageUrl);
-//   saveBusiness(biz);
-// }
-
-export async function addGalleryImage(businessId: string, imageUrl: string): Promise<void> {
   const { data, error } = await supabase
-    .from('businesses')
-    .select('*')
-    .eq('id', businessId)
-    .maybeSingle();
+    .from("businesses")
+    .select("*")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: false, nullsFirst: false });
 
   if (error) {
-    console.error('[Supabase] Error fetching business for gallery add', error.message, error.details, error.hint);
-    throw error;
+    console.error("[Supabase] getUserBusinesses error:", error.message);
+    return [];
   }
 
-  if (!data) return;
-
-  const biz = fromSnakeBusiness(data);
-  const nextImages = [...(biz.galleryImages ?? []), imageUrl];
-
-  const { error: upsertError } = await supabase
-    .from('businesses')
-    .upsert({
-      ...toSnakeBusiness(biz),
-      gallery_images: nextImages,
-    });
-
-  if (upsertError) {
-    console.error('[Supabase] Error updating gallery images', upsertError.message, upsertError.details, upsertError.hint);
-    throw upsertError;
-  }
-}
-
-export async function removeGalleryImage(businessId: string, imageUrl: string): Promise<void> {
-  const { data, error } = await supabase
-    .from('businesses')
-    .select('*')
-    .eq('id', businessId)
-    .maybeSingle();
-
-  if (error) {
-    console.error('[Supabase] Error fetching business for gallery remove', error.message, error.details, error.hint);
-    throw error;
-  }
-
-  if (!data) return;
-
-  const biz = fromSnakeBusiness(data);
-  const nextImages = (biz.galleryImages ?? []).filter(u => u !== imageUrl);
-
-  const { error: upsertError } = await supabase
-    .from('businesses')
-    .upsert({
-      ...toSnakeBusiness(biz),
-      gallery_images: nextImages,
-    });
-
-  if (upsertError) {
-    console.error('[Supabase] Error updating gallery images', upsertError.message, upsertError.details, upsertError.hint);
-    throw upsertError;
-  }
+  return (data || []).map(fromSnakeBusiness);
 }

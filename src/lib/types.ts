@@ -1,4 +1,4 @@
-export type IndustryType = 'barbershop' | 'restaurant' | 'clinic' | 'beauty-salon';
+export type IndustryType = 'barbershop' | 'restaurant' | 'clinic' | 'beauty-salon' | 'custom';
 
 export interface SocialLinks {
   instagram: string;
@@ -40,6 +40,8 @@ export interface Business {
   name: string;
   subdomain: string;
   industry: IndustryType;
+  template: string;
+  templateId?: string;
   phone: string;
   address: string;
   description: string;

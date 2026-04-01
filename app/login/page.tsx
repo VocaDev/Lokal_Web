@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, AlertCircle } from "lucide-react";
+import { clearCurrentBusiness } from "@/lib/store";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,6 +41,7 @@ export default function LoginPage() {
         throw signInError;
       }
 
+      clearCurrentBusiness(); // 🔥 Clear any stale business ID on login
       router.push("/dashboard");
       router.refresh();
     } catch (err: any) {

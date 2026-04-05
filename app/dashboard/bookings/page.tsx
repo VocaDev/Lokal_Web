@@ -9,6 +9,8 @@ export default function BookingsPage() {
   const [loading, setLoading] = useState(true);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
 
   useEffect(() => {
     getCurrentBusiness()
@@ -51,9 +53,38 @@ export default function BookingsPage() {
     completed: "bg-primary/10 text-primary",
   };
 
+  const handleExportReport = async () => {
+    setExportLoading(true);
+    setExportMessage(null);
+    try {
+      const res = await fetch('/api/export-report', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Gabim i panjohur');
+      setExportMessage('✅ ' + data.message);
+    } catch (err: any) {
+      setExportMessage('❌ ' + err.message);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Bookings</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-[#e8e8f0]">Rezervimet</h1>
+        <div className="flex flex-col items-end gap-2">
+          <button
+            onClick={handleExportReport}
+            disabled={exportLoading}
+            className="bg-[#1e1e35] border border-[rgba(120,120,255,0.22)] text-[#8888aa] hover:text-[#e8e8f0] hover:border-[rgba(120,120,255,0.4)] rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 disabled:opacity-50"
+          >
+            {exportLoading ? 'Duke gjeneruar...' : 'Eksporto Raportin (.txt)'}
+          </button>
+          {exportMessage && (
+            <span className="text-xs text-[#8888aa]">{exportMessage}</span>
+          )}
+        </div>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">All Bookings</CardTitle>
@@ -96,4 +127,3 @@ export default function BookingsPage() {
     </div>
   );
 }
-

@@ -1,0 +1,16 @@
+
+LOKALWEB — RAPORT I REZERVIMEVE
+================================
+Biznesi: molla
+ID: 392184de-9765-46f8-acbb-0c01c8aacb53
+Data e gjenerimit: 5.4.2026, 9:27:19 e pasdites
+
+STATISTIKAT:
+- Total rezervime: 5
+- Konfirmuara: 2
+- Në pritje: 2
+- Të anuluara: 1
+- Të përfunduara: 0
+
+Shërbimi më i popullarizuar (ID): 346e747f-ba22-4d92-8a9b-cc567f2e3dc2
+================================

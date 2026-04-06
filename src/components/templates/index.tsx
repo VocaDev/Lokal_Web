@@ -14,6 +14,7 @@ import RestaurantElegant from './custom/RestaurantElegant'
 import RestaurantCasual from './custom/RestaurantCasual'
 import ClinicClean from './custom/ClinicClean'
 import ClinicModern from './custom/ClinicModern'
+import ClinicPremium from './custom/ClinicPremium'
 import BeautyLuxury from './custom/BeautyLuxury'
 import BeautyMinimal from './custom/BeautyMinimal'
 import BarbershopModern from './custom/BarbershopModern'
@@ -45,7 +46,8 @@ export default function TemplateRouter({ business, services, hours }: TemplatePr
     case 'clinic':
       if (tid === 'clean') return <ClinicClean {...props} />
       if (tid === 'modern') return <ClinicModern {...props} />
-      return <ClinicClean {...props} /> // default for clinic
+      if (tid === 'premium') return <ClinicPremium {...props} />
+      return <ClinicPremium {...props} /> // default for clinic
 
     case 'beauty-salon':
       if (tid === 'luxury') return <BeautyLuxury {...props} />

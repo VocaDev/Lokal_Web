@@ -26,6 +26,7 @@ const mockServices: Service[] = [
 
 const mockHours: BusinessHours[] = [
   { id: '1', businessId: '1', dayOfWeek: 1, isOpen: true, openTime: '09:00', closeTime: '18:00' },
+  { id: '2', businessId: '1', dayOfWeek: 2, isOpen: true, openTime: '09:00', closeTime: '18:00' },
 ]
 
 export default function TempGalleryPage() {

@@ -1,57 +1,57 @@
 'use client'
 import { useEffect, useState } from "react";
 import { Business, Booking, Service } from "@/lib/types";
-import { getBookings, getServices, getCurrentBusiness } from "@/lib/store";
+import { getBookings, getServices, getCurrentBusiness, updateBookingStatus } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Check, X, User, Phone, Scissors, Calendar, Clock } from "lucide-react";
 
 export default function BookingsPage() {
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
 
+  // useEffect 1 — ngarko business
   useEffect(() => {
     getCurrentBusiness()
-      .then(biz => {
-        setBusiness(biz);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+      .then(biz => setBusiness(biz))
+      .finally(() => setLoading(false))
+  }, [])
 
+  // useEffect 2 — ngarko bookings + services pas business
   useEffect(() => {
-    if (!business?.id) return;
-    (async () => {
-      try {
-        const [bks, svcs] = await Promise.all([
-          getBookings(business.id),
-          getServices(business.id),
-        ]);
-        setBookings(bks);
-        setServices(svcs);
-      } catch (err) {
-        console.error("Failed to load bookings data", err);
-      }
-    })();
-  }, [business?.id]);
-
-  if (loading || !business) {
-    return (
-      <div className="min-h-[200px] flex items-center justify-center text-muted-foreground text-sm">
-        Loading bookings...
-      </div>
-    );
-  }
+    if (!business?.id) return
+    Promise.all([
+      getBookings(business.id),
+      getServices(business.id)
+    ]).then(([bks, svcs]) => {
+      setBookings(bks)
+      setServices(svcs)
+    })
+  }, [business?.id])
 
   const getServiceName = (serviceId: string) => services.find(s => s.id === serviceId)?.name || 'Unknown';
 
-  const statusStyles: Record<string, string> = {
-    confirmed: "bg-success/10 text-success",
-    pending: "bg-warning/10 text-warning",
-    cancelled: "bg-destructive/10 text-destructive",
-    completed: "bg-primary/10 text-primary",
-  };
+  const handleStatusChange = async (bookingId: string, newStatus: string) => {
+    setActionLoading(true)
+    try {
+      await updateBookingStatus(bookingId, newStatus)
+      // REFETCH — mos bej optimistic update
+      const fresh = await getBookings(business!.id)
+      setBookings(fresh)
+      setDrawerOpen(false)
+      setSelectedBooking(null)
+    } catch (err) {
+      console.error("Failed to update booking status", err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
 
   const handleExportReport = async () => {
     setExportLoading(true);
@@ -68,15 +68,30 @@ export default function BookingsPage() {
     }
   };
 
+  if (loading || !business) {
+    return (
+      <div className="min-h-[200px] flex items-center justify-center text-[#8888aa] text-sm">
+        Loading bookings...
+      </div>
+    );
+  }
+
+  const statusColors: Record<string, string> = {
+    pending: "bg-amber-400/10 text-amber-400",
+    confirmed: "bg-blue-400/10 text-blue-400",
+    completed: "bg-green-400/10 text-green-400",
+    cancelled: "bg-red-400/10 text-red-400",
+  };
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-[#e8e8f0]">Rezervimet</h1>
+    <div className="min-h-screen bg-[#0a0a0f] p-6 lg:p-8 text-[#e8e8f0] font-sans">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-2xl font-bold">Rezervimet</h1>
         <div className="flex flex-col items-end gap-2">
           <button
             onClick={handleExportReport}
             disabled={exportLoading}
-            className="bg-[#1e1e35] border border-[rgba(120,120,255,0.22)] text-[#8888aa] hover:text-[#e8e8f0] hover:border-[rgba(120,120,255,0.4)] rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 disabled:opacity-50"
+            className="bg-[#1e1e35] border border-[rgba(120,120,255,0.12)] hover:border-[rgba(120,120,255,0.22)] text-[#8888aa] hover:text-[#e8e8f0] rounded-lg px-4 py-2 text-sm transition-all duration-150 disabled:opacity-50"
           >
             {exportLoading ? 'Duke gjeneruar...' : 'Eksporto Raportin (.txt)'}
           </button>
@@ -85,45 +100,222 @@ export default function BookingsPage() {
           )}
         </div>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">All Bookings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+
+      <div className="bg-[#151522] border border-[rgba(120,120,255,0.12)] rounded-xl overflow-hidden">
+        <div className="p-6 border-b border-[rgba(120,120,255,0.12)]">
+          <h2 className="text-lg font-semibold">Të gjitha rezervimet</h2>
+        </div>
+        <div className="overflow-x-auto">
+          {bookings.length === 0 ? (
+            <div className="p-12 text-center text-[#8888aa]">
+              Nuk ka asnjë rezervim.
+            </div>
+          ) : (
+            <table className="w-full text-sm text-left">
               <thead>
-                <tr className="border-b text-left">
-                  <th className="pb-3 font-medium text-muted-foreground">Customer</th>
-                  <th className="pb-3 font-medium text-muted-foreground">Service</th>
-                  <th className="pb-3 font-medium text-muted-foreground">Date & Time</th>
-                  <th className="pb-3 font-medium text-muted-foreground">Status</th>
+                <tr className="border-b border-[rgba(120,120,255,0.12)] bg-[#1e1e35]/30">
+                  <th className="py-4 px-6 font-medium text-[#8888aa]">Customer</th>
+                  <th className="py-4 px-6 font-medium text-[#8888aa]">Service</th>
+                  <th className="py-4 px-6 font-medium text-[#8888aa]">Date & Time</th>
+                  <th className="py-4 px-6 font-medium text-[#8888aa]">Status</th>
+                  <th className="py-4 px-6 font-medium text-[#8888aa] text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[rgba(120,120,255,0.08)]">
                 {bookings.map(b => {
                   const dt = new Date(b.appointmentAt);
                   return (
-                    <tr key={b.id} className="border-b last:border-0">
-                      <td className="py-3">
-                        <p className="font-medium text-foreground">{b.customerName}</p>
-                        <p className="text-xs text-muted-foreground">{b.customerPhone}</p>
+                    <tr 
+                      key={b.id} 
+                      className="hover:bg-[rgba(120,120,255,0.02)] transition-colors cursor-pointer"
+                      onClick={() => { setSelectedBooking(b); setDrawerOpen(true) }}
+                    >
+                      <td className="py-4 px-6">
+                        <div className="font-medium text-[#e8e8f0]">{b.customerName}</div>
+                        <div className="text-xs text-[#5a5a7a] mt-0.5">{b.customerPhone}</div>
                       </td>
-                      <td className="py-3 text-foreground">{getServiceName(b.serviceId)}</td>
-                      <td className="py-3 text-foreground">{dt.toLocaleDateString()} at {dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                      <td className="py-3">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyles[b.status]}`}>
+                      <td className="py-4 px-6 text-[#8888aa]">
+                        {getServiceName(b.serviceId)}
+                      </td>
+                      <td className="py-4 px-6 text-[#8888aa]">
+                        <div>{dt.toLocaleDateString()}</div>
+                        <div className="text-xs text-[#5a5a7a] mt-0.5">
+                          {dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${statusColors[b.status] || ''}`}>
                           {b.status}
                         </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        {b.status === "pending" ? (
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleStatusChange(b.id, "confirmed") }}
+                              className="p-1.5 rounded-lg bg-green-400/10 text-green-400 hover:bg-green-400/20 transition-all duration-150"
+                              aria-label="Accept booking"
+                            >
+                              <Check size={14} />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleStatusChange(b.id, "cancelled") }}
+                              className="p-1.5 rounded-lg bg-red-400/10 text-red-400 hover:bg-red-400/20 transition-all duration-150"
+                              aria-label="Decline booking"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="text-right text-[#5a5a7a]">—</div>
+                        )}
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+          )}
+        </div>
+      </div>
+
+      {/* Backdrop */}
+      {drawerOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+          onClick={() => { setDrawerOpen(false); setSelectedBooking(null) }}
+        />
+      )}
+
+      {/* Drawer Panel */}
+      <div className={`fixed top-0 right-0 h-full w-full max-w-md bg-[#0f0f1a] border-l border-[rgba(120,120,255,0.15)] z-50 transform transition-transform duration-300 ease-in-out ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        {selectedBooking && (
+          <div className="flex flex-col h-full">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-[rgba(120,120,255,0.12)]">
+              <h2 className="text-lg font-bold text-[#e8e8f0]">Detajet e Rezervimit</h2>
+              <button
+                onClick={() => { setDrawerOpen(false); setSelectedBooking(null) }}
+                className="p-2 rounded-lg hover:bg-[#1e1e35] text-[#8888aa] hover:text-[#e8e8f0] transition-all duration-150"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="flex items-center gap-4 text-[#8888aa]">
+                <div className="p-3 rounded-xl bg-[#1e1e35] text-[#4f8ef7]">
+                  <User size={20} />
+                </div>
+                <div>
+                  <p className="text-xs text-[#5a5a7a] mb-0.5">Klienti</p>
+                  <p className="font-medium text-[#e8e8f0]">{selectedBooking.customerName}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 text-[#8888aa]">
+                <div className="p-3 rounded-xl bg-[#1e1e35] text-[#4f8ef7]">
+                  <Phone size={20} />
+                </div>
+                <div>
+                  <p className="text-xs text-[#5a5a7a] mb-0.5">Telefoni</p>
+                  <p className="font-medium text-[#e8e8f0]">{selectedBooking.customerPhone}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 text-[#8888aa]">
+                <div className="p-3 rounded-xl bg-[#1e1e35] text-[#8b5cf6]">
+                  <Scissors size={20} />
+                </div>
+                <div>
+                  <p className="text-xs text-[#5a5a7a] mb-0.5">Shërbimi</p>
+                  <p className="font-medium text-[#e8e8f0]">{getServiceName(selectedBooking.serviceId)}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-3 text-[#8888aa]">
+                  <div className="p-3 rounded-xl bg-[#1e1e35]">
+                    <Calendar size={18} className="text-[#8888aa]" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#5a5a7a] mb-0.5">Data</p>
+                    <p className="font-medium text-[#e8e8f0]">{new Date(selectedBooking.appointmentAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 text-[#8888aa]">
+                  <div className="p-3 rounded-xl bg-[#1e1e35]">
+                    <Clock size={18} className="text-[#8888aa]" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#5a5a7a] mb-0.5">Ora</p>
+                    <p className="font-medium text-[#e8e8f0]">
+                      {new Date(selectedBooking.appointmentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-[rgba(120,120,255,0.08)]">
+                <p className="text-xs text-[#5a5a7a] mb-3">Statusi i rezervimit</p>
+                <div className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium capitalize ${statusColors[selectedBooking.status] || ''}`}>
+                  {selectedBooking.status}
+                </div>
+              </div>
+            </div>
+
+            {/* Actions Footer */}
+            <div className="p-6 border-t border-[rgba(120,120,255,0.12)] space-y-3 bg-[#0a0a0f]">
+              {selectedBooking.status === "pending" && (
+                <>
+                  <button
+                    onClick={() => handleStatusChange(selectedBooking.id, "confirmed")}
+                    disabled={actionLoading}
+                    className="w-full py-2.5 rounded-lg bg-green-400/15 text-green-400 font-semibold text-sm hover:bg-green-400/25 transition-all duration-150 disabled:opacity-50"
+                  >
+                    {actionLoading ? "Duke u procesuar..." : "✓ Konfirmo Rezervimin"}
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange(selectedBooking.id, "cancelled")}
+                    disabled={actionLoading}
+                    className="w-full py-2.5 rounded-lg bg-red-400/10 text-red-400 font-semibold text-sm hover:bg-red-400/20 transition-all duration-150 disabled:opacity-50"
+                  >
+                    {actionLoading ? "..." : "✗ Refuzo"}
+                  </button>
+                </>
+              )}
+
+              {selectedBooking.status === "confirmed" && (
+                <>
+                  <button
+                    onClick={() => handleStatusChange(selectedBooking.id, "completed")}
+                    disabled={actionLoading}
+                    className="w-full py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-violet-600 text-white font-semibold text-sm hover:opacity-90 transition-all duration-150 disabled:opacity-50"
+                  >
+                    {actionLoading ? "Duke u procesuar..." : "✓ Shëno si Kompletuar"}
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange(selectedBooking.id, "cancelled")}
+                    disabled={actionLoading}
+                    className="w-full py-2.5 rounded-lg bg-red-400/10 text-red-400 font-semibold text-sm hover:bg-red-400/20 transition-all duration-150 disabled:opacity-50"
+                  >
+                    {actionLoading ? "..." : "Anulo Rezervimin"}
+                  </button>
+                </>
+              )}
+
+              {(selectedBooking.status === "completed" || selectedBooking.status === "cancelled") && (
+                <p className="text-center text-sm text-[#5a5a7a] py-2 bg-[rgba(120,120,255,0.05)] rounded-lg">
+                  Ky rezervim është i mbyllur dhe nuk mund të ndryshohet.
+                </p>
+              )}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
     </div>
   );
 }

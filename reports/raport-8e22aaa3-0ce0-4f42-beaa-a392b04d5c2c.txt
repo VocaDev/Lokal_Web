@@ -1,0 +1,16 @@
+
+LOKALWEB — RAPORT I REZERVIMEVE
+================================
+Biznesi: Dinka
+ID: 8e22aaa3-0ce0-4f42-beaa-a392b04d5c2c
+Data e gjenerimit: 6.4.2026, 10:13:25 e paradites
+
+STATISTIKAT:
+- Total rezervime: 2
+- Konfirmuara: 0
+- Në pritje: 0
+- Të anuluara: 0
+- Të përfunduara: 2
+
+Shërbimi më i popullarizuar (ID): d3027c2c-3292-49ce-ae96-e80856edba16
+================================

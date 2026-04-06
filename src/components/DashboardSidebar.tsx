@@ -110,7 +110,7 @@ export function DashboardSidebar({ business }: { business: Business }) {
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push("/register")}>
+              <DropdownMenuItem onClick={() => router.push("/dashboard/new-business")}>
                 <UserPlus className="mr-2 h-4 w-4" />
                 <span>Register new business</span>
               </DropdownMenuItem>

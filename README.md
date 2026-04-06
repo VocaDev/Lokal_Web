@@ -32,7 +32,7 @@ LokalWeb ofron template të dedikuara për industri të ndryshme:
 |:---:|:---:|
 | ![Barbershop Bold](/public/screenshots/barbershop-bold.png) | ![Clinic Premium](/public/screenshots/clinic-premium.png) |
 | **Restaurant Bistro** | **Beauty Luxury** |
-| ![Restaurant Bistro](/public/screenshots/restaurant-bistro.png) | ![Beauty Luxury](/public/screenshots/beauty-luxury.png) |
+| ![Restaurant Bistro](/public/screenshots/restaurant-bistro.png) | ![Beauty Luxury](/public/screenshots/beauty-salon-luxury.png) |
 
 > [!NOTE]
 > Platforma ofron gjithsej **11 variante** unike (3 për Barbershop, 3 për Restorante, 3 për Klinika dhe 2 për Sallone Bukurie), të gjitha të optimizuara për konvertim dhe testimin akademik.

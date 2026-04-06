@@ -39,8 +39,8 @@ const templates = [
   { id: "modern", name: "Clinic Modern", industry: "clinic", preview: "/screenshots/clinic-modern.png" },
   { id: "premium", name: "Clinic Premium", industry: "clinic", preview: "/screenshots/clinic-premium.png" },
   // Beauty Salon
-  { id: "luxury", name: "Beauty Luxury", industry: "beauty-salon", preview: "/screenshots/beauty-luxury.png" },
-  { id: "minimal", name: "Beauty Minimal", industry: "beauty-salon", preview: "/screenshots/beauty-minimal.png" },
+  { id: "luxury", name: "Beauty Luxury", industry: "beauty-salon", preview: "/screenshots/beauty-salon-luxury.png" },
+  { id: "minimal", name: "Beauty Minimal", industry: "beauty-salon", preview: "/screenshots/beauty-salon-minimal.png" },
 ];
 
 export default function NewBusinessPage() {

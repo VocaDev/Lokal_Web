@@ -28,11 +28,15 @@ Shumë biznese lokale në Kosovë (barber, klinika, restorante, sallone bukurie)
 
 LokalWeb ofron template të dedikuara për industri të ndryshme:
 
-| **Barbershop Classic** | **Modern Clinic** |
+| **Barbershop Bold** (Real Design) | **Clinic Premium** (Real Design) |
 |:---:|:---:|
-| ![Classic Barbershop](/public/classic_barbershop_preview_1774863170934.png) | ![Modern Clinic](/public/modern_clinic_preview_1774863200431.png) |
-| **Elegant Salon / Restaurant** | **Barbershop Bold** |
-| ![Elegant Salon](/public/elegant_salon_preview_modern_restaurant_preview_1774863353896.png) | ![Barbershop Bold](/public/barbershop_bold_preview_1774863117010.png) |
+| ![Barbershop Bold](/public/screenshots/barbershop-bold.png) | ![Clinic Premium](/public/screenshots/clinic-premium.png) |
+| **Restaurant Bistro** | **Beauty Luxury** |
+| ![Restaurant Bistro](/public/screenshots/restaurant-bistro.png) | ![Beauty Luxury](/public/screenshots/beauty-luxury.png) |
+
+> [!NOTE]
+> Platforma ofron gjithsej **11 variante** unike (3 për Barbershop, 3 për Restorante, 3 për Klinika dhe 2 për Sallone Bukurie), të gjitha të optimizuara për konvertim dhe testimin akademik.
+
 
 ---
 

@@ -34,11 +34,21 @@ import {
 } from "@/lib/validators";
 
 const templates = [
-  { id: "classic", name: "Classic Barbershop", industry: "barbershop", preview: "/classic_barbershop_preview_1774863170934.png" },
-  { id: "bold", name: "Barbershop Bold", industry: "barbershop", preview: "/barbershop_bold_preview_1774863117010.png" },
-  { id: "clinic", name: "Modern Clinic", industry: "clinic", preview: "/modern_clinic_preview_1774863200431.png" },
-  { id: "salon", name: "Elegant Salon", industry: "beauty-salon", preview: "/elegant_salon_preview_modern_restaurant_preview_1774863353896.png" },
-  { id: "restaurant", name: "Minimal Restaurant", industry: "restaurant", preview: "/elegant_salon_preview_modern_restaurant_preview_1774863353896.png" },
+  // Barbershop
+  { id: "bold", name: "Barbershop Bold", industry: "barbershop", preview: "/screenshots/barbershop-bold.png" },
+  { id: "minimal", name: "Barbershop Minimal", industry: "barbershop", preview: "/screenshots/barbershop-minimal.png" },
+  { id: "modern", name: "Barbershop Modern", industry: "barbershop", preview: "/screenshots/barbershop-modern.png" },
+  // Restaurant
+  { id: "elegant", name: "Restaurant Elegant", industry: "restaurant", preview: "/screenshots/restaurant-elegant.png" },
+  { id: "casual", name: "Restaurant Casual", industry: "restaurant", preview: "/screenshots/restaurant-casual.png" },
+  { id: "bistro", name: "Restaurant Bistro", industry: "restaurant", preview: "/screenshots/restaurant-bistro.png" },
+  // Clinic
+  { id: "clean", name: "Clinic Clean", industry: "clinic", preview: "/screenshots/clinic-clean.png" },
+  { id: "modern", name: "Clinic Modern", industry: "clinic", preview: "/screenshots/clinic-modern.png" },
+  { id: "premium", name: "Clinic Premium", industry: "clinic", preview: "/screenshots/clinic-premium.png" },
+  // Beauty Salon
+  { id: "luxury", name: "Beauty Luxury", industry: "beauty-salon", preview: "/screenshots/beauty-luxury.png" },
+  { id: "minimal", name: "Beauty Minimal", industry: "beauty-salon", preview: "/screenshots/beauty-minimal.png" },
 ];
 
 export default function RegisterPage() {

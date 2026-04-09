@@ -51,4 +51,12 @@ export interface Business {
   galleryImages: string[];
   ownerId?: string;
   createdAt: string;
+  // Customization Flags
+  showTestimonials?: boolean;
+  showTeam?: boolean;
+  showContact?: boolean;
+  heroHeight?: 'small' | 'medium' | 'large';
+  cardStyle?: 'minimal' | 'rounded' | 'bordered';
 }
+
+export * from './customization';

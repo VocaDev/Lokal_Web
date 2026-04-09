@@ -36,7 +36,14 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
   }, []);
 
   return (
-    <div className="bg-[#0a0a0f] text-white min-h-screen" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div 
+      className="text-white min-h-screen transition-colors duration-500" 
+      style={{ 
+        backgroundColor: 'var(--bg-color, #0a0a0f)',
+        color: 'var(--text-color, white)',
+        fontFamily: 'var(--body-font, "Inter", sans-serif)' 
+      }}
+    >
       {/* NAVBAR */}
       <nav
         className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-5 transition-transform duration-300 bg-black/20 backdrop-blur-sm"
@@ -52,7 +59,12 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
       </nav>
 
       {/* HERO */}
-      <section className="relative min-h-screen flex items-center justify-center">
+      <section 
+        className="relative flex items-center justify-center transition-all duration-700"
+        style={{ 
+          minHeight: business.heroHeight === 'small' ? '60vh' : business.heroHeight === 'large' ? '100vh' : '85vh' 
+        }}
+      >
         <img
           src={business.galleryImages?.[0] ?? "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1600&q=80"}
           alt="Barbershop"
@@ -65,7 +77,11 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
           </span>
           <h1
             className="font-black text-white leading-[0.95] mb-6"
-            style={{ fontSize: "clamp(3rem, 8vw, 7rem)", letterSpacing: "-0.02em" }}
+            style={{ 
+              fontSize: "clamp(3rem, 8vw, 7rem)", 
+              letterSpacing: "-0.02em",
+              fontFamily: 'var(--heading-font, inherit)'
+            }}
           >
             THE ART OF<br />THE CUT
           </h1>
@@ -93,15 +109,24 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
       </section>
 
       {/* SERVICES */}
-      <section id="services" className="bg-[#0a0a0f] py-32 px-8">
+      <section 
+        id="services" 
+        className="py-32 px-8"
+        style={{ backgroundColor: 'var(--bg-color, #0a0a0f)' }}
+      >
         <div className="max-w-6xl mx-auto">
           <p className="text-white/40 text-xs tracking-[0.4em] uppercase mb-4">OUR SERVICES</p>
-          <h2 className="font-black text-white" style={{ fontSize: "clamp(2rem, 5vw, 4rem)" }}>WHAT WE DO</h2>
+          <h2 className="font-black text-white" style={{ fontSize: "clamp(2rem, 5vw, 4rem)", fontFamily: 'var(--heading-font, inherit)' }}>WHAT WE DO</h2>
           <div className="w-16 h-px bg-white/20 mt-6 mb-16" />
         </div>
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-px bg-white/10">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-px" style={{ backgroundColor: 'var(--border-color, rgba(255,255,255,0.1))' }}>
           {services.map((s, i) => (
-            <div key={s.id} className="bg-[#0a0a0f] p-10 cursor-pointer group hover:bg-white/5 transition-colors" onClick={() => openBooking(s)}>
+            <div 
+              key={s.id} 
+              className="p-10 cursor-pointer group hover:bg-white/5 transition-colors" 
+              style={{ backgroundColor: 'var(--surface-color, #0a0a0f)' }}
+              onClick={() => openBooking(s)}
+            >
               <span className="text-white/10 text-6xl font-black block mb-4">
                 {String(i + 1).padStart(2, '0')}
               </span>
@@ -153,51 +178,53 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
       </section>
 
       {/* HOURS & CONTACT */}
-      <section className="bg-[#0a0a0f] py-32 px-8">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20">
-          <div>
-            <p className="text-white/40 text-xs tracking-[0.4em] uppercase mb-4">HOURS</p>
-            <h2 className="text-white font-black text-4xl mb-10">WHEN WE'RE OPEN</h2>
+      {business.showContact !== false && (
+        <section className="bg-[#0a0a0f] py-32 px-8" style={{ backgroundColor: 'var(--bg-color, #0a0a0f)' }}>
+          <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20">
             <div>
-              {(() => {
-                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-                const todayIdx = new Date().getDay()
-                return hours
-                  .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
-                  .map((h) => {
-                    const isToday = h.dayOfWeek === todayIdx
-                    return (
-                      <div key={h.dayOfWeek} className="flex justify-between py-4 border-b border-white/[0.08]">
-                        <span className={`text-sm tracking-widest uppercase ${isToday ? 'text-white' : 'text-white/60'}`}>
-                          {dayNames[h.dayOfWeek]}
-                        </span>
-                        <span className="text-white text-sm font-medium">
-                          {h.isOpen
-                            ? `${h.openTime.slice(0, 5)} – ${h.closeTime.slice(0, 5)}`
-                            : 'CLOSED'}
-                        </span>
-                      </div>
-                    )
-                  })
-              })()}
+              <p className="text-white/40 text-xs tracking-[0.4em] uppercase mb-4">HOURS</p>
+              <h2 className="text-white font-black text-4xl mb-10" style={{ fontFamily: 'var(--heading-font, inherit)' }}>WHEN WE'RE OPEN</h2>
+              <div>
+                {(() => {
+                  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                  const todayIdx = new Date().getDay()
+                  return hours
+                    .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+                    .map((h) => {
+                      const isToday = h.dayOfWeek === todayIdx
+                      return (
+                        <div key={h.dayOfWeek} className="flex justify-between py-4 border-b border-white/[0.08]">
+                          <span className={`text-sm tracking-widest uppercase ${isToday ? 'text-white' : 'text-white/60'}`}>
+                            {dayNames[h.dayOfWeek]}
+                          </span>
+                          <span className="text-white text-sm font-medium">
+                            {h.isOpen
+                              ? `${h.openTime.slice(0, 5)} – ${h.closeTime.slice(0, 5)}`
+                              : 'CLOSED'}
+                          </span>
+                        </div>
+                      )
+                    })
+                })()}
+              </div>
+            </div>
+            <div>
+              <p className="text-white/40 text-xs tracking-[0.4em] uppercase mb-4">CONTACT</p>
+              <h2 className="text-white font-black text-4xl mb-10" style={{ fontFamily: 'var(--heading-font, inherit)' }}>FIND US</h2>
+              <p className="text-white/60 text-sm leading-loose mb-8">{business.address}</p>
+              <p className="text-white font-medium mb-8">{business.phone}</p>
+              <div className="flex flex-col gap-3">
+                <a href={`tel:${business.phone}`} className="flex items-center justify-center gap-2 border border-white/30 text-white/70 w-full py-4 text-xs tracking-widest uppercase transition-colors hover:border-white hover:text-white">
+                  <Phone size={16} /> CALL US
+                </a>
+                <a href={`https://wa.me/${(business.socialLinks?.whatsapp ?? business.phone ?? '').replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 border border-white/30 text-white/70 w-full py-4 text-xs tracking-widest uppercase transition-colors hover:border-white hover:text-white">
+                  <MessageCircle size={16} /> WHATSAPP
+                </a>
+              </div>
             </div>
           </div>
-          <div>
-            <p className="text-white/40 text-xs tracking-[0.4em] uppercase mb-4">CONTACT</p>
-            <h2 className="text-white font-black text-4xl mb-10">FIND US</h2>
-            <p className="text-white/60 text-sm leading-loose mb-8">{business.address}</p>
-            <p className="text-white font-medium mb-8">{business.phone}</p>
-            <div className="flex flex-col gap-3">
-              <a href={`tel:${business.phone}`} className="flex items-center justify-center gap-2 border border-white/30 text-white/70 w-full py-4 text-xs tracking-widest uppercase transition-colors hover:border-white hover:text-white">
-                <Phone size={16} /> CALL US
-              </a>
-              <a href={`https://wa.me/${(business.socialLinks?.whatsapp ?? business.phone ?? '').replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 border border-white/30 text-white/70 w-full py-4 text-xs tracking-widest uppercase transition-colors hover:border-white hover:text-white">
-                <MessageCircle size={16} /> WHATSAPP
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* FOOTER */}
       <footer className="border-t border-white/[0.08] py-12 px-8">

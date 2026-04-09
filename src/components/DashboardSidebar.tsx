@@ -1,4 +1,4 @@
-import { LayoutDashboard, Calendar, Scissors, User, Clock, Image, LogOut, Loader2, ChevronDown, Building2, Check, UserPlus } from "lucide-react";
+import { LayoutDashboard, Calendar, Scissors, User, Clock, Image, LogOut, Loader2, ChevronDown, Building2, Check, UserPlus, Palette } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -31,6 +31,7 @@ const items = [
   { title: "Services", url: "/dashboard/services", icon: Scissors },
   { title: "Business Hours", url: "/dashboard/hours", icon: Clock },
   { title: "Gallery", url: "/dashboard/gallery", icon: Image },
+  { title: "Customization", url: "/dashboard/customization", icon: Palette },
   { title: "Profile", url: "/dashboard/profile", icon: User },
 ];
 

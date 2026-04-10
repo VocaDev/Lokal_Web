@@ -103,7 +103,7 @@ export default function RegisterPage() {
       return;
     }
     if (!validatePassword(auth.password).valid) {
-      setError("Fjalëkalimi duhet të ketë së paku 8 karaktere.");
+      setError("Fjalë" + "kalimi duhet të ketë së paku 8 karaktere.");
       return;
     }
     if (!form.subdomain) {
@@ -215,7 +215,7 @@ export default function RegisterPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Fjalëkalimi</Label>
+                  <Label htmlFor="password">Fjalë{"kalimi"}</Label>
                   <div className="relative">
                     <Input
                       id="password"

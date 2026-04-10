@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { NextResponse } from 'next/server';
 
 import { createClient } from "@/lib/supabase/server";
 import { Business, BusinessHours, Service } from "@/lib/types";
@@ -30,6 +31,22 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
     .maybeSingle();
 
   if (!bizData) notFound();
+
+  if (
+    bizData.website_creation_method === 'ai_generated' && 
+    bizData.custom_website_html
+  ) {
+    return new NextResponse(bizData.custom_website_html, {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+    })
+  }
+
+  console.log('DEBUG business:', {
+    subdomain: bizData.subdomain,
+    website_creation_method: bizData.website_creation_method,
+    has_custom_html: !!bizData.custom_website_html,
+    html_preview: bizData.custom_website_html?.substring(0, 100)
+  })
 
   const [{ data: servicesData }, { data: hoursData }, { data: customData }, { data: galleryData }] =
     await Promise.all([
@@ -69,6 +86,8 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
     galleryImages: allGalleryImages,
     ownerId: bizData.owner_id,
     createdAt: bizData.created_at,
+    websiteCreationMethod: bizData.website_creation_method,
+    customWebsiteHtml: bizData.custom_website_html,
     showTestimonials: customData?.show_testimonials ?? true,
     showTeam: customData?.show_team ?? true,
     showContact: customData?.show_contact ?? true,

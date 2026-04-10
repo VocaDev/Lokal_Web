@@ -9,7 +9,16 @@ export const createClient = async () => {
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
-        setAll: (c) => c.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+        setAll: (c) => {
+          try {
+            c.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // Ignore - read-only context (Server Component)
+            // Session refresh happens in middleware
+          }
+        }
       }
     }
   )

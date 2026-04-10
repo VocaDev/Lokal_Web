@@ -11,6 +11,23 @@ export async function GET(request: Request) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      // Logic for business-aware redirection
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (session?.user) {
+        const { data: business } = await supabase
+          .from('businesses')
+          .select('website_builder_completed')
+          .eq('owner_id', session.user.id)
+          .maybeSingle()
+
+        if (business) {
+          if (!business.website_builder_completed) {
+            return NextResponse.redirect(`${origin}/register/website-builder-choice`)
+          }
+        }
+      }
+      
       return NextResponse.redirect(`${origin}${next}`)
     }
   }

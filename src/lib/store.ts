@@ -18,6 +18,10 @@ function fromSnakeBusiness(data: any): Business {
     galleryImages: data.gallery_images || [],
     ownerId: data.owner_id,
     createdAt: data.created_at ?? new Date().toISOString(),
+    websiteCreationMethod: data.website_creation_method,
+    customWebsiteHtml: data.custom_website_html,
+    aiSetupData: data.ai_setup_data,
+    websiteBuilderCompleted: data.website_builder_completed ?? false,
   };
 }
 

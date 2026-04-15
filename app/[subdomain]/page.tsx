@@ -1,6 +1,4 @@
 import { notFound } from "next/navigation";
-import { NextResponse } from 'next/server';
-
 import { createClient } from "@/lib/supabase/server";
 import { Business, BusinessHours, Service } from "@/lib/types";
 import TemplateRouter from "@/components/templates";
@@ -32,13 +30,16 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
 
   if (!bizData) notFound();
 
+  // ✅ FIXED: was returning NextResponse (a class instance) from a page component,
+  // which caused "Only plain objects can be passed to Client Components" error.
+  // NextResponse can only be used in Route Handlers or middleware — never in pages.
   if (
-    bizData.website_creation_method === 'ai_generated' && 
+    bizData.website_creation_method === 'ai_generated' &&
     bizData.custom_website_html
   ) {
-    return new NextResponse(bizData.custom_website_html, {
-      headers: { 'Content-Type': 'text/html; charset=utf-8' }
-    })
+    return (
+      <div dangerouslySetInnerHTML={{ __html: bizData.custom_website_html }} />
+    );
   }
 
   console.log('DEBUG business:', {
@@ -46,7 +47,7 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
     website_creation_method: bizData.website_creation_method,
     has_custom_html: !!bizData.custom_website_html,
     html_preview: bizData.custom_website_html?.substring(0, 100)
-  })
+  });
 
   const [{ data: servicesData }, { data: hoursData }, { data: customData }, { data: galleryData }] =
     await Promise.all([
@@ -64,7 +65,6 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
       supabase.from('gallery_items').select('*').eq('business_id', bizData.id).order('display_order', { ascending: true }),
     ]);
 
-  // Merge gallery images from both sources
   const customGallery = (galleryData || [])
     .filter((v) => v.image_url)
     .map((v) => v.image_url as string);
@@ -81,7 +81,7 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
     address: bizData.address,
     description: bizData.description,
     logoUrl: bizData.logo_url,
-    accentColor: customData?.primary_color || bizData.accent_color, // Prefer customization
+    accentColor: customData?.primary_color || bizData.accent_color,
     socialLinks: bizData.social_links ?? { instagram: '', facebook: '', whatsapp: '' },
     galleryImages: allGalleryImages,
     ownerId: bizData.owner_id,
@@ -95,7 +95,6 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
     cardStyle: customData?.card_style || 'minimal',
   };
 
-  // Generate CSS Variables for Theme
   const themeStyles = customData
     ? {
         '--primary-color': customData.primary_color,
@@ -105,13 +104,13 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
         '--bg-color': customData.bg_color,
         '--surface-color': customData.surface_color,
         '--border-color': customData.border_color,
-        '--heading-font': customData.heading_font === 'dm-sans' ? 'DM Sans' : 
-                         customData.heading_font === 'playfair' ? 'Playfair Display' : 
+        '--heading-font': customData.heading_font === 'dm-sans' ? 'DM Sans' :
+                         customData.heading_font === 'playfair' ? 'Playfair Display' :
                          customData.heading_font.charAt(0).toUpperCase() + customData.heading_font.slice(1),
-        '--body-font': customData.body_font === 'dm-sans' ? 'DM Sans' : 
-                       customData.body_font === 'playfair' ? 'Playfair Display' : 
+        '--body-font': customData.body_font === 'dm-sans' ? 'DM Sans' :
+                       customData.body_font === 'playfair' ? 'Playfair Display' :
                        customData.body_font.charAt(0).toUpperCase() + customData.body_font.slice(1),
-      } as any
+      } as React.CSSProperties
     : {};
 
   const services: Service[] = (servicesData ?? []).map((row) => ({
@@ -134,7 +133,11 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
 
   return (
     <div style={themeStyles} className="theme-customized min-h-screen">
-      <TemplateRouter business={business} services={services} hours={hours} />
+      <TemplateRouter
+        business={JSON.parse(JSON.stringify(business))}
+        services={JSON.parse(JSON.stringify(services))}
+        hours={JSON.parse(JSON.stringify(hours))}
+      />
     </div>
   );
 }

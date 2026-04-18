@@ -62,11 +62,26 @@ Middleware-i i avancuar trajton subdomenet në mënyrë dinamike, duke ridrejtua
 
 ---
 
-## 6. Moduli Akademik (Academic CRUD)
-Përfshin një implementim të izoluar (UI -> Service -> Repository -> CSV) që dëshmon aftësitë në arkitekturat tradicionale softuerike dhe punën me skedarë lokalë.
+---
+
+## 7. Improvement Sprint — Week 6 (Software Engineering Phase)
+
+Në javën e 6-të, projekti kaloi në një fazë të thellë refaktorimi për të rritur standardet inxhinierike dhe sigurinë e kodit.
+
+### 7.1 Layered Architecture & Service Layer
+- **Service Extraction:** Krijimi i `src/lib/services/bookingService.ts`. Kjo shtresë ndërmjetëse eliminon logjikën e biznesit nga komponentët UI, duke centralizuar rregullat e tranzicionit të statusit (p.sh. parandalimi i kalimit nga 'completed' në 'pending').
+- **Type Safety:** Përdorimi i *Union Types* (`BookingStatus`) dhe *Result Interfaces* (`BookingActionResult`) siguron që çdo veprim mbi të dhënat të jetë i parashikueshëm dhe i mbrojtur nga gabimet e shkrimit në compile-time.
+
+### 7.2 Robust Error Handling & Feedback
+- **Feedback-u Vizual (Toast):** Implementimi i një sistemi njoftimesh qendror (`useToast`) që u jep përdoruesve feedback në kohë reale për suksese dhe dështime, duke eliminuar "UI-në ngrirë" apo veprimet pa përgjigje.
+- **Defensive Coding:** Kalimi nga `any` në `unknown` në kapjen e gabimeve (catch blocks) dhe zbatim i validimit strikt `instanceof Error`.
+
+### 7.3 Arkitektura e Dokumentuar
+- **Architecture Mapping:** Krijimi i `docs/architecture.md` me Mermaid diagrams që pasqyrojnë "Request Lifecycle" dhe ndërveprimin mes Middleware, Supabase RLS, dhe Service Layer.
+- **Visual Evidence:** Dokumentimi i plotë i ndërfaqes së administrimit përmes një galerie sistematike screenshot-esh në `README.md`, duke dëshmuar pjekurinë vizuale të dashboard-it.
 
 ---
 
 **Dokumenti u përditësua nga:** Antigravity (Senior AI Architect)
-**Versioni:** 3.0 (Prill 2026)
-**Statusi:** Produksion
+**Versioni:** 3.1 — Sprint Enhancement
+**Statusi:** Produksion & I Auditorizuar

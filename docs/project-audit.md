@@ -52,56 +52,50 @@ Implementimi i multi-tenancy me subdomain routing dhe Row-Level Security (RLS) f
 
 ### 1. Strukturë jo e standardizuar e backend logic
 
-Logjika e komunikimit me databazën (Supabase) është e shpërndarë dhe nuk ndjek gjithmonë një pattern të qartë si Service/Repository.
+Logjika e komunikimit me databazën (Supabase) është e shpërndarë direkt brenda komponentëve UI ose API routes (p.sh. në `app/api/customization/[businessId]/route.ts`). Kjo e bën kodin të vështirë për t'u testuar në mënyrë të izoluar pasi business logic është e pleksur me thirrjet e databazës.
 
 ---
 
 ### 2. Error Handling i dobët
 
-Në disa pjesë:
-
-- gabimet nuk kapen si duhet
-- mungon feedback i qartë për përdoruesin
-- përdoret `console.log` në vend të trajtimit real të gabimeve
+Në shumë pjesë të dashboard-it:
+- Gabimet kapen me `try/catch` por thjesht printohen në konsolë me `console.error`.
+- Përdoruesi nuk merr asnjë njoftim vizual nëse një veprim (si ndryshimi i statusit) dështoi.
+- Mungon një sistem i centralizuar i njoftimeve (Toast).
 
 ---
 
 ### 3. Validimi i inputeve jo konsistent
 
-Edhe pse përdoret Zod:
-
-- nuk aplikohet kudo
-- nuk ka një sistem të centralizuar validimi
+Edhe pse përdoret Zod në disa pjesë të reja:
+- Formularët e vjetër (regjistrimi, orari) pranojnë të dhëna pa verifikim strikt të formatit.
+- Mund të dërgohen payload-e të pasaktë në API që mund të shkaktojnë dështime në DB.
 
 ---
 
 ### 4. Mungesë e testeve
 
-Projekti nuk përmban:
-
-- unit tests
-- integration tests
-
-Kjo e bën më të vështirë mirëmbajtjen dhe refactoring-un.
+Projekti aktualisht ka:
+- Zero unit tests për funksionet kalkuluese ose logjikën e tranzicioneve.
+- Zero teste integrimi për rrjedhat kryesore (Booking flow).
+Kjo rrit rrezikun e regresioneve gjatë refactoring-ut.
 
 ---
 
 ### 5. Dokumentimi i paplotë
 
-Dokumentimi ekziston, por:
-
-- mungojnë udhëzime të qarta për setup lokal
-- mungon një overview i thjeshtë për developer të rinj
+Dokumentimi fillestar:
+- Nuk ka udhëzime se si të konfigurohen variablat e mjediset (.env) për Supabase.
+- Nuk shpjegon se si funksionon "Magic" i Next.js Middleware për subdomaint.
+- Mungon një listë e qartë e screenshots.
 
 ---
 
-### 6. UI/UX në disa flows nuk është optimal
+### 6. UI/UX "Mute" (pa feedback)
 
-Në disa pjesë të dashboard-it:
-
-- mungojnë loading states
-- mungojnë empty states
-- navigimi mund të përmirësohet
+Në dashboard:
+- Kur klikohet një buton aksioni, nuk ka `loading state` vizual të qartë brenda butonit.
+- Përdoruesi mund të klikojë disa herë të njëjtin buton duke shkaktuar thirrje të tepërta.
 
 ---
 

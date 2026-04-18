@@ -40,6 +40,18 @@ LokalWeb ofron template të dedikuara për industri të ndryshme:
 
 ---
 
+## 📊 Dashboard — Paneli i Menaxhimit
+
+Pronarët e biznesit menaxhojnë gjithçka përmes një dashboardi modern dhe intuitiv:
+
+| **Overview** | **Rezervimet (Bookings)** |
+|:---:|:---:|
+| ![Overview](docs/screenshots/Overview.png) | ![Bookings](docs/screenshots/Bookings.png) |
+| **Shërbimet (Services)** | **Customization Hub** |
+| ![Services](docs/screenshots/Services.png) | ![Customization](docs/screenshots/Costumization%20Part1.png) |
+
+---
+
 ## 🛠️ Veçoritë Kryesore (Features)
 
 ### 💼 Për Pronarët e Biznesit

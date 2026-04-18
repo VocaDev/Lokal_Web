@@ -1,9 +1,35 @@
 'use client'
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Business, Booking, Service } from "@/lib/types";
-import { getBookings, getServices, getCurrentBusiness, updateBookingStatus } from "@/lib/store";
+import { getBookings, getServices, getCurrentBusiness } from "@/lib/store";
+import { confirmBooking, cancelBooking, completeBooking, BookingStatus } from "@/lib/services/bookingService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, X, User, Phone, Scissors, Calendar, Clock } from "lucide-react";
+
+type ToastKind = "success" | "error" | "info";
+interface Toast { message: string; kind: ToastKind }
+
+function useToast() {
+  const [toast, setToast] = useState<Toast | null>(null);
+  const show = useCallback((message: string, kind: ToastKind = "info") => {
+    setToast({ message, kind });
+    setTimeout(() => setToast(null), 3500);
+  }, []);
+  return { toast, show };
+}
+
+const TOAST_COLORS: Record<ToastKind, string> = {
+  success: "bg-green-400/15 text-green-400 border-green-400/20",
+  error:   "bg-red-400/15 text-red-400 border-red-400/20",
+  info:    "bg-blue-400/15 text-blue-400 border-blue-400/20",
+};
+
+const statusColors: Record<BookingStatus, string> = {
+  pending: "bg-amber-400/10 text-amber-400",
+  confirmed: "bg-blue-400/10 text-blue-400",
+  completed: "bg-green-400/10 text-green-400",
+  cancelled: "bg-red-400/10 text-red-400",
+};
 
 export default function BookingsPage() {
   const [business, setBusiness] = useState<Business | null>(null);
@@ -14,55 +40,62 @@ export default function BookingsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
-  const [exportMessage, setExportMessage] = useState<string | null>(null);
 
-  // useEffect 1 — ngarko business
+  const { toast, show: showToast } = useToast();
+
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    setSelectedBooking(null);
+  };
+
   useEffect(() => {
     getCurrentBusiness()
       .then(biz => setBusiness(biz))
-      .finally(() => setLoading(false))
-  }, [])
+      .catch(() => showToast("Nuk u ngarkua biznesi. Rifresko faqen.", "error"))
+      .finally(() => setLoading(false));
+  }, []);
 
-  // useEffect 2 — ngarko bookings + services pas business
   useEffect(() => {
-    if (!business?.id) return
-    Promise.all([
-      getBookings(business.id),
-      getServices(business.id)
-    ]).then(([bks, svcs]) => {
-      setBookings(bks)
-      setServices(svcs)
-    })
-  }, [business?.id])
+    if (!business?.id) return;
+    Promise.all([getBookings(business.id), getServices(business.id)])
+      .then(([bks, svcs]) => { setBookings(bks); setServices(svcs); })
+      .catch(() => showToast("Nuk u ngarkuan të dhënat. Provo përsëri.", "error"));
+  }, [business?.id]);
 
   const getServiceName = (serviceId: string) => services.find(s => s.id === serviceId)?.name || 'Unknown';
 
-  const handleStatusChange = async (bookingId: string, newStatus: string) => {
-    setActionLoading(true)
-    try {
-      await updateBookingStatus(bookingId, newStatus)
-      // REFETCH — mos bej optimistic update
-      const fresh = await getBookings(business!.id)
-      setBookings(fresh)
-      setDrawerOpen(false)
-      setSelectedBooking(null)
-    } catch (err) {
-      console.error("Failed to update booking status", err)
-    } finally {
-      setActionLoading(false)
+  const handleAction = async (
+    booking: Booking,
+    action: typeof confirmBooking | typeof cancelBooking | typeof completeBooking
+  ) => {
+    if (!business?.id) return;
+    setActionLoading(true);
+    const result = await action(booking, business.id);
+    setActionLoading(false);
+
+    if (!result.success) {
+      showToast(result.error ?? "Ndodhi një gabim.", "error");
+      return;
     }
-  }
+    if (result.bookings) setBookings(result.bookings);
+    if (result.error) {
+      showToast(result.error, "info");
+    } else {
+      showToast("Statusi u ndryshua me sukses.", "success");
+    }
+    closeDrawer();
+  };
 
   const handleExportReport = async () => {
     setExportLoading(true);
-    setExportMessage(null);
     try {
       const res = await fetch('/api/export-report', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Gabim i panjohur');
-      setExportMessage('✅ ' + data.message);
-    } catch (err: any) {
-      setExportMessage('❌ ' + err.message);
+      showToast('✅ ' + data.message, 'success');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Gabim i panjohur";
+      showToast('❌ ' + message, 'error');
     } finally {
       setExportLoading(false);
     }
@@ -76,13 +109,6 @@ export default function BookingsPage() {
     );
   }
 
-  const statusColors: Record<string, string> = {
-    pending: "bg-amber-400/10 text-amber-400",
-    confirmed: "bg-blue-400/10 text-blue-400",
-    completed: "bg-green-400/10 text-green-400",
-    cancelled: "bg-red-400/10 text-red-400",
-  };
-
   return (
     <div className="min-h-screen bg-[#0a0a0f] p-6 lg:p-8 text-[#e8e8f0] font-sans">
       <div className="flex items-center justify-between mb-8">
@@ -95,9 +121,6 @@ export default function BookingsPage() {
           >
             {exportLoading ? 'Duke gjeneruar...' : 'Eksporto Raportin (.txt)'}
           </button>
-          {exportMessage && (
-            <span className="text-xs text-[#8888aa]">{exportMessage}</span>
-          )}
         </div>
       </div>
 
@@ -144,7 +167,7 @@ export default function BookingsPage() {
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${statusColors[b.status] || ''}`}>
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${statusColors[b.status as BookingStatus] || ''}`}>
                           {b.status}
                         </span>
                       </td>
@@ -152,14 +175,14 @@ export default function BookingsPage() {
                         {b.status === "pending" ? (
                           <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={(e) => { e.stopPropagation(); handleStatusChange(b.id, "confirmed") }}
+                              onClick={(e) => { e.stopPropagation(); handleAction(b, confirmBooking) }}
                               className="p-1.5 rounded-lg bg-green-400/10 text-green-400 hover:bg-green-400/20 transition-all duration-150"
                               aria-label="Accept booking"
                             >
                               <Check size={14} />
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); handleStatusChange(b.id, "cancelled") }}
+                              onClick={(e) => { e.stopPropagation(); handleAction(b, cancelBooking) }}
                               className="p-1.5 rounded-lg bg-red-400/10 text-red-400 hover:bg-red-400/20 transition-all duration-150"
                               aria-label="Decline booking"
                             >
@@ -183,7 +206,7 @@ export default function BookingsPage() {
       {drawerOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
-          onClick={() => { setDrawerOpen(false); setSelectedBooking(null) }}
+          onClick={closeDrawer}
         />
       )}
 
@@ -196,7 +219,7 @@ export default function BookingsPage() {
             <div className="flex items-center justify-between p-6 border-b border-[rgba(120,120,255,0.12)]">
               <h2 className="text-lg font-bold text-[#e8e8f0]">Detajet e Rezervimit</h2>
               <button
-                onClick={() => { setDrawerOpen(false); setSelectedBooking(null) }}
+                onClick={closeDrawer}
                 className="p-2 rounded-lg hover:bg-[#1e1e35] text-[#8888aa] hover:text-[#e8e8f0] transition-all duration-150"
               >
                 <X size={18} />
@@ -261,7 +284,7 @@ export default function BookingsPage() {
 
               <div className="pt-4 border-t border-[rgba(120,120,255,0.08)]">
                 <p className="text-xs text-[#5a5a7a] mb-3">Statusi i rezervimit</p>
-                <div className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium capitalize ${statusColors[selectedBooking.status] || ''}`}>
+                <div className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium capitalize ${statusColors[selectedBooking.status as BookingStatus] || ''}`}>
                   {selectedBooking.status}
                 </div>
               </div>
@@ -272,14 +295,14 @@ export default function BookingsPage() {
               {selectedBooking.status === "pending" && (
                 <>
                   <button
-                    onClick={() => handleStatusChange(selectedBooking.id, "confirmed")}
+                    onClick={() => handleAction(selectedBooking, confirmBooking)}
                     disabled={actionLoading}
                     className="w-full py-2.5 rounded-lg bg-green-400/15 text-green-400 font-semibold text-sm hover:bg-green-400/25 transition-all duration-150 disabled:opacity-50"
                   >
                     {actionLoading ? "Duke u procesuar..." : "✓ Konfirmo Rezervimin"}
                   </button>
                   <button
-                    onClick={() => handleStatusChange(selectedBooking.id, "cancelled")}
+                    onClick={() => handleAction(selectedBooking, cancelBooking)}
                     disabled={actionLoading}
                     className="w-full py-2.5 rounded-lg bg-red-400/10 text-red-400 font-semibold text-sm hover:bg-red-400/20 transition-all duration-150 disabled:opacity-50"
                   >
@@ -291,14 +314,14 @@ export default function BookingsPage() {
               {selectedBooking.status === "confirmed" && (
                 <>
                   <button
-                    onClick={() => handleStatusChange(selectedBooking.id, "completed")}
+                    onClick={() => handleAction(selectedBooking, completeBooking)}
                     disabled={actionLoading}
                     className="w-full py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-violet-600 text-white font-semibold text-sm hover:opacity-90 transition-all duration-150 disabled:opacity-50"
                   >
                     {actionLoading ? "Duke u procesuar..." : "✓ Shëno si Kompletuar"}
                   </button>
                   <button
-                    onClick={() => handleStatusChange(selectedBooking.id, "cancelled")}
+                    onClick={() => handleAction(selectedBooking, cancelBooking)}
                     disabled={actionLoading}
                     className="w-full py-2.5 rounded-lg bg-red-400/10 text-red-400 font-semibold text-sm hover:bg-red-400/20 transition-all duration-150 disabled:opacity-50"
                   >
@@ -316,6 +339,12 @@ export default function BookingsPage() {
           </div>
         )}
       </div>
+
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-[100] px-4 py-3 rounded-lg border text-sm font-medium shadow-lg transition-all duration-300 ${TOAST_COLORS[toast.kind]}`}>
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }

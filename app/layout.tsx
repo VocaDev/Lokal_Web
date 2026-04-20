@@ -29,8 +29,12 @@ export default async function RootLayout({
   const host = heads.get('host') || ''
   
   // Detekto nëse jemi në një subdomain (p.sh. emri.lokalweb.com ose emri.localhost:3000)
-  const isSubdomain = host.split('.').length > (host.includes('localhost') ? 1 : 2) || 
-                     (host.includes('.lokalweb.com') && !host.startsWith('www.'))
+  const isMainDomain =
+    host === 'lokal-web-one.vercel.app' ||
+    host === 'localhost:3000' ||
+    host.startsWith('192.168.')
+
+  const isSubdomain = !isMainDomain && host.includes('.')
 
   if (isSubdomain) {
     return <>{children}</>

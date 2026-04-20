@@ -7,7 +7,6 @@ import { headers } from 'next/headers'
 export const metadata: Metadata = {
   title: 'LokalWeb — Websites for Kosovo Businesses',
   description: 'Get a professional website and booking system for your Kosovo business in minutes.',
-  manifest: '/manifest.json',
   themeColor: '#4f8ef7',
   appleWebApp: {
     capable: true,
@@ -39,6 +38,11 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <meta name="theme-color" content="#4f8ef7" />
+      </head>
       <body>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <ProviderContext>

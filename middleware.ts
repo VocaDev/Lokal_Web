@@ -6,22 +6,15 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const hostname = request.headers.get('host') || ''
-  const isLocalhost = hostname.includes('localhost')
-  
-  // Robust subdomain detection
-  let subdomain = ''
-  if (!isLocalhost) {
-    const parts = hostname.split('.')
-    if (parts.length > 2) {
-      subdomain = parts[0]
-    }
-  }
+  const hostname = request.headers.get('host') || '';
 
-  const isMainDomain = subdomain === '' || subdomain === 'www' || subdomain === 'lokalweb'
+  const isMainDomain =
+    hostname === 'lokal-web-one.vercel.app' ||
+    hostname === 'localhost:3000' ||
+    hostname.startsWith('192.168.');
 
-  // 1. Auth Protection for Dashboard
   if (isMainDomain) {
+    // 1. Auth Protection for Dashboard
     const isDashboard = request.nextUrl.pathname.startsWith('/dashboard')
     const isAuthPage = request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register'
 
@@ -32,7 +25,12 @@ export async function middleware(request: NextRequest) {
     if (isAuthPage && user) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
+    
+    return supabaseResponse;
   }
+
+  // Extract subdomain from *.vercel.app or *.lokalweb.com
+  const subdomain = hostname.split('.')[0];
 
   // 2. Subdomain Routing
   if (!isMainDomain && subdomain) {

@@ -27,6 +27,10 @@ dist-ssr
 .next/
 out/
 
+# PWA
+public/sw.js
+public/workbox-*.js
+
 # Notes
 Notes per Permirsim.md
 docs/Project Overview.md

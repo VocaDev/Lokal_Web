@@ -5,9 +5,21 @@ import { ThemeProvider } from 'next-themes';
 import { headers } from 'next/headers'
 
 export const metadata: Metadata = {
-  title: 'LokalWeb',
-  description: 'Multi-tenant SaaS LokalWeb',
-}
+  title: 'LokalWeb — Websites for Kosovo Businesses',
+  description: 'Get a professional website and booking system for your Kosovo business in minutes.',
+  manifest: '/manifest.json',
+  themeColor: '#4f8ef7',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'LokalWeb',
+  },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+  },
+};
 
 export default async function RootLayout({
   children,

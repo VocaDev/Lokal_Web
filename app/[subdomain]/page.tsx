@@ -30,25 +30,6 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
 
   if (!bizData) notFound();
 
-  // ✅ FIXED: was returning NextResponse (a class instance) from a page component,
-  // which caused "Only plain objects can be passed to Client Components" error.
-  // NextResponse can only be used in Route Handlers or middleware — never in pages.
-  if (
-    bizData.website_creation_method === 'ai_generated' &&
-    bizData.custom_website_html
-  ) {
-    return (
-      <div dangerouslySetInnerHTML={{ __html: bizData.custom_website_html }} />
-    );
-  }
-
-  console.log('DEBUG business:', {
-    subdomain: bizData.subdomain,
-    website_creation_method: bizData.website_creation_method,
-    has_custom_html: !!bizData.custom_website_html,
-    html_preview: bizData.custom_website_html?.substring(0, 100)
-  });
-
   const [{ data: servicesData }, { data: hoursData }, { data: customData }, { data: galleryData }] =
     await Promise.all([
       supabase

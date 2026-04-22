@@ -27,29 +27,6 @@ type TemplateProps = {
 }
 
 export default function TemplateRouter({ business, services, hours }: TemplateProps) {
-  console.log('TEMPLATE ROUTER DEBUG:', {
-    websiteCreationMethod: business.websiteCreationMethod,
-    website_creation_method: (business as any).website_creation_method,
-    hasCustomHtml: !!business.customWebsiteHtml,
-  })
-
-  const creationMethod = 
-    business.websiteCreationMethod || 
-    (business as any).website_creation_method
-
-  const customHtml = 
-    business.customWebsiteHtml || 
-    (business as any).custom_website_html
-
-  if (creationMethod === 'ai_generated' && customHtml) {
-    return (
-      <div 
-        className="w-full min-h-screen overflow-x-hidden"
-        dangerouslySetInnerHTML={{ __html: customHtml }}
-      />
-    )
-  }
-
   const props = { business, services, hours }
   const tid = business.templateId ?? 'default'
 

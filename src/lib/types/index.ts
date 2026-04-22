@@ -49,6 +49,7 @@ export interface Business {
   accentColor: string;
   socialLinks: SocialLinks;
   galleryImages: string[];
+  gallerySections?: Record<string, string[]>;
   ownerId?: string;
   createdAt: string;
   // Customization Flags

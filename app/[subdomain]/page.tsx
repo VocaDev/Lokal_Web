@@ -46,10 +46,18 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
       supabase.from('gallery_items').select('*').eq('business_id', bizData.id).order('display_order', { ascending: true }),
     ]);
 
-  const customGallery = (galleryData || [])
-    .filter((v) => v.image_url)
-    .map((v) => v.image_url as string);
-  const allGalleryImages = [...(bizData.gallery_images || []), ...customGallery];
+  const galleryBySection: Record<string, string[]> = {};
+  (galleryData || []).forEach((item) => {
+    if (!item.image_url) return;
+    const key = item.section_key || 'gallery';
+    if (!galleryBySection[key]) galleryBySection[key] = [];
+    galleryBySection[key].push(item.image_url as string);
+  });
+
+  const allGalleryImages = [
+    ...(bizData.gallery_images || []),
+    ...Object.values(galleryBySection).flat(),
+  ];
 
   const business: Business = {
     id: bizData.id,
@@ -65,6 +73,7 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
     accentColor: customData?.primary_color || bizData.accent_color,
     socialLinks: bizData.social_links ?? { instagram: '', facebook: '', whatsapp: '' },
     galleryImages: allGalleryImages,
+    gallerySections: galleryBySection,
     ownerId: bizData.owner_id,
     createdAt: bizData.created_at,
     websiteCreationMethod: bizData.website_creation_method,

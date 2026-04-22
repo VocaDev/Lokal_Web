@@ -29,7 +29,19 @@ export default function BusinessHoursPage() {
     (async () => {
       try {
         const data = await getBusinessHours(business.id);
-        setHours(data);
+        if (data.length === 0) {
+          const defaults: BusinessHours[] = Array.from({ length: 7 }, (_, i) => ({
+            id: crypto.randomUUID(),
+            businessId: business.id,
+            dayOfWeek: i,
+            isOpen: i !== 0,
+            openTime: '09:00',
+            closeTime: i === 6 ? '15:00' : '18:00',
+          }));
+          setHours(defaults);
+        } else {
+          setHours(data);
+        }
       } catch (err) {
         console.error("Failed to load business hours", err);
       }

@@ -10,8 +10,10 @@ export async function middleware(request: NextRequest) {
 
   const isMainDomain =
     hostname === 'lokal-web-one.vercel.app' ||
-    hostname === 'localhost:3000' ||
-    hostname.startsWith('192.168.');
+    hostname.startsWith('localhost:') ||
+    hostname === 'localhost' ||
+    hostname.startsWith('192.168.') ||
+    hostname.startsWith('127.0.0.1');
 
   if (isMainDomain) {
     // 1. Auth Protection for Dashboard

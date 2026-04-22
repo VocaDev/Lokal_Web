@@ -23,7 +23,7 @@ export default function BeautyMinimal({ business, services, hours }: {
       <nav className="p-10 flex justify-between items-center border-b border-white/5">
         <span className="tracking-[0.5em] font-black text-xs text-white uppercase">{business.name}</span>
         <button onClick={() => openBooking()} className="text-[10px] tracking-[0.3em] font-black border border-[#f472b6]/20 px-8 py-3 rounded-full hover:bg-[#f472b6] hover:text-white hover:border-transparent transition-all uppercase">
-          RESERVE
+          {(business.ctaPrimary || 'RESERVE').toUpperCase()}
         </button>
       </nav>
 
@@ -31,11 +31,11 @@ export default function BeautyMinimal({ business, services, hours }: {
       <section className="py-40 px-8 max-w-4xl mx-auto text-center relative">
         <div className="w-20 h-px bg-[#f472b6]/20 mx-auto mb-10" />
         <h1 className="text-4xl md:text-6xl font-black tracking-[0.2em] text-white italic uppercase mb-10">
-          Soft.<br />Luminous.<br />Lokal.
+          {business.heroHeadline ? business.heroHeadline : <>Soft.<br />Luminous.<br />Lokal.</>}
         </h1>
         <div className="w-20 h-px bg-[#f472b6]/20 mx-auto mb-16" />
         <p className="text-[#f472b6]/40 max-w-md mx-auto leading-relaxed text-sm tracking-wide lowercase">
-          {business.description || "A space of tranquility and light, specializing in minimal beauty treatments that let your natural glow shine through."}
+          {business.heroSubheadline || business.description || "A space of tranquility and light, specializing in minimal beauty treatments that let your natural glow shine through."}
         </p>
       </section>
 

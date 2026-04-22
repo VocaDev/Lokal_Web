@@ -54,7 +54,7 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
           onClick={() => openBooking()}
           className="border border-white text-white bg-transparent px-6 py-2.5 text-xs font-bold tracking-widest uppercase transition-colors hover:bg-white hover:text-black"
         >
-          BOOK NOW
+          {(business.ctaPrimary || 'BOOK NOW').toUpperCase()}
         </button>
       </nav>
 
@@ -77,29 +77,29 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
           </span>
           <h1
             className="font-black text-white leading-[0.95] mb-6"
-            style={{ 
-              fontSize: "clamp(3rem, 8vw, 7rem)", 
+            style={{
+              fontSize: "clamp(3rem, 8vw, 7rem)",
               letterSpacing: "-0.02em",
               fontFamily: 'var(--heading-font, inherit)'
             }}
           >
-            THE ART OF<br />THE CUT
+            {business.heroHeadline ? business.heroHeadline : <>THE ART OF<br />THE CUT</>}
           </h1>
           <p className="text-white/60 text-lg tracking-wide mb-10">
-            Precision cuts. Clean lines. Since 2015.
+            {business.heroSubheadline || business.description || 'Precision cuts. Clean lines. Since 2015.'}
           </p>
           <div className="flex items-center justify-center gap-4 flex-wrap">
             <button
               onClick={() => scrollTo("services")}
               className="border-2 border-white text-white px-8 py-4 text-sm font-bold tracking-widest uppercase transition-colors hover:bg-white hover:text-black"
             >
-              VIEW SERVICES
+              {(business.ctaSecondary || 'VIEW SERVICES').toUpperCase()}
             </button>
             <button
               onClick={() => openBooking()}
               className="bg-white text-black px-8 py-4 text-sm font-bold tracking-widest uppercase transition-colors hover:bg-white/90"
             >
-              BOOK APPOINTMENT
+              {(business.ctaPrimary || 'BOOK APPOINTMENT').toUpperCase()}
             </button>
           </div>
         </div>
@@ -154,7 +154,7 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
             <p className="text-white/40 text-xs tracking-[0.4em] uppercase mb-6">OUR STORY</p>
             <h2 className="text-white font-black text-4xl leading-tight mb-6">MORE THAN A HAIRCUT</h2>
             <p className="text-white/50 leading-relaxed mb-10">
-              {business.description || "We believe every man deserves to look and feel his best. Our barbers combine traditional techniques with modern style to deliver a cut that's uniquely yours."}
+              {business.aboutCopy || business.description || "We believe every man deserves to look and feel his best. Our barbers combine traditional techniques with modern style to deliver a cut that's uniquely yours."}
             </p>
             <div className="flex gap-12">
               <div>

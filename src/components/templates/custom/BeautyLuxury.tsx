@@ -26,7 +26,7 @@ export default function BeautyLuxury({ business, services, hours }: {
           <span className="font-black tracking-[0.3em] text-sm text-white uppercase">{business.name}</span>
         </div>
         <button onClick={() => openBooking()} className="bg-white text-[#0a050f] px-8 py-3 rounded-full text-[10px] font-black tracking-widest uppercase hover:bg-[#a855f7] hover:text-white transition-all shadow-xl shadow-[#a855f7]/10">
-          BOOK EXPERIENCE
+          {(business.ctaPrimary || 'BOOK EXPERIENCE').toUpperCase()}
         </button>
       </nav>
 
@@ -42,14 +42,14 @@ export default function BeautyLuxury({ business, services, hours }: {
         <div className="relative z-10 max-w-4xl text-center px-8">
           <span className="text-[#a855f7] font-black tracking-[0.6em] uppercase text-[10px] mb-8 block">THE PINNACLE OF BEAUTY</span>
           <h1 className="text-6xl md:text-8xl font-black text-white leading-[0.9] mb-12 tracking-tighter uppercase italic">
-            REFINED.<br />ELEGANCE.
+            {business.heroHeadline ? business.heroHeadline : <>REFINED.<br />ELEGANCE.</>}
           </h1>
           <div className="w-20 h-px bg-[#a855f7]/30 mx-auto mb-12" />
           <p className="text-white/60 text-lg leading-relaxed mb-12 max-w-xl mx-auto font-sans italic">
-             {business.description || "Indulge in an atmosphere of pure luxury where expert hands transform your beauty and well-being."}
+             {business.heroSubheadline || business.description || "Indulge in an atmosphere of pure luxury where expert hands transform your beauty and well-being."}
           </p>
           <button onClick={() => document.getElementById('treatments')?.scrollIntoView({behavior: 'smooth'})} className="border border-[#a855f7] text-[#a855f7] px-12 py-4 rounded-full text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#a855f7] hover:text-white transition-all shadow-2xl shadow-[#a855f7]/5">
-            THE TREATMENTS
+            {(business.ctaSecondary || 'THE TREATMENTS').toUpperCase()}
           </button>
         </div>
       </section>

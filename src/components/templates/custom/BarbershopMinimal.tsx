@@ -22,16 +22,16 @@ export default function BarbershopMinimal({ business, services, hours }: {
       <nav className="p-8 flex justify-between items-center border-b border-white/5">
         <span className="tracking-[0.3em] font-bold text-sm uppercase">{business.name}</span>
         <button onClick={() => openBooking()} className="text-xs tracking-widest border border-white/20 px-6 py-2 hover:bg-white hover:text-black transition-colors">
-          BOOK NOW
+          {(business.ctaPrimary || 'BOOK NOW').toUpperCase()}
         </button>
       </nav>
 
       <section className="py-32 px-8 max-w-4xl mx-auto text-center">
         <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mb-8 uppercase">
-          {business.name}
+          {business.heroHeadline || business.name}
         </h1>
         <p className="text-white/40 max-w-lg mx-auto leading-relaxed">
-          {business.description || "Minimalist grooming for the modern individual."}
+          {business.heroSubheadline || business.description || "Minimalist grooming for the modern individual."}
         </p>
       </section>
 

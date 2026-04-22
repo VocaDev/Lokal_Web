@@ -26,7 +26,7 @@ export default function RestaurantCasual({ business, services, hours }: {
           <span className="font-black tracking-tight text-lg italic uppercase">{business.name}</span>
         </div>
         <button onClick={() => openBooking()} className="bg-red-600 text-white px-6 py-2 rounded-xl text-xs font-bold tracking-widest uppercase hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20">
-          BOOK A TABLE
+          {(business.ctaPrimary || 'BOOK A TABLE').toUpperCase()}
         </button>
       </nav>
 
@@ -35,13 +35,13 @@ export default function RestaurantCasual({ business, services, hours }: {
         <div className="max-w-3xl">
           <span className="text-red-500 font-bold tracking-[0.2em] uppercase text-sm mb-6 block">EAT • DRINK • ENJOY</span>
           <h1 className="text-6xl md:text-8xl font-black italic tracking-tighter mb-8 uppercase leading-[0.9]">
-            {business.name}
+            {business.heroHeadline || business.name}
           </h1>
           <p className="text-zinc-400 text-lg md:text-xl leading-relaxed mb-12 max-w-xl mx-auto">
-            {business.description || "The best food in the neighborhood. Fresh ingredients, bold flavors, great company."}
+            {business.heroSubheadline || business.description || "The best food in the neighborhood. Fresh ingredients, bold flavors, great company."}
           </p>
           <button onClick={() => document.getElementById('menu')?.scrollIntoView({behavior: 'smooth'})} className="bg-zinc-100 text-zinc-950 px-10 py-4 rounded-xl text-sm font-black tracking-widest uppercase hover:scale-105 transition-all shadow-xl shadow-white/5">
-            CHECK THE MENU
+            {(business.ctaSecondary || 'CHECK THE MENU').toUpperCase()}
           </button>
         </div>
       </section>

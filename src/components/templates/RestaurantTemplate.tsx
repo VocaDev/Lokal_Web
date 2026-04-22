@@ -46,7 +46,7 @@ export default function RestaurantTemplate({ business, services, hours }: Props)
           className="text-white font-semibold rounded-lg px-5 py-2 text-sm transition-all hover:opacity-90"
           style={{ backgroundColor: business.accentColor }}
         >
-          Reserve a Table
+          {business.ctaPrimary || 'Reserve a Table'}
         </button>
       </nav>
 
@@ -78,23 +78,23 @@ export default function RestaurantTemplate({ business, services, hours }: Props)
             {business.industry.replace('-', ' ')}
           </div>
           <h1 className="text-5xl md:text-7xl font-black text-white mb-4">
-            {business.name}
+            {business.heroHeadline || business.name}
           </h1>
-          <p className="text-lg text-white/65 max-w-xl mx-auto mb-10">{business.description}</p>
+          <p className="text-lg text-white/65 max-w-xl mx-auto mb-10">{business.heroSubheadline || business.description}</p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <button
               onClick={() => handleScroll('services')}
               className="border border-white/25 text-white rounded-lg px-7 py-3 font-semibold hover:bg-white/8 transition-colors"
             >
-              View Menu
+              {business.ctaSecondary || 'View Menu'}
             </button>
             <button
               onClick={() => openBooking()}
               className="text-white font-semibold rounded-lg px-7 py-3 transition-all hover:opacity-90"
               style={{ backgroundColor: business.accentColor }}
             >
-              Reserve a Table
+              {business.ctaPrimary || 'Reserve a Table'}
             </button>
           </div>
 

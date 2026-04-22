@@ -51,7 +51,7 @@ export default function ClinicTemplate({ business, services, hours }: Props) {
           className="text-white font-semibold rounded-lg px-5 py-2 text-sm transition-all hover:opacity-90"
           style={{ backgroundColor: business.accentColor }}
         >
-          Book Consultation
+          {business.ctaPrimary || 'Book Consultation'}
         </button>
       </nav>
 
@@ -86,24 +86,24 @@ export default function ClinicTemplate({ business, services, hours }: Props) {
             <Plus className="h-6 w-6" style={{ color: business.accentColor }} />
           </div>
           <h1 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tight">
-            {business.name}
+            {business.heroHeadline || business.name}
           </h1>
           <p className="text-sm uppercase tracking-[0.25em] text-white/40 mb-4">Your Health, Our Priority</p>
-          <p className="text-base text-white/65 max-w-lg mx-auto mb-10">{business.description}</p>
+          <p className="text-base text-white/65 max-w-lg mx-auto mb-10">{business.heroSubheadline || business.description}</p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <button
               onClick={() => handleScroll('services')}
               className="border border-white/20 text-white/80 rounded-lg px-6 py-3 font-semibold hover:bg-white/8 transition-colors"
             >
-              Our Services
+              {business.ctaSecondary || 'Our Services'}
             </button>
             <button
               onClick={() => openBooking()}
               className="text-white font-semibold rounded-lg px-6 py-3 transition-all hover:opacity-90"
               style={{ backgroundColor: business.accentColor }}
             >
-              Book Consultation
+              {business.ctaPrimary || 'Book Consultation'}
             </button>
           </div>
 
@@ -184,7 +184,7 @@ export default function ClinicTemplate({ business, services, hours }: Props) {
             <div>
               <h2 className="text-2xl font-bold text-[#e8e8f0] mb-4">About Our Clinic</h2>
               <p className="text-[#8888aa] leading-relaxed mb-6">
-                We are committed to providing compassionate, evidence-based healthcare to our community. Our experienced team is here to support your wellbeing.
+                {business.aboutCopy || business.description || 'We are committed to providing compassionate, evidence-based healthcare to our community. Our experienced team is here to support your wellbeing.'}
               </p>
               {business.phone && (
                 <a href={`tel:${business.phone}`}>

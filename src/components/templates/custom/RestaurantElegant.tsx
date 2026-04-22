@@ -23,7 +23,7 @@ export default function RestaurantElegant({ business, services, hours }: {
       <nav className="fixed top-0 inset-x-0 z-50 p-6 flex justify-between items-center bg-[#0f0a05]/80 backdrop-blur-md border-b border-[#d97706]/10">
         <span className="text-xl font-bold tracking-widest text-[#d97706] uppercase">{business.name}</span>
         <button onClick={() => openBooking()} className="bg-[#d97706] text-black px-6 py-2 text-xs font-bold tracking-widest uppercase hover:bg-[#b45309] transition-colors">
-          RESERVE A TABLE
+          {(business.ctaPrimary || 'RESERVE A TABLE').toUpperCase()}
         </button>
       </nav>
 
@@ -37,11 +37,11 @@ export default function RestaurantElegant({ business, services, hours }: {
         <div className="absolute inset-0 bg-[#0f0a05]/70" />
         <div className="relative z-10 max-w-3xl text-center px-8">
           <div className="w-12 h-px bg-[#d97706] mx-auto mb-8" />
-          <h1 className="text-5xl md:text-7xl font-bold italic mb-6">{business.name}</h1>
-          <p className="text-lg text-[#d97706]/80 tracking-widest uppercase mb-12">Fine Dining • Excellence • Tradition</p>
+          <h1 className="text-5xl md:text-7xl font-bold italic mb-6">{business.heroHeadline || business.name}</h1>
+          <p className="text-lg text-[#d97706]/80 tracking-widest uppercase mb-12">{business.heroSubheadline || 'Fine Dining • Excellence • Tradition'}</p>
           <div className="flex justify-center gap-6">
             <button onClick={() => document.getElementById('menu')?.scrollIntoView({behavior: 'smooth'})} className="border border-[#d97706] text-[#d97706] px-8 py-3 text-xs tracking-widest uppercase hover:bg-[#d97706] hover:text-black transition-all">
-              THE MENU
+              {(business.ctaSecondary || 'THE MENU').toUpperCase()}
             </button>
           </div>
         </div>

@@ -28,7 +28,7 @@ export default function ClinicModern({ business, services, hours }: {
           <span className="font-black tracking-tight text-xl text-white uppercase">{business.name}</span>
         </div>
         <button onClick={() => openBooking()} className="bg-[#0d9488] text-white px-8 py-3 rounded-2xl text-xs font-bold tracking-widest uppercase hover:bg-[#0f766e] transition-all shadow-xl shadow-[#0d9488]/10">
-          RESERVE CONSULTATION
+          {(business.ctaPrimary || 'RESERVE CONSULTATION').toUpperCase()}
         </button>
       </nav>
 
@@ -44,14 +44,14 @@ export default function ClinicModern({ business, services, hours }: {
         <div className="relative z-10 max-w-2xl">
           <span className="text-[#0d9488] font-black tracking-[0.3em] uppercase text-xs mb-6 block">NEXT-GEN MEDICAL CENTER</span>
           <h1 className="text-6xl md:text-8xl font-black text-white leading-[0.85] mb-8 uppercase italic tracking-tighter">
-            ADVANCED<br />HEALTHCARE.
+            {business.heroHeadline ? business.heroHeadline : <>ADVANCED<br />HEALTHCARE.</>}
           </h1>
           <p className="text-slate-400 text-lg leading-relaxed mb-10 max-w-lg">
-            {business.description || "State-of-the-art medical facility combining technology with compassion for your total wellness."}
+            {business.heroSubheadline || business.description || "State-of-the-art medical facility combining technology with compassion for your total wellness."}
           </p>
           <div className="flex flex-wrap gap-4">
              <button onClick={() => document.getElementById('treatments')?.scrollIntoView({behavior: 'smooth'})} className="bg-white text-[#020617] px-10 py-4 rounded-2xl text-xs font-bold tracking-widest uppercase hover:bg-slate-200 transition-all">
-               VIEW TREATMENTS
+               {(business.ctaSecondary || 'VIEW TREATMENTS').toUpperCase()}
              </button>
           </div>
         </div>

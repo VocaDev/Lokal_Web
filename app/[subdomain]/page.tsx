@@ -74,6 +74,11 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
     showContact: customData?.show_contact ?? true,
     heroHeight: customData?.hero_height || 'medium',
     cardStyle: customData?.card_style || 'minimal',
+    heroHeadline: customData?.hero_headline || undefined,
+    heroSubheadline: customData?.hero_subheadline || undefined,
+    aboutCopy: customData?.about_copy || undefined,
+    ctaPrimary: customData?.cta_primary || undefined,
+    ctaSecondary: customData?.cta_secondary || undefined,
   };
 
   const themeStyles = customData

@@ -55,7 +55,7 @@ const ClinicPremium = ({ business, services, hours }: {
           ))}
         </div>
         <button onClick={() => openBooking()} className="bg-[#2563eb] text-white text-sm font-medium px-5 py-2 rounded-md hover:bg-[#1d4ed8] transition-colors">
-          Book Consultation
+          {business.ctaPrimary || 'Book Consultation'}
         </button>
       </nav>
 
@@ -67,10 +67,10 @@ const ClinicPremium = ({ business, services, hours }: {
             <span className="text-[#2563eb] text-xs font-medium">Accepting New Patients</span>
           </div>
           <h1 className="text-[#1a1a2e] font-semibold leading-tight mb-6" style={{ fontSize: "3rem", lineHeight: "1.15" }}>
-            Your Health Deserves Expert Care
+            {business.heroHeadline || 'Your Health Deserves Expert Care'}
           </h1>
           <p className="text-[#6b7280] text-lg font-normal leading-relaxed max-w-md mb-10">
-            {business.description ?? 
+            {business.heroSubheadline ?? business.description ??
             "We provide evidence-based medicine with a compassionate approach. Your wellbeing is our highest priority."}
           </p>
           <div className="flex flex-wrap gap-6 mb-10">
@@ -83,10 +83,10 @@ const ClinicPremium = ({ business, services, hours }: {
           </div>
           <div className="flex gap-3">
             <button onClick={() => openBooking()} className="bg-[#2563eb] text-white font-medium text-sm px-6 py-3 rounded-md hover:bg-[#1d4ed8] transition-colors">
-              Book Consultation
+              {business.ctaPrimary || 'Book Consultation'}
             </button>
             <button onClick={() => scrollTo("services")} className="border border-[#e5e7eb] text-[#1a1a2e] font-medium text-sm px-6 py-3 rounded-md hover:border-[#2563eb] transition-colors">
-              View Services
+              {business.ctaSecondary || 'View Services'}
             </button>
           </div>
         </div>
@@ -166,6 +166,7 @@ const ClinicPremium = ({ business, services, hours }: {
       </section>
 
       {/* TEAM */}
+      {business.showTeam !== false && (
       <section id="team" className="bg-white py-24 px-8 md:px-16">
         <div className="max-w-5xl mx-auto mb-14 text-center">
           <span className="bg-[#eff6ff] text-[#2563eb] text-xs font-medium px-3 py-1 rounded-full inline-block mb-4">Our Specialists</span>
@@ -209,6 +210,7 @@ const ClinicPremium = ({ business, services, hours }: {
           ))}
         </div>
       </section>
+      )}
 
       {/* HOURS & CONTACT */}
       <section className="bg-[#f8f9fa] py-24 px-8 md:px-16">

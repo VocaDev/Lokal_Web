@@ -46,7 +46,7 @@ export default function BarbershopTemplate({ business, services, hours }: Props)
           className="text-white font-semibold rounded-lg px-5 py-2 text-sm transition-all hover:opacity-90"
           style={{ backgroundColor: business.accentColor }}
         >
-          Book Now
+          {business.ctaPrimary || 'Book Now'}
         </button>
       </nav>
 
@@ -82,23 +82,23 @@ export default function BarbershopTemplate({ business, services, hours }: Props)
             />
           )}
           <h1 className="text-5xl md:text-7xl font-black text-white mb-4 tracking-tight">
-            {business.name}
+            {business.heroHeadline || business.name}
           </h1>
-          <p className="text-lg text-white/70 max-w-xl mx-auto mb-8">{business.description}</p>
+          <p className="text-lg text-white/70 max-w-xl mx-auto mb-8">{business.heroSubheadline || business.description}</p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <button
               onClick={() => handleScroll('services')}
               className="border-2 border-white/30 text-white rounded-lg px-6 py-3 font-semibold hover:bg-white/10 transition-colors"
             >
-              View Services
+              {business.ctaSecondary || 'View Services'}
             </button>
             <button
               onClick={() => openBooking()}
               className="text-white font-semibold rounded-lg px-6 py-3 transition-all hover:opacity-90"
               style={{ backgroundColor: business.accentColor }}
             >
-              Book Appointment
+              {business.ctaPrimary || 'Book Appointment'}
             </button>
           </div>
 

@@ -45,7 +45,7 @@ const BarbershopModern = ({ business, services, hours }: {
           onClick={() => openBooking()}
           className="text-white text-xs tracking-[0.3em] uppercase font-light underline underline-offset-4 decoration-white/30 hover:decoration-white transition-colors"
         >
-          Book
+          {business.ctaPrimary || 'Book'}
         </button>
       </nav>
 
@@ -56,18 +56,31 @@ const BarbershopModern = ({ business, services, hours }: {
             No. 01 — Barbershop
           </span>
           <div className="w-8 h-px bg-white/20 mb-8" />
-          <h1 className="font-light text-5xl md:text-7xl tracking-[0.15em] uppercase text-white">
-            PRECISION
-          </h1>
-          <h1 className="font-light text-5xl md:text-7xl tracking-[0.15em] uppercase text-white/40 -mt-2">
-            & CRAFT
-          </h1>
+          {business.heroHeadline ? (
+            <h1 className="font-light text-5xl md:text-7xl tracking-[0.15em] uppercase text-white">
+              {business.heroHeadline}
+            </h1>
+          ) : (
+            <>
+              <h1 className="font-light text-5xl md:text-7xl tracking-[0.15em] uppercase text-white">
+                PRECISION
+              </h1>
+              <h1 className="font-light text-5xl md:text-7xl tracking-[0.15em] uppercase text-white/40 -mt-2">
+                & CRAFT
+              </h1>
+            </>
+          )}
+          {business.heroSubheadline && (
+            <p className="mt-6 text-white/50 text-sm font-light leading-relaxed max-w-md">
+              {business.heroSubheadline}
+            </p>
+          )}
           <div className="mt-16 flex items-center gap-8">
             <button
               onClick={() => scrollTo('services')}
               className="text-white/60 text-xs tracking-widest uppercase hover:text-white transition-colors font-light"
             >
-              View Services →
+              {business.ctaSecondary || 'View Services →'}
             </button>
             <button
               onClick={() => scrollTo('story')}
@@ -150,7 +163,7 @@ const BarbershopModern = ({ business, services, hours }: {
             <p className="text-white/20 text-[10px] tracking-[0.4em] uppercase mb-6">03 — Story</p>
             <h2 className="text-white font-light text-3xl tracking-wide mb-8">More Than a Haircut</h2>
             <p className="text-white/40 text-sm leading-loose font-light mb-10">
-              {business.description ?? "We believe every man deserves to look and feel his best."}
+              {business.aboutCopy ?? business.description ?? "We believe every man deserves to look and feel his best."}
             </p>
             <div className="flex gap-16 mt-10 pt-10 border-t border-white/[0.06]">
               <div>

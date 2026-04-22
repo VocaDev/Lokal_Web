@@ -37,7 +37,7 @@ const RestaurantBistro = ({ business, services, hours }: {
           onClick={openReservation}
           className="bg-[#d97706] text-black font-bold text-xs tracking-widest uppercase px-5 py-2.5 hover:bg-[#b45309] transition-colors"
         >
-          Reserve a Table
+          {business.ctaPrimary || 'Reserve a Table'}
         </button>
       </nav>
 
@@ -54,28 +54,36 @@ const RestaurantBistro = ({ business, services, hours }: {
             Est. 2018 · Prishtina
           </span>
           <h1>
-            <span className="block font-black leading-none" style={{ fontSize: 'clamp(3.5rem, 9vw, 8rem)', letterSpacing: '-0.02em' }}>
-              WHERE EVERY
-            </span>
-            <span className="block text-[#d97706] font-black leading-none -mt-2" style={{ fontSize: 'clamp(3.5rem, 9vw, 8rem)', letterSpacing: '-0.02em' }}>
-              PLATE TELLS A STORY
-            </span>
+            {business.heroHeadline ? (
+              <span className="block font-black leading-none" style={{ fontSize: 'clamp(3.5rem, 9vw, 8rem)', letterSpacing: '-0.02em' }}>
+                {business.heroHeadline}
+              </span>
+            ) : (
+              <>
+                <span className="block font-black leading-none" style={{ fontSize: 'clamp(3.5rem, 9vw, 8rem)', letterSpacing: '-0.02em' }}>
+                  WHERE EVERY
+                </span>
+                <span className="block text-[#d97706] font-black leading-none -mt-2" style={{ fontSize: 'clamp(3.5rem, 9vw, 8rem)', letterSpacing: '-0.02em' }}>
+                  PLATE TELLS A STORY
+                </span>
+              </>
+            )}
           </h1>
           <p className="mt-8 text-white/50 text-base font-light tracking-wide">
-            New York soul. Kosovo heart. Open daily.
+            {business.heroSubheadline || business.description || 'New York soul. Kosovo heart. Open daily.'}
           </p>
           <div className="mt-12 flex gap-4 justify-center flex-wrap">
             <button
               onClick={() => scrollTo('menu')}
               className="border-2 border-white text-white font-bold text-xs tracking-widest uppercase px-8 py-4 hover:bg-white hover:text-black transition-colors"
             >
-              VIEW MENU
+              {(business.ctaSecondary || 'VIEW MENU').toUpperCase()}
             </button>
             <button
               onClick={openReservation}
               className="bg-[#d97706] text-black font-bold text-xs tracking-widest uppercase px-8 py-4 hover:bg-[#b45309] transition-colors"
             >
-              RESERVE A TABLE
+              {(business.ctaPrimary || 'RESERVE A TABLE').toUpperCase()}
             </button>
           </div>
         </div>
@@ -135,7 +143,7 @@ const RestaurantBistro = ({ business, services, hours }: {
               FOOD IS OUR LANGUAGE
             </h2>
             <p className="text-white/50 text-sm leading-relaxed mb-10 font-light">
-              {business.description ?? "Born from a love of bold flavors and honest cooking, we bring the energy of a great neighborhood restaurant to your city. Every dish is made from scratch, every day."}
+              {business.aboutCopy ?? business.description ?? "Born from a love of bold flavors and honest cooking, we bring the energy of a great neighborhood restaurant to your city. Every dish is made from scratch, every day."}
             </p>
             <div className="flex gap-10 pt-10 border-t border-white/[0.07]">
               {[

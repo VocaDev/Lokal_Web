@@ -28,7 +28,7 @@ export default function ClinicClean({ business, services, hours }: {
           <span className="font-bold tracking-tight text-xl text-slate-800 uppercase">{business.name}</span>
         </div>
         <button onClick={() => openBooking()} className="bg-blue-600 text-white px-8 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20">
-          BOOK APPOINTMENT
+          {(business.ctaPrimary || 'BOOK APPOINTMENT').toUpperCase()}
         </button>
       </nav>
 
@@ -37,10 +37,10 @@ export default function ClinicClean({ business, services, hours }: {
         <div className="flex-1 flex flex-col justify-center px-12 md:px-24 py-20 bg-slate-50">
           <span className="bg-blue-100 text-blue-600 px-4 py-1 rounded-full text-[10px] font-bold tracking-[0.2em] uppercase mb-8 self-start">PROFESSIONAL CARE</span>
           <h1 className="text-5xl md:text-6xl font-black tracking-tighter text-slate-900 mb-8 leading-[0.95] uppercase">
-            Your Health Is<br />Our Priority.
+            {business.heroHeadline ? business.heroHeadline : <>Your Health Is<br />Our Priority.</>}
           </h1>
           <p className="text-lg text-slate-500 leading-relaxed mb-10 max-w-lg">
-             {business.description || "We provide top-tier medical services with a focus on precision and personalized care. Your wellness begins with us."}
+             {business.heroSubheadline || business.description || "We provide top-tier medical services with a focus on precision and personalized care. Your wellness begins with us."}
           </p>
           <div className="flex items-center gap-4 text-sm font-bold text-slate-400">
              <ShieldCheck className="h-5 w-5 text-blue-500" />

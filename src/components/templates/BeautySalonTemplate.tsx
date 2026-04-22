@@ -45,7 +45,7 @@ export default function BeautySalonTemplate({ business, services, hours }: Props
           className="text-white font-semibold rounded-lg px-5 py-2 text-sm transition-all hover:opacity-90"
           style={{ backgroundColor: business.accentColor }}
         >
-          Book Now
+          {business.ctaPrimary || 'Book Now'}
         </button>
       </nav>
 
@@ -78,24 +78,24 @@ export default function BeautySalonTemplate({ business, services, hours }: Props
             style={{ backgroundColor: business.accentColor }}
           />
           <h1 className="text-5xl md:text-6xl font-black text-white mb-4 tracking-wide">
-            {business.name}
+            {business.heroHeadline || business.name}
           </h1>
           <p className="text-sm uppercase tracking-[0.3em] text-white/50 mb-3">Beauty & Wellness</p>
-          <p className="text-base text-white/65 max-w-lg mx-auto mb-10">{business.description}</p>
+          <p className="text-base text-white/65 max-w-lg mx-auto mb-10">{business.heroSubheadline || business.description}</p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <button
               onClick={() => handleScroll('services')}
               className="border border-white/25 text-white/80 rounded-full px-7 py-3 font-semibold hover:bg-white/8 transition-colors"
             >
-              Explore Treatments
+              {business.ctaSecondary || 'Explore Treatments'}
             </button>
             <button
               onClick={() => openBooking()}
               className="text-white font-semibold rounded-full px-7 py-3 transition-all hover:opacity-90"
               style={{ backgroundColor: business.accentColor }}
             >
-              Book Now
+              {business.ctaPrimary || 'Book Now'}
             </button>
           </div>
 

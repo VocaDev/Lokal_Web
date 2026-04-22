@@ -57,6 +57,12 @@ export interface Business {
   showContact?: boolean;
   heroHeight?: 'small' | 'medium' | 'large';
   cardStyle?: 'minimal' | 'rounded' | 'bordered';
+  // AI-generated copy (from website_customization)
+  heroHeadline?: string;
+  heroSubheadline?: string;
+  aboutCopy?: string;
+  ctaPrimary?: string;
+  ctaSecondary?: string;
   // Website Builder
   websiteCreationMethod?: string;
   customWebsiteHtml?: string;

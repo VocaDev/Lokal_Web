@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCustomization, useGalleryItems } from '@/lib/customization/hooks';
 import { WebsiteCustomization } from '@/lib/types';
 import ColorSection from './ColorSection';
@@ -20,6 +21,12 @@ export default function CustomizationHub({ businessId }: CustomizationHubProps) 
   const { customization, isLoading: customLoading, refetch } = useCustomization(businessId);
   const { galleryItems } = useGalleryItems(businessId);
   const { toast } = useToast();
+  const router = useRouter();
+
+  const handleRegenerateWebsite = () => {
+    if (!confirm("This will replace your current website. Are you sure?")) return;
+    router.push('/register/website-builder-choice');
+  };
 
   // Local form state (not persisted until Save clicked)
   const [formData, setFormData] = useState<Partial<WebsiteCustomization>>({});
@@ -86,11 +93,22 @@ export default function CustomizationHub({ businessId }: CustomizationHubProps) 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-[#e8e8f0]">Website Customization</h1>
-        <p className="text-[#8888aa] mt-2">
-          Customize colors, fonts, layout, and upload photos for your website
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-[#e8e8f0]">Website Customization</h1>
+          <p className="text-[#8888aa] mt-2">
+            Customize colors, fonts, layout, and upload photos for your website
+          </p>
+        </div>
+        <div className="flex flex-col items-start sm:items-end">
+          <button
+            onClick={handleRegenerateWebsite}
+            className="border border-blue-400 text-blue-400 rounded-lg px-5 py-2.5 hover:bg-blue-400/10 font-semibold transition-all duration-200"
+          >
+            Regenerate Website
+          </button>
+          <p className="text-[#8888aa] text-xs mt-1">Your previous website will be replaced.</p>
+        </div>
       </div>
 
       {/* Two-Tab Layout */}

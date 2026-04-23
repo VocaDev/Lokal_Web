@@ -8,13 +8,6 @@ import {
   ArrowLeft,
   Check,
   Loader2,
-  Palette,
-  Layout,
-  Layers,
-  Crown,
-  MessageSquare,
-  Users,
-  Mail,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,32 +16,53 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
-const MOODS = [
+export const MOODS = [
+  {
+    id: 'heritage',
+    label: 'Heritage & Warm',
+    keywords: ['traditional', 'timeless', 'rooted'],
+    primaryColor: '#8b6f47',
+    bgColor: '#1a1512',
+    fontFamily: "'Playfair Display', serif",
+    preview: 'Where craft is passed down.',
+  },
+  {
+    id: 'modern',
+    label: 'Modern & Sharp',
+    keywords: ['clean', 'precise', 'confident'],
+    primaryColor: '#3b82f6',
+    bgColor: '#0a0a0f',
+    fontFamily: "'Inter', sans-serif",
+    preview: 'Designed for today.',
+  },
+  {
+    id: 'bold',
+    label: 'Bold & Unforgettable',
+    keywords: ['high-contrast', 'striking', 'memorable'],
+    primaryColor: '#ef4444',
+    bgColor: '#0a0a0f',
+    fontFamily: "'Space Grotesk', sans-serif",
+    preview: 'You will remember this.',
+  },
   {
     id: 'premium',
-    label: 'Premium',
-    icon: Crown,
-    description: 'Sfond i errët, aksente ari/vjollcë, Playfair headings.',
+    label: 'Premium & Refined',
+    keywords: ['elegant', 'discreet', 'quality'],
+    primaryColor: '#d4af37',
+    bgColor: '#0d0a0a',
+    fontFamily: "'Playfair Display', serif",
+    preview: 'The quiet signal of quality.',
   },
   {
-    id: 'playful',
-    label: 'Playful',
-    icon: Sparkles,
-    description: 'Aksente të ndritshme, karta të rrumbullakosura, Poppins.',
+    id: 'warm',
+    label: 'Warm & Welcoming',
+    keywords: ['friendly', 'approachable', 'honest'],
+    primaryColor: '#ea580c',
+    bgColor: '#1a110a',
+    fontFamily: "'Poppins', sans-serif",
+    preview: 'Come in, stay awhile.',
   },
-  {
-    id: 'minimal',
-    label: 'Minimal',
-    icon: Layout,
-    description: 'Sfond i bardhë/off-white, bordura të holla, Inter.',
-  },
-  {
-    id: 'elegant',
-    label: 'Elegant',
-    icon: Layers,
-    description: 'Hapësirë bujare, tipografi e hollë, animacione të buta.',
-  },
-]
+] as const
 
 const INDUSTRY_SUGGESTIONS = [
   'Berber',
@@ -65,12 +79,7 @@ interface FormState {
   businessName: string
   industry: string
   tagline: string
-  preferredMood: string
-  sections: {
-    testimonials: boolean
-    team: boolean
-    contact: boolean
-  }
+  moodId: string
 }
 
 export default function WebsiteBuilderWizard() {
@@ -84,12 +93,7 @@ export default function WebsiteBuilderWizard() {
     businessName: '',
     industry: '',
     tagline: '',
-    preferredMood: 'premium',
-    sections: {
-      testimonials: true,
-      team: false,
-      contact: true,
-    },
+    moodId: 'premium',
   })
 
   useEffect(() => {
@@ -137,7 +141,7 @@ export default function WebsiteBuilderWizard() {
         return
       }
     }
-    if (currentStep === 2 && !formData.preferredMood) {
+    if (currentStep === 2 && !formData.moodId) {
       toast.error('Ju lutem zgjidhni një mood')
       return
     }
@@ -146,14 +150,9 @@ export default function WebsiteBuilderWizard() {
 
   const prevStep = () => setCurrentStep(prev => prev - 1)
 
-  const toggleSection = (key: keyof FormState['sections']) => {
-    setFormData(prev => ({
-      ...prev,
-      sections: { ...prev.sections, [key]: !prev.sections[key] },
-    }))
-  }
+  const selectedMood = MOODS.find(m => m.id === formData.moodId) ?? MOODS[0]
 
-  const generateTheme = async () => {
+  const handleGenerate = async () => {
     if (!businessId) {
       toast.error('Biznesi nuk u gjet. Ju lutem rifreskoni faqen.')
       return
@@ -168,14 +167,12 @@ export default function WebsiteBuilderWizard() {
           businessName: formData.businessName,
           industry: formData.industry,
           tagline: formData.tagline,
-          preferredMood: formData.preferredMood,
-          sections: formData.sections,
+          preferredMood: formData.moodId,
+          sections: { testimonials: true, team: false, contact: true },
         }),
       })
       const data = await res.json()
-      if (!res.ok || data.error) {
-        throw new Error(data.error || `Request failed (${res.status})`)
-      }
+      if (!res.ok || data.error) throw new Error(data.error || `Request failed (${res.status})`)
       toast.success('Tema u gjenerua! Mund ta personalizoni më tutje këtu.')
       router.push('/dashboard/customization')
     } catch (error: any) {
@@ -196,7 +193,7 @@ export default function WebsiteBuilderWizard() {
     <div className="space-y-8">
       <div className="flex justify-between items-center max-w-md mx-auto relative px-4">
         <div className="absolute top-1/2 left-0 w-full h-0.5 bg-[rgba(120,120,255,0.12)] -translate-y-1/2 z-0" />
-        {[1, 2, 3, 4].map((step) => (
+        {[1, 2, 3].map((step) => (
           <div
             key={step}
             className={cn(
@@ -275,73 +272,55 @@ export default function WebsiteBuilderWizard() {
         {currentStep === 2 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-[#e8e8f0]">Mood i Brendit</h2>
-              <p className="text-[#8888aa] mt-1">AI do zgjedhë paletën, fontet dhe template-in bazuar në mood-in tuaj</p>
+              <h2 className="text-3xl font-bold text-[#e8e8f0]">Pick your vibe</h2>
+              <p className="text-[#8888aa] mt-1">Our AI will design within this direction. Pick what fits you — not what you think customers want.</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {MOODS.map((mood) => (
-                <button
-                  key={mood.id}
-                  onClick={() => setFormData(p => ({ ...p, preferredMood: mood.id }))}
-                  className={cn(
-                    'flex flex-col items-start p-4 rounded-xl border transition-all duration-300 text-left',
-                    formData.preferredMood === mood.id
-                      ? 'bg-[#1e1e35] border-[rgba(120,120,255,0.6)]'
-                      : 'bg-[#151522] border-[rgba(120,120,255,0.12)] hover:border-[rgba(120,120,255,0.3)]'
-                  )}
-                >
-                  <div className={cn(
-                    'p-2 rounded-lg mb-3',
-                    formData.preferredMood === mood.id ? 'bg-blue-500/20 text-blue-400' : 'bg-[#1e1e35] text-[#8888aa]'
-                  )}>
-                    <mood.icon className="w-5 h-5" />
-                  </div>
-                  <span className="font-semibold text-[#e8e8f0]">{mood.label}</span>
-                  <span className="text-xs text-[#8888aa] mt-1">{mood.description}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {currentStep === 3 && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-[#e8e8f0]">Seksione Shtesë</h2>
-              <p className="text-[#8888aa] mt-1">Hero, shërbimet dhe orari përfshihen gjithmonë. Zgjidh seksionet shtesë.</p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[
-                { key: 'testimonials' as const, label: 'Dëshmi', description: 'Komentet e klientëve', icon: MessageSquare },
-                { key: 'team' as const, label: 'Ekipi', description: 'Anëtarët e stafit', icon: Users },
-                { key: 'contact' as const, label: 'Kontakt', description: 'Info + WhatsApp', icon: Mail },
-              ].map((section) => {
-                const active = formData.sections[section.key]
-                const Icon = section.icon
+            <div className="grid md:grid-cols-2 gap-4">
+              {MOODS.map((mood) => {
+                const active = formData.moodId === mood.id
                 return (
                   <button
-                    key={section.key}
-                    onClick={() => toggleSection(section.key)}
+                    key={mood.id}
+                    onClick={() => setFormData(p => ({ ...p, moodId: mood.id }))}
                     className={cn(
-                      'flex items-center p-4 rounded-xl border transition-all duration-300 text-left gap-4',
+                      'text-left rounded-xl overflow-hidden transition-all duration-300',
                       active
-                        ? 'bg-[#1e1e35] border-[rgba(120,120,255,0.6)]'
-                        : 'bg-[#151522] border-[rgba(120,120,255,0.12)] hover:border-[rgba(120,120,255,0.3)]'
+                        ? 'ring-2 ring-blue-400 scale-[1.02]'
+                        : 'ring-1 ring-[rgba(120,120,255,0.12)] hover:ring-[rgba(120,120,255,0.3)]'
                     )}
                   >
-                    <div className={cn(
-                      'p-2 rounded-lg',
-                      active ? 'bg-violet-500/20 text-violet-400' : 'bg-[#1e1e35] text-[#8888aa]'
-                    )}>
-                      <Icon className="w-5 h-5" />
+                    <div
+                      className="p-6 h-36 flex flex-col justify-end relative overflow-hidden"
+                      style={{ backgroundColor: mood.bgColor }}
+                    >
+                      <div
+                        className="absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl opacity-40 -translate-y-1/3 translate-x-1/4"
+                        style={{ backgroundColor: mood.primaryColor }}
+                      />
+                      <div className="relative">
+                        <p className="text-2xl font-bold" style={{ color: '#fff', fontFamily: mood.fontFamily }}>
+                          {mood.preview}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 flex flex-col">
-                      <span className="font-semibold text-[#e8e8f0]">{section.label}</span>
-                      <span className="text-xs text-[#8888aa]">{section.description}</span>
+
+                    <div className="bg-[#151522] p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-[#e8e8f0]">{mood.label}</h3>
+                        <div className="flex gap-1">
+                          <div className="w-4 h-4 rounded-full" style={{ backgroundColor: mood.primaryColor }} />
+                          <div className="w-4 h-4 rounded-full bg-white/10" />
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {mood.keywords.map((k) => (
+                          <span key={k} className="text-xs bg-blue-400/10 text-blue-400 rounded-full px-2 py-0.5">
+                            {k}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                    {active && <Check className="w-5 h-5 text-violet-400" />}
                   </button>
                 )
               })}
@@ -349,7 +328,7 @@ export default function WebsiteBuilderWizard() {
           </div>
         )}
 
-        {currentStep === 4 && (
+        {currentStep === 3 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-center">
               <h2 className="text-2xl font-bold text-[#e8e8f0]">Përmbledhja</h2>
@@ -368,29 +347,17 @@ export default function WebsiteBuilderWizard() {
                 </div>
                 <div>
                   <span className="text-[#8888aa] block">Mood:</span>
-                  <span className="text-[#e8e8f0] font-medium capitalize">{formData.preferredMood}</span>
+                  <span className="text-[#e8e8f0] font-medium">{selectedMood.label}</span>
                 </div>
                 <div>
                   <span className="text-[#8888aa] block">Slogani:</span>
                   <span className="text-[#e8e8f0] font-medium">{formData.tagline || '—'}</span>
                 </div>
               </div>
-              <div className="pt-2">
-                <span className="text-[#8888aa] text-sm block mb-2">Seksione shtesë:</span>
-                <div className="flex flex-wrap gap-2">
-                  {(Object.entries(formData.sections) as Array<[keyof FormState['sections'], boolean]>)
-                    .filter(([, on]) => on)
-                    .map(([key]) => (
-                      <span key={key} className="bg-blue-500/10 text-blue-400 rounded-full px-2 py-0.5 text-xs font-medium capitalize">
-                        {key}
-                      </span>
-                    ))}
-                </div>
-              </div>
             </Card>
 
             <Button
-              onClick={generateTheme}
+              onClick={handleGenerate}
               disabled={isGenerating}
               className="w-full bg-gradient-to-r from-blue-500 to-violet-600 text-white font-bold h-12 rounded-xl group"
             >
@@ -410,7 +377,7 @@ export default function WebsiteBuilderWizard() {
         )}
       </div>
 
-      {currentStep < 4 && (
+      {currentStep < 3 && (
         <div className="flex justify-between items-center pt-8 border-t border-[rgba(120,120,255,0.12)]">
           <Button
             variant="ghost"

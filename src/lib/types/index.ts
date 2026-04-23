@@ -1,4 +1,8 @@
-export type IndustryType = 'barbershop' | 'restaurant' | 'clinic' | 'beauty-salon' | 'custom';
+import type { Industry } from '../industries';
+
+export type IndustryType = Industry;
+export type { Industry } from '../industries';
+export { INDUSTRIES, INDUSTRY_LABELS, normalizeIndustry } from '../industries';
 
 export interface SocialLinks {
   instagram: string;

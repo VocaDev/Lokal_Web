@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
+import { normalizeIndustry } from '@/lib/industries';
 
 export const maxDuration = 30;
 
@@ -36,7 +37,8 @@ const INDUSTRY_CONTEXT: Record<string, string> = {
   restaurant: `Kosovar restaurants center on shared meals. Traditional: flija, pite, tavë kosi, qebapa. Coffee culture (macchiato, Turkish). Sunday family gatherings. Outdoor terraces (bahçe). Price: 8-30 EUR.`,
   clinic: `Healthcare clinics blend trust, modernity, family-doctor warmth. Private clinics compete on wait times, equipment, foreign degrees (Germany, Austria). Family recommendations drive growth.`,
   beauty_salon: `Beauty salons serve everyday grooming + big life events. Bridal sessions (4-6 hours), engagement prep, nail art daily. Strong stylist-client loyalty. Price: 15-50 EUR.`,
-  general: `Small Kosovar business. Currency Euro. Major cities: Prishtinë, Prizren, Pejë, Gjakovë, Mitrovicë, Ferizaj, Gjilan. Bilingual audience (Albanian/English).`,
+  gym: `Gyms in Kosovo range from no-frills strength rooms to boutique studios. Core audience: 18-40 with disposable income. Monthly memberships dominate (€25-40). Personal training €15-25/session. Growing interest in group classes, functional fitness, CrossFit. Family/student discounts common.`,
+  other: `Small Kosovar business. Currency Euro. Major cities: Prishtinë, Prizren, Pejë, Gjakovë, Mitrovicë, Ferizaj, Gjilan. Bilingual audience (Albanian/English).`,
 };
 
 export async function POST(request: NextRequest) {
@@ -45,13 +47,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'AI not configured' }, { status: 503 });
     }
 
-    const { businessName, industry, tagline, moodKeywords } = await request.json();
+    const { businessName, industry, industryLabel, tagline, moodKeywords, userProvidedServices } = await request.json();
     if (!businessName || !industry) {
       return NextResponse.json({ error: 'businessName and industry required' }, { status: 400 });
     }
 
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-    const context = INDUSTRY_CONTEXT[industry] || INDUSTRY_CONTEXT.general;
+    const canonical = normalizeIndustry(industry);
+    const context = INDUSTRY_CONTEXT[canonical] || INDUSTRY_CONTEXT.other;
+    const displayIndustry = industryLabel || industry;
 
     const systemPrompt = `You are a senior brand strategist who has positioned 200+ small businesses across Southeast Europe. You do NOT design yet — you THINK.
 
@@ -72,8 +76,9 @@ Every field must be surprising and specific. Output valid JSON matching the sche
 
     const userPrompt = `BUSINESS:
 - Name: ${businessName}
-- Industry: ${industry}
+- Industry: ${displayIndustry}
 - Owner's description: ${tagline || '(none provided)'}
+- Services the owner provides: ${userProvidedServices || '(none specified)'}
 - Mood keywords: ${(moodKeywords || []).join(', ') || '(none)'}
 
 INDUSTRY CONTEXT:

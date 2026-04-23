@@ -15,6 +15,7 @@ import { Card } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { INDUSTRIES, INDUSTRY_LABELS, normalizeIndustry } from '@/lib/industries'
 import GenerationLoader, { Brief, LoaderStage } from './GenerationLoader'
 import VariantPicker, { Variant } from './VariantPicker'
 
@@ -68,22 +69,17 @@ export const MOODS = [
   },
 ] as const
 
-const INDUSTRY_SUGGESTIONS = [
-  'Berber',
-  'Restorant',
-  'Klinikë',
-  'Sallon Bukurie',
-  'Kafene',
-  'Gym',
-  'Fotograf',
-  'Tjetër',
-]
+const INDUSTRY_CHIPS = INDUSTRIES.map((id) => ({
+  id,
+  label: INDUSTRY_LABELS[id].sq,
+}))
 
 interface FormState {
   businessName: string
-  industry: string
+  industry: string          // raw user text (may be free-text)
   tagline: string
   moodId: string
+  userProvidedServices: string
 }
 
 export default function WebsiteBuilderWizard() {
@@ -100,6 +96,7 @@ export default function WebsiteBuilderWizard() {
     industry: '',
     tagline: '',
     moodId: 'premium',
+    userProvidedServices: '',
   })
 
   useEffect(() => {
@@ -136,7 +133,20 @@ export default function WebsiteBuilderWizard() {
     })()
   }, [router])
 
-  const nextStep = () => {
+  const persistIndustry = async () => {
+    if (!businessId) return
+    const canonical = normalizeIndustry(formData.industry)
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('businesses')
+      .update({ industry: canonical })
+      .eq('id', businessId)
+    if (error) {
+      console.error('[wizard] persistIndustry failed (non-fatal):', error)
+    }
+  }
+
+  const nextStep = async () => {
     if (currentStep === 1) {
       if (!formData.businessName || formData.businessName.length < 2) {
         toast.error('Ju lutem shënoni emrin e biznesit (min. 2 karaktere)')
@@ -146,6 +156,9 @@ export default function WebsiteBuilderWizard() {
         toast.error('Ju lutem shënoni industrinë (min. 2 karaktere)')
         return
       }
+      // Persist the canonical industry to the businesses row before we advance.
+      // Non-fatal if it fails — log + continue.
+      await persistIndustry()
     }
     if (currentStep === 2 && !formData.moodId) {
       toast.error('Ju lutem zgjidhni një mood')
@@ -169,14 +182,18 @@ export default function WebsiteBuilderWizard() {
     try {
       const moodKeywords = MOODS.find((m) => m.id === formData.moodId)?.keywords ?? []
 
+      const canonicalIndustry = normalizeIndustry(formData.industry)
+
       const briefRes = await fetch('/api/brand-brief', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           businessName: formData.businessName,
-          industry: formData.industry,
+          industry: canonicalIndustry,
+          industryLabel: formData.industry,
           tagline: formData.tagline,
           moodKeywords,
+          userProvidedServices: formData.userProvidedServices,
         }),
       })
       if (!briefRes.ok) {
@@ -194,7 +211,8 @@ export default function WebsiteBuilderWizard() {
         body: JSON.stringify({
           brief: briefData.brief,
           businessName: formData.businessName,
-          industry: formData.industry,
+          industry: canonicalIndustry,
+          userProvidedServices: formData.userProvidedServices,
         }),
       }).then(async (r) => {
         if (!r.ok) {
@@ -281,19 +299,19 @@ export default function WebsiteBuilderWizard() {
               <div className="space-y-3">
                 <label className="text-sm font-medium text-[#e8e8f0]">Industria</label>
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {INDUSTRY_SUGGESTIONS.map(sugg => (
+                  {INDUSTRY_CHIPS.map(chip => (
                     <button
-                      key={sugg}
+                      key={chip.id}
                       type="button"
-                      onClick={() => setFormData(p => ({ ...p, industry: sugg }))}
+                      onClick={() => setFormData(p => ({ ...p, industry: chip.label }))}
                       className={cn(
                         'px-3 py-1 rounded-full text-xs transition-all border',
-                        formData.industry === sugg
+                        normalizeIndustry(formData.industry) === chip.id
                           ? 'bg-blue-500/20 border-blue-500 text-blue-400'
                           : 'bg-[#0a0a0f] border-[rgba(120,120,255,0.12)] text-[#8888aa] hover:border-[rgba(120,120,255,0.3)]'
                       )}
                     >
-                      {sugg}
+                      {chip.label}
                     </button>
                   ))}
                 </div>
@@ -303,6 +321,19 @@ export default function WebsiteBuilderWizard() {
                   onChange={(e) => setFormData(p => ({ ...p, industry: e.target.value }))}
                   className="bg-[#1e1e35] border-[rgba(120,120,255,0.22)] text-[#e8e8f0] focus:border-blue-500"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[#e8e8f0]">Çfarë shërbimesh ofron? (Opsionale)</label>
+                <Input
+                  placeholder="p.sh. qethje, fade, rregullim mjekre, brisk"
+                  value={formData.userProvidedServices}
+                  onChange={(e) => setFormData(p => ({ ...p, userProvidedServices: e.target.value }))}
+                  className="bg-[#1e1e35] border-[rgba(120,120,255,0.22)] text-[#e8e8f0] focus:border-blue-500"
+                />
+                <p className="text-xs text-[#5a5a7a]">
+                  Opsionale. Shërbimet e listuara e ndihmojnë AI-n të ndërtojë më mirë faqen tënde.
+                </p>
               </div>
 
               <div className="space-y-2">

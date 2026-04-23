@@ -136,7 +136,7 @@ export default function RegisterPage() {
             owner_id: data.user.id,
             subdomain: form.subdomain,
             name: form.subdomain, // temp placeholder
-            industry: 'general', // temp placeholder
+            industry: 'other', // canonical placeholder — user picks real industry in wizard/profile
             website_builder_completed: false
           });
 

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from "react";
 import { Business, IndustryType } from "@/lib/types";
+import { normalizeIndustry } from "@/lib/industries";
 import { saveBusiness, getCurrentBusiness } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ const templates = [
   { id: "classic", name: "Classic Barbershop", industry: "barbershop" },
   { id: "bold", name: "Barbershop Bold", industry: "barbershop" },
   { id: "clinic", name: "Modern Clinic", industry: "clinic" },
-  { id: "salon", name: "Elegant Salon", industry: "beauty-salon" },
+  { id: "salon", name: "Elegant Salon", industry: "beauty_salon" },
   { id: "restaurant", name: "Minimal Restaurant", industry: "restaurant" },
 ];
 
@@ -37,7 +38,7 @@ export default function ProfilePage() {
         if (biz) {
           setBusiness(biz);
           setForm({
-            industry: biz.industry,
+            industry: normalizeIndustry(biz.industry),
             template: biz.template || "classic",
             phone: biz.phone,
             address: biz.address,
@@ -92,8 +93,9 @@ export default function ProfilePage() {
                     <SelectItem value="barbershop">Barbershop</SelectItem>
                     <SelectItem value="restaurant">Restaurant</SelectItem>
                     <SelectItem value="clinic">Clinic</SelectItem>
-                    <SelectItem value="beauty-salon">Beauty Salon</SelectItem>
-                    <SelectItem value="custom">Custom (Development)</SelectItem>
+                    <SelectItem value="beauty_salon">Beauty Salon</SelectItem>
+                    <SelectItem value="gym">Gym</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -106,8 +108,8 @@ export default function ProfilePage() {
                     {templates.filter(t => t.industry === form.industry).map(t => (
                       <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                     ))}
-                    {form.industry === 'custom' && (
-                      <SelectItem value="bold">Test Template (Custom)</SelectItem>
+                    {form.industry === 'other' && (
+                      <SelectItem value="bold">Test Template (Generic)</SelectItem>
                     )}
                   </SelectContent>
                 </Select>

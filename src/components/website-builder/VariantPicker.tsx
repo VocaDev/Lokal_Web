@@ -35,12 +35,15 @@ type Props = {
   onRegenerate: () => void;
 };
 
+const PUBLIC_HOST = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lokal-web-one.vercel.app';
+
 export default function VariantPicker({ variants, businessId, onRegenerate }: Props) {
   const router = useRouter();
   const { toast } = useToast();
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [applyingIdx, setApplyingIdx] = useState<number | null>(null);
   const [published, setPublished] = useState(false);
+  const [publishedSubdomain, setPublishedSubdomain] = useState<string | null>(null);
 
   const apply = async (variant: Variant, idx: number) => {
     setSelectedIdx(idx);
@@ -51,12 +54,13 @@ export default function VariantPicker({ variants, businessId, onRegenerate }: Pr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ businessId, theme: variant }),
       });
+      const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to publish');
+        throw new Error(body.error || 'Failed to publish');
       }
+      setPublishedSubdomain(body.subdomain ?? null);
       setPublished(true);
-      setTimeout(() => router.push('/dashboard/customization'), 1800);
+      // No auto-redirect — user dismisses via the modal buttons.
     } catch (err: any) {
       toast({ title: 'Publish failed', description: err.message, variant: 'destructive' });
       setApplyingIdx(null);
@@ -65,6 +69,8 @@ export default function VariantPicker({ variants, businessId, onRegenerate }: Pr
   };
 
   if (published) {
+    const siteUrl = publishedSubdomain ? `https://${publishedSubdomain}.${PUBLIC_HOST}` : null;
+    const siteLabel = publishedSubdomain ? `${publishedSubdomain}.${PUBLIC_HOST}` : 'Your website is live';
     return (
       <div className="fixed inset-0 z-50 bg-[#0a0a0f] flex items-center justify-center p-6 animate-in fade-in duration-500">
         <div className="text-center space-y-6 max-w-md">
@@ -77,7 +83,25 @@ export default function VariantPicker({ variants, businessId, onRegenerate }: Pr
           <h2 className="text-4xl font-bold bg-gradient-to-br from-blue-400 to-violet-500 bg-clip-text text-transparent">
             Your website is live
           </h2>
-          <p className="text-[#8888aa]">Taking you to your dashboard...</p>
+          <p className="text-[#8888aa] break-all">{siteLabel}</p>
+          <div className="flex gap-3 justify-center pt-4 flex-wrap">
+            {siteUrl && (
+              <a
+                href={siteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-gradient-to-r from-blue-500 to-violet-600 text-white font-semibold rounded-lg px-6 py-3 hover:opacity-90 transition"
+              >
+                Open my website →
+              </a>
+            )}
+            <button
+              onClick={() => router.push('/dashboard/customization')}
+              className="border border-[rgba(120,120,255,0.22)] text-[#e8e8f0] font-medium rounded-lg px-6 py-3 hover:bg-[rgba(255,255,255,0.04)] transition"
+            >
+              Customize more
+            </button>
+          </div>
         </div>
       </div>
     );

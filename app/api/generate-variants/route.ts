@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
+import { normalizeIndustry, type Industry } from '@/lib/industries';
 
 export const maxDuration = 60;
 
@@ -61,6 +62,19 @@ const THEME_SCHEMA = {
           required: ['question', 'answer'],
         },
       },
+      services: {
+        type: 'array', minItems: 4, maxItems: 6,
+        items: {
+          type: 'object', additionalProperties: false,
+          properties: {
+            name: { type: 'string' },
+            description: { type: 'string' },
+            price: { type: 'number' },
+            durationMinutes: { type: 'number' },
+          },
+          required: ['name', 'description', 'price', 'durationMinutes'],
+        },
+      },
       showTestimonials: { type: 'boolean' },
       showTeam: { type: 'boolean' },
       showContact: { type: 'boolean' },
@@ -72,7 +86,7 @@ const THEME_SCHEMA = {
       'headingFont', 'bodyFont', 'heroHeight', 'cardStyle',
       'heroHeadline', 'heroSubheadline', 'aboutCopy',
       'ctaPrimary', 'ctaSecondary', 'footerTagline', 'metaDescription',
-      'valueProps', 'testimonials', 'faq',
+      'valueProps', 'testimonials', 'faq', 'services',
       'showTestimonials', 'showTeam', 'showContact',
     ],
   },
@@ -105,12 +119,30 @@ async function generateVariant(
   brief: any,
   businessName: string,
   industry: string,
+  canonicalIndustry: Industry,
+  userProvidedServices: string,
   direction: typeof VARIANT_DIRECTIONS[0],
 ) {
   const systemPrompt = `You are a senior designer translating a brand strategy brief into a complete website theme.
 
 YOUR DIRECTION — ${direction.name}:
 ${direction.directive}
+
+REALISTIC PRICING (Kosovo market, EUR — use these anchors when generating the services array):
+- barbershop: €5-25 (haircut €8-12, fade €10-15, straight razor €15-25, full package €20-30)
+- restaurant: menu items €4-15 (appetizer €4-7, main €8-15, dessert €4-7)
+- clinic: consultations €25-80 (general consult €25-40, specialist €50-80, procedure €40-150)
+- beauty_salon: services €15-50 (manicure €15-20, pedicure €20-30, haircut+style €25-40, bridal €50-150)
+- gym: services €10-40 (day pass €5-10, monthly membership €25-40, personal training €15-25/session)
+- other: infer reasonable prices from the user's description
+
+THIS BUSINESS'S INDUSTRY: ${canonicalIndustry} (use the matching price range above)
+Each service MUST have a realistic duration in minutes (15, 30, 45, 60, 90, 120).
+
+USER-PROVIDED SERVICES (gospel — build the services array around these exact offerings):
+${userProvidedServices || '(none provided — infer 4-5 typical services for this industry)'}
+
+If the user listed services, each entry in your services array MUST correspond to one of them (keep their names, translate only if the site copy language differs). Do not invent unrelated offerings when the user has been specific.
 
 FEW-SHOT — HERO HEADLINES
 
@@ -209,17 +241,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'AI not configured' }, { status: 503 });
     }
 
-    const { brief, businessName, industry } = await request.json();
+    const { brief, businessName, industry, userProvidedServices } = await request.json();
     if (!brief || !businessName || !industry) {
       return NextResponse.json({ error: 'brief, businessName, industry required' }, { status: 400 });
     }
 
+    const canonical = normalizeIndustry(industry);
+    const services = userProvidedServices || '';
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-    console.log('[generate-variants] Generating 2 variants in parallel');
+    console.log('[generate-variants] Generating 2 variants in parallel', { canonical, hasUserServices: !!services });
     let [variantA, variantB] = await Promise.all([
-      generateVariant(groq, brief, businessName, industry, VARIANT_DIRECTIONS[0]),
-      generateVariant(groq, brief, businessName, industry, VARIANT_DIRECTIONS[1]),
+      generateVariant(groq, brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[0]),
+      generateVariant(groq, brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[1]),
     ]);
 
     const valA = validateVariant(variantA);
@@ -227,11 +261,11 @@ export async function POST(request: NextRequest) {
 
     if (!valA.valid) {
       console.warn('[generate-variants] Variant A failed, regenerating:', valA.reasons);
-      variantA = await generateVariant(groq, brief, businessName, industry, VARIANT_DIRECTIONS[0]);
+      variantA = await generateVariant(groq, brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[0]);
     }
     if (!valB.valid) {
       console.warn('[generate-variants] Variant B failed, regenerating:', valB.reasons);
-      variantB = await generateVariant(groq, brief, businessName, industry, VARIANT_DIRECTIONS[1]);
+      variantB = await generateVariant(groq, brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[1]);
     }
 
     return NextResponse.json({ success: true, variants: [variantA, variantB] });

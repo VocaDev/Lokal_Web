@@ -39,8 +39,8 @@ const templates = [
   { id: "modern", name: "Clinic Modern", industry: "clinic", preview: "/screenshots/clinic-modern.png" },
   { id: "premium", name: "Clinic Premium", industry: "clinic", preview: "/screenshots/clinic-premium.png" },
   // Beauty Salon
-  { id: "luxury", name: "Beauty Luxury", industry: "beauty-salon", preview: "/screenshots/beauty-salon-luxury.png" },
-  { id: "minimal", name: "Beauty Minimal", industry: "beauty-salon", preview: "/screenshots/beauty-salon-minimal.png" },
+  { id: "luxury", name: "Beauty Luxury", industry: "beauty_salon", preview: "/screenshots/beauty-salon-luxury.png" },
+  { id: "minimal", name: "Beauty Minimal", industry: "beauty_salon", preview: "/screenshots/beauty-salon-minimal.png" },
 ];
 
 export default function NewBusinessPage() {
@@ -227,7 +227,9 @@ export default function NewBusinessPage() {
                   <SelectItem value="barbershop">Barbershop</SelectItem>
                   <SelectItem value="restaurant">Restaurant</SelectItem>
                   <SelectItem value="clinic">Clinic</SelectItem>
-                  <SelectItem value="beauty-salon">Beauty Salon</SelectItem>
+                  <SelectItem value="beauty_salon">Beauty Salon</SelectItem>
+                  <SelectItem value="gym">Gym</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>

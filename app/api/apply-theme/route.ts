@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    const { error: bizErr } = await supabase
+    const { data: bizUpdated, error: bizErr } = await supabase
       .from('businesses')
       .update({
         template_id: theme.templateId,
@@ -18,9 +18,12 @@ export async function POST(request: NextRequest) {
         website_builder_completed: true,
         custom_website_html: null,
       })
-      .eq('id', businessId);
+      .eq('id', businessId)
+      .select('subdomain')
+      .maybeSingle();
 
     if (bizErr) throw new Error(`Business update: ${bizErr.message}`);
+    const subdomain = bizUpdated?.subdomain ?? null;
 
     const payload: Record<string, any> = {
       business_id: businessId,
@@ -65,7 +68,40 @@ export async function POST(request: NextRequest) {
 
     if (error) throw new Error(`Customization: ${error.message}`);
 
-    return NextResponse.json({ success: true });
+    // 3. Write AI-generated services to the services table.
+    // Clear existing services for this business (in case of regeneration),
+    // then insert the new AI-generated rows. Non-fatal if it fails — owner
+    // can still add services manually via /dashboard/services.
+    if (Array.isArray(theme.services) && theme.services.length > 0) {
+      const { error: delErr } = await supabase
+        .from('services')
+        .delete()
+        .eq('business_id', businessId);
+      if (delErr) {
+        console.error('[apply-theme] Failed to clear existing services:', delErr);
+      }
+
+      const serviceRows = theme.services
+        .filter((s: any) => s && typeof s.name === 'string' && s.name.trim().length > 0)
+        .map((s: any) => ({
+          business_id: businessId,
+          name: String(s.name).trim(),
+          description: typeof s.description === 'string' ? s.description : '',
+          price: typeof s.price === 'number' ? s.price : 0,
+          duration_minutes: typeof s.durationMinutes === 'number' ? s.durationMinutes : 30,
+        }));
+
+      if (serviceRows.length > 0) {
+        const { error: servicesError } = await supabase
+          .from('services')
+          .insert(serviceRows);
+        if (servicesError) {
+          console.error('[apply-theme] Failed to insert services (non-fatal):', servicesError);
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true, subdomain });
   } catch (error: any) {
     console.error('[apply-theme]', error?.message || error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });

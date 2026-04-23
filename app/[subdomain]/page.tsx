@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Business, BusinessHours, Service } from "@/lib/types";
+import { normalizeIndustry } from "@/lib/industries";
 import TemplateRouter from "@/components/templates";
 
 export async function generateMetadata({ params }: { params: Promise<{ subdomain: string }> }) {
@@ -63,7 +64,7 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
     id: bizData.id,
     name: bizData.name,
     subdomain: bizData.subdomain,
-    industry: bizData.industry,
+    industry: normalizeIndustry(bizData.industry),
     template: bizData.template_id || 'bold',
     templateId: bizData.template_id ?? undefined,
     phone: bizData.phone,

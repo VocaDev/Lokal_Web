@@ -15,6 +15,10 @@ import { Card } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import GenerationLoader, { Brief, LoaderStage } from './GenerationLoader'
+import VariantPicker, { Variant } from './VariantPicker'
+
+type Phase = 'form' | LoaderStage | 'picking'
 
 export const MOODS = [
   {
@@ -85,7 +89,9 @@ interface FormState {
 export default function WebsiteBuilderWizard() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
-  const [isGenerating, setIsGenerating] = useState(false)
+  const [phase, setPhase] = useState<Phase>('form')
+  const [brief, setBrief] = useState<Brief>(null)
+  const [variants, setVariants] = useState<Variant[] | null>(null)
   const [businessId, setBusinessId] = useState<string | null>(null)
   const [bootstrapping, setBootstrapping] = useState(true)
 
@@ -157,27 +163,57 @@ export default function WebsiteBuilderWizard() {
       toast.error('Biznesi nuk u gjet. Ju lutem rifreskoni faqen.')
       return
     }
-    setIsGenerating(true)
+    setPhase('thinking')
+    setBrief(null)
+    setVariants(null)
     try {
-      const res = await fetch('/api/generate-website', {
+      const moodKeywords = MOODS.find((m) => m.id === formData.moodId)?.keywords ?? []
+
+      const briefRes = await fetch('/api/brand-brief', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          businessId,
           businessName: formData.businessName,
           industry: formData.industry,
           tagline: formData.tagline,
-          preferredMood: formData.moodId,
-          sections: { testimonials: true, team: false, contact: true },
+          moodKeywords,
         }),
       })
-      const data = await res.json()
-      if (!res.ok || data.error) throw new Error(data.error || `Request failed (${res.status})`)
-      toast.success('Tema u gjenerua! Mund ta personalizoni më tutje këtu.')
-      router.push('/dashboard/customization')
+      if (!briefRes.ok) {
+        const err = await briefRes.json()
+        throw new Error(err.error || `Brief generation failed (${briefRes.status})`)
+      }
+      const briefData = await briefRes.json()
+      setBrief(briefData.brief)
+      setPhase('brief-revealing')
+
+      const revealMin = new Promise<void>((resolve) => setTimeout(resolve, 4500))
+      const variantsPromise = fetch('/api/generate-variants', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brief: briefData.brief,
+          businessName: formData.businessName,
+          industry: formData.industry,
+        }),
+      }).then(async (r) => {
+        if (!r.ok) {
+          const err = await r.json()
+          throw new Error(err.error || `Variants generation failed (${r.status})`)
+        }
+        return r.json() as Promise<{ variants: Variant[] }>
+      })
+
+      const [, variantsData] = await Promise.all([revealMin, variantsPromise])
+
+      setPhase('designing')
+      await new Promise<void>((resolve) => setTimeout(resolve, 1000))
+
+      setVariants(variantsData.variants)
+      setPhase('picking')
     } catch (error: any) {
       toast.error(error.message || 'Dështoi gjenerimi i temës')
-      setIsGenerating(false)
+      setPhase('form')
     }
   }
 
@@ -186,6 +222,20 @@ export default function WebsiteBuilderWizard() {
       <div className="min-h-[400px] flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-[#4f8ef7] animate-spin" />
       </div>
+    )
+  }
+
+  if (phase === 'thinking' || phase === 'brief-revealing' || phase === 'designing') {
+    return <GenerationLoader stage={phase} brief={brief} />
+  }
+
+  if (phase === 'picking' && variants && businessId) {
+    return (
+      <VariantPicker
+        variants={variants}
+        businessId={businessId}
+        onRegenerate={handleGenerate}
+      />
     )
   }
 
@@ -358,20 +408,10 @@ export default function WebsiteBuilderWizard() {
 
             <Button
               onClick={handleGenerate}
-              disabled={isGenerating}
               className="w-full bg-gradient-to-r from-blue-500 to-violet-600 text-white font-bold h-12 rounded-xl group"
             >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Duke dizajnuar website-in tuaj...
-                </>
-              ) : (
-                <>
-                  Gjenero Temën
-                  <Sparkles className="w-5 h-5 ml-2 group-hover:rotate-12 transition-transform" />
-                </>
-              )}
+              Gjenero Temën
+              <Sparkles className="w-5 h-5 ml-2 group-hover:rotate-12 transition-transform" />
             </Button>
           </div>
         )}
@@ -382,7 +422,7 @@ export default function WebsiteBuilderWizard() {
           <Button
             variant="ghost"
             onClick={prevStep}
-            disabled={currentStep === 1 || isGenerating}
+            disabled={currentStep === 1}
             className={cn(
               'text-[#8888aa] hover:text-[#e8e8f0] hover:bg-[#151522]',
               currentStep === 1 ? 'invisible' : ''

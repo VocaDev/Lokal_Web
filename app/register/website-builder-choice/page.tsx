@@ -63,8 +63,8 @@ export default async function WebsiteBuilderChoicePage() {
               <p className="text-[#8888aa] mb-8 flex-1">
                 Zgjidhni nga libraria jonë e template-ve profesionale dhe shkoni live menjëherë duke shtuar informacionin tuaj.
               </p>
-              <Link 
-                href="/dashboard/website-builder/template-select"
+              <Link
+                href="/dashboard/customization"
                 className="inline-flex items-center justify-center w-full border border-[rgba(120,120,255,0.22)] text-[#e8e8f0] font-bold py-4 rounded-xl transition-all duration-300 hover:bg-[#1e1e35] group/btn"
               >
                 Eksploro Templates

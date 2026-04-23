@@ -177,8 +177,9 @@ Generate the theme as ${direction.name}.`;
     ],
     response_format: { type: 'json_schema', json_schema: THEME_SCHEMA },
     temperature: direction.temperature,
-    max_completion_tokens: 3500,
-  });
+    max_completion_tokens: 8000,
+    reasoning_effort: 'low',
+  } as any);
 
   return JSON.parse(completion.choices[0]?.message?.content || '{}');
 }

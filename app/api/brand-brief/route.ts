@@ -89,8 +89,9 @@ Write the brief. Every field must be specific enough that it couldn't describe a
       ],
       response_format: { type: 'json_schema', json_schema: BRAND_BRIEF_SCHEMA },
       temperature: 0.3,
-      max_completion_tokens: 800,
-    });
+      max_completion_tokens: 4000,
+      reasoning_effort: 'low',
+    } as any);
 
     const raw = completion.choices[0]?.message?.content || '{}';
     const brief = JSON.parse(raw);

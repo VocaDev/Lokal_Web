@@ -34,3 +34,5 @@ public/workbox-*.js
 # Notes
 Notes per Permirsim.md
 docs/Project Overview.md
+
+tsconfig.tsbuildinfo

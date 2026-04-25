@@ -1,11 +1,11 @@
 /**
  * Stage 1: Brand Brief Generator
- * Model: openai/gpt-oss-120b (Groq) with strict JSON schema
+ * Model: claude-haiku-4-5 (Anthropic) with JSON-only system instruction
  * Returns a 5-field strategic brief in ~2 seconds
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import Groq from 'groq-sdk';
+import { anthropic } from '@/lib/anthropic';
 import { normalizeIndustry } from '@/lib/industries';
 
 export const maxDuration = 30;
@@ -43,7 +43,7 @@ const INDUSTRY_CONTEXT: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!process.env.GROQ_API_KEY) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json({ error: 'AI not configured' }, { status: 503 });
     }
 
@@ -52,7 +52,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'businessName and industry required' }, { status: 400 });
     }
 
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
     const canonical = normalizeIndustry(industry);
     const context = INDUSTRY_CONTEXT[canonical] || INDUSTRY_CONTEXT.other;
     const displayIndustry = industryLabel || industry;
@@ -87,19 +86,18 @@ ${context}
 
 Write the brief. Every field must be specific enough that it couldn't describe a competitor.`;
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.1-8b-instant',
+    const response = await anthropic.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 2000,
+      temperature: 0.3,
+      system: systemPrompt,
       messages: [
-        { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
-      max_completion_tokens: 2000,
-    } as any);
+    });
 
-    const raw = completion.choices[0]?.message?.content || '{}';
-    const brief = JSON.parse(raw);
+    const text = response.content[0].type === 'text' ? response.content[0].text : '';
+    const brief = JSON.parse(text.trim());
     console.log('[brand-brief]', JSON.stringify(brief, null, 2));
 
     return NextResponse.json({ success: true, brief });

@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import Groq from 'groq-sdk';
+import { anthropic } from '@/lib/anthropic';
 import { normalizeIndustry, type Industry } from '@/lib/industries';
 
 export const maxDuration = 60;
@@ -115,7 +115,6 @@ const VARIANT_DIRECTIONS = [
 ];
 
 async function generateVariant(
-  groq: Groq,
   brief: any,
   businessName: string,
   industry: string,
@@ -124,6 +123,9 @@ async function generateVariant(
   direction: typeof VARIANT_DIRECTIONS[0],
 ) {
   const systemPrompt = `You are a senior designer translating a brand strategy brief into a complete website theme.
+
+CRITICAL: The price field in every service MUST be a number (integer), never a string. Use the midpoint if a range is intended. Example: 25 not "20-30 Eur".
+The icon field in valueProps MUST always be a non-empty emoji string. Never leave it empty.
 
 YOUR DIRECTION — ${direction.name}:
 ${direction.directive}
@@ -202,18 +204,18 @@ BUSINESS:
 
 Generate the theme as ${direction.name}.`;
 
-  const completion = await groq.chat.completions.create({
-    model: 'llama-3.1-8b-instant',
+  const response = await anthropic.messages.create({
+    model: 'claude-haiku-4-5',
+    max_tokens: 4096,
+    temperature: direction.temperature,
+    system: systemPrompt,
     messages: [
-      { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
     ],
-    response_format: { type: 'json_object' },
-    temperature: direction.temperature,
-    max_completion_tokens: 3000,
-  } as any);
+  });
 
-  return JSON.parse(completion.choices[0]?.message?.content || '{}');
+  const text = response.content[0].type === 'text' ? response.content[0].text : '';
+  return JSON.parse(text.trim() || '{}');
 }
 
 function validateVariant(v: any): { valid: boolean; reasons: string[] } {
@@ -237,7 +239,7 @@ function validateVariant(v: any): { valid: boolean; reasons: string[] } {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!process.env.GROQ_API_KEY) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json({ error: 'AI not configured' }, { status: 503 });
     }
 
@@ -248,12 +250,11 @@ export async function POST(request: NextRequest) {
 
     const canonical = normalizeIndustry(industry);
     const services = userProvidedServices || '';
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
     console.log('[generate-variants] Generating 2 variants in parallel', { canonical, hasUserServices: !!services });
     let [variantA, variantB] = await Promise.all([
-      generateVariant(groq, brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[0]),
-      generateVariant(groq, brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[1]),
+      generateVariant(brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[0]),
+      generateVariant(brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[1]),
     ]);
 
     const valA = validateVariant(variantA);
@@ -261,11 +262,11 @@ export async function POST(request: NextRequest) {
 
     if (!valA.valid) {
       console.warn('[generate-variants] Variant A failed, regenerating:', valA.reasons);
-      variantA = await generateVariant(groq, brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[0]);
+      variantA = await generateVariant(brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[0]);
     }
     if (!valB.valid) {
       console.warn('[generate-variants] Variant B failed, regenerating:', valB.reasons);
-      variantB = await generateVariant(groq, brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[1]);
+      variantB = await generateVariant(brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[1]);
     }
 
     return NextResponse.json({ success: true, variants: [variantA, variantB] });

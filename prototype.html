@@ -1,0 +1,2222 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LokalWeb — Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Blue scale (primary) */
+      --blue-700: #1e40af;
+      --blue-600: #1d4ed8;
+      --blue-500: #2563eb;
+      --blue-400: #60a5fa;
+      --blue-tint-12: rgba(29,78,216,0.12);
+      --blue-tint-08: rgba(29,78,216,0.08);
+      --blue-tint-04: rgba(29,78,216,0.04);
+
+      /* Neutrals — strictly cool, NO warm tint */
+      --paper: #ffffff;
+      --surface: #f7f8fa;
+      --surface-2: #eef0f4;
+      --surface-3: #e3e6ec;
+
+      /* Ink */
+      --ink: #0a0c10;
+      --ink-2: #3a414e;
+      --ink-3: #6b7280;
+      --ink-4: #9ca3af;
+
+      /* Borders */
+      --border: rgba(10,12,16,0.08);
+      --border-2: rgba(10,12,16,0.14);
+      --border-strong: rgba(10,12,16,0.22);
+
+      /* Semantic */
+      --success: #15803d;
+      --success-bg: rgba(21,128,61,0.08);
+      --warning: #b45309;
+      --warning-bg: rgba(180,83,9,0.08);
+      --danger: #b91c1c;
+      --danger-bg: rgba(185,28,28,0.08);
+
+      /* Radius scale */
+      --r-xs: 4px;
+      --r-sm: 6px;
+      --r: 8px;
+      --r-lg: 10px;
+      --r-xl: 14px;
+
+      /* Spacing scale */
+      --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px;
+      --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+      --s-12: 48px; --s-16: 64px; --s-20: 80px; --s-24: 96px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Geist', sans-serif;
+      font-feature-settings: 'cv02', 'cv03', 'cv04';
+      background-color: var(--surface-2);
+      color: var(--ink-2);
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* TYPOGRAPHY */
+    h1, h2, h3, h4, .headline { color: var(--ink); font-weight: 600; }
+    .display { font-size: clamp(40px, 6vw, 68px); letter-spacing: -0.03em; line-height: 1.02; }
+    .display.heavy { font-weight: 700; letter-spacing: -0.04em; }
+    .heading-2 { font-size: clamp(28px, 4vw, 42px); letter-spacing: -0.025em; line-height: 1.1; }
+    
+    .eyebrow {
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--blue-600);
+      margin-bottom: var(--s-3);
+      display: block;
+    }
+    .mono { font-family: 'Geist Mono', monospace; }
+    i, em, .italic-accent { font-style: italic; }
+    .text-blue { color: var(--blue-600); }
+    .text-ink { color: var(--ink); }
+
+    /* COMPONENTS */
+    a { color: var(--blue-600); text-decoration: none; transition: opacity 0.15s; }
+    a:hover { opacity: 0.8; }
+    
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px 18px; font-family: inherit; font-weight: 500; font-size: 14px;
+      line-height: 1; border: 1px solid transparent; border-radius: var(--r-sm);
+      cursor: pointer; transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--blue-600); color: #fff; }
+    .btn-primary:hover { background: var(--blue-700); }
+    .btn-secondary { background: var(--paper); color: var(--ink); border-color: var(--border-2); }
+    .btn-secondary:hover { background: var(--surface); border-color: var(--border-strong); }
+    .btn-ghost { background: transparent; color: var(--ink-2); }
+    .btn-ghost:hover { background: var(--surface); color: var(--ink); }
+    .btn-lg { padding: 12px 22px; font-size: 15px; }
+    .btn-sm { padding: 7px 14px; font-size: 13px; }
+    .btn-icon { padding: 8px; border-radius: var(--r-sm); background: var(--surface-2); color: var(--ink-2); border: none; cursor: pointer; }
+    .btn-icon:hover { background: var(--surface-3); color: var(--ink); }
+
+    .input {
+      background: var(--paper); border: 1px solid var(--border-2);
+      border-radius: var(--r-sm); padding: 10px 14px;
+      font-family: 'Geist', sans-serif; font-size: 14px; color: var(--ink);
+      width: 100%; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input:focus { border-color: var(--blue-600); box-shadow: 0 0 0 3px var(--blue-tint-12); }
+    .input::placeholder { color: var(--ink-4); }
+    .label { display: block; font-size: 13px; font-weight: 500; margin-bottom: var(--s-1); color: var(--ink); }
+
+    .card { background: var(--paper); border: 1px solid var(--border); border-radius: var(--r); padding: var(--s-5); transition: border-color 0.15s; }
+    .card:hover { border-color: var(--border-strong); }
+    .card-elevated { background: var(--paper); border: 1px solid var(--border-2); border-radius: var(--r); padding: var(--s-5); }
+    
+    .badge {
+      font-family: 'Geist Mono', monospace; text-transform: uppercase; letter-spacing: 0.04em;
+      font-size: 11px; padding: 3px 8px; border-radius: var(--r-xs); display: inline-block; font-weight: 500;
+    }
+    .badge-blue { background: var(--blue-tint-12); color: var(--blue-600); }
+    .badge-success { background: var(--success-bg); color: var(--success); }
+    .badge-warning { background: var(--warning-bg); color: var(--warning); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger); }
+    .badge-neutral { background: var(--surface-3); color: var(--ink-2); }
+
+    .pulse-dot {
+      width: 8px; height: 8px; background: var(--success); border-radius: 50%;
+      display: inline-block; box-shadow: 0 0 0 0 rgba(21, 128, 61, 0.4);
+      animation: pulse 2s infinite ease-in-out;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(21, 128, 61, 0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(21, 128, 61, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(21, 128, 61, 0); }
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .gap-1 { gap: var(--s-1); }
+    .gap-2 { gap: var(--s-2); }
+    .gap-3 { gap: var(--s-3); }
+    .gap-4 { gap: var(--s-4); }
+    .gap-6 { gap: var(--s-6); }
+    .gap-8 { gap: var(--s-8); }
+    .grid { display: grid; }
+    .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .text-center { text-align: center; }
+    .w-full { width: 100%; }
+    .h-full { height: 100%; }
+    .mt-4 { margin-top: var(--s-4); }
+    .mt-8 { margin-top: var(--s-8); }
+    .mb-2 { margin-bottom: var(--s-2); }
+    .mb-4 { margin-bottom: var(--s-4); }
+    .mb-6 { margin-bottom: var(--s-6); }
+    .mb-8 { margin-bottom: var(--s-8); }
+    .py-10 { padding-top: var(--s-10); padding-bottom: var(--s-10); }
+    .py-20 { padding-top: var(--s-20); padding-bottom: var(--s-20); }
+    .px-6 { padding-left: var(--s-6); padding-right: var(--s-6); }
+    .opacity-60 { opacity: 0.6; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
+    
+    .divider { height: 1px; background: var(--border); width: 100%; }
+
+    /* LAYOUT & SHELL */
+    .shell-container {
+      display: flex; justify-content: center; align-items: flex-start;
+      min-height: 100vh; padding: 32px 20px 120px 20px;
+      background: var(--surface-2);
+    }
+
+    .shell {
+      width: 100%;
+      background: var(--surface);
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .shell.desktop {
+      max-width: 1280px;
+      margin: 0 auto;
+      min-height: 90vh;
+      border-radius: var(--r-xs);
+      box-shadow: 0 12px 48px rgba(0,0,0,0.08);
+    }
+
+    .shell.mobile {
+      max-width: 390px;
+      margin: 0 auto;
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 0 0 8px var(--ink), 0 24px 60px rgba(0,0,0,0.45);
+      min-height: 844px;
+      height: 844px;
+    }
+
+    /* FRAMES */
+    .frame { display: none; width: 100%; height: 100%; }
+    .frame.active { display: block; animation: fadeIn 0.2s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* SPECIFIC FRAME STYLES */
+    
+    /* Nav & Footer */
+    .nav-blur {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(255,255,255,0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: var(--s-4) var(--s-6); display: flex; justify-content: space-between; align-items: center;
+    }
+    .logo { font-weight: 700; font-size: 18px; color: var(--ink); letter-spacing: -0.02em; }
+    .nav-links { display: flex; gap: var(--s-6); font-weight: 500; font-size: 14px; }
+    
+    /* Landing Hero */
+    .hero-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 64px; padding: 80px 64px; align-items: center; }
+    .mobile .hero-grid { grid-template-columns: 1fr; padding: 40px 24px; text-align: center; gap: 40px; }
+    .mobile .hero-grid .display { font-size: 36px; }
+    .hero-image-container { position: relative; perspective: 1000px; height: 500px; display: flex; align-items: center; justify-content: center; }
+    
+    .laptop { width: 560px; transform: perspective(1800px) rotateY(-8deg) rotateX(2deg); transform-origin: right center; filter: drop-shadow(0 30px 50px rgba(10,12,16,0.18)); position: absolute; }
+    .laptop-lid { background: var(--ink); padding: 10px 10px 12px; border-radius: 10px 10px 2px 2px; border: 1px solid rgba(255,255,255,0.06); }
+    .laptop-screen { aspect-ratio: 16/10; background: var(--paper); border-radius: 3px; overflow: hidden; display: flex; flex-direction: column; }
+    .laptop-hinge { height: 4px; background: linear-gradient(180deg, #1a1f28, #0a0c10); margin: 0 -2%; }
+    .laptop-base { height: 8px; background: linear-gradient(180deg, #2a2f38, #14181f); border-radius: 0 0 10px 10px; margin: 0 -3%; box-shadow: inset 0 2px 0 rgba(255,255,255,0.04); }
+    
+    .laptop-nav { padding: 12px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); font-size: 10px; }
+    .laptop-hero { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: #fff; }
+    .phone-mock {
+      width: 180px; height: 380px; background: var(--ink); border-radius: 20px;
+      transform: rotateY(4deg) translateZ(40px); box-shadow: -10px 15px 30px rgba(0,0,0,0.15);
+      position: absolute; right: -20px; bottom: 20px; border: 6px solid var(--ink); overflow: hidden;
+    }
+    .lp-phone-notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 50%; height: 16px; background: var(--ink); border-radius: 0 0 12px 12px; z-index: 10; }
+    .hero-floating-badge {
+      position: absolute; top: 0; right: 20px; background: #fff; padding: 12px 16px;
+      border-radius: var(--r); box-shadow: 0 8px 24px rgba(0,0,0,0.1); z-index: 10;
+      transform: translateZ(60px); display: flex; align-items: center; gap: 12px;
+    }
+
+    /* Landing Showcase */
+    .showcase-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 200px); gap: 24px; }
+    .showcase-card { border-radius: var(--r-lg); overflow: hidden; border: 1px solid var(--border); display: flex; flex-direction: column; position: relative; cursor: pointer; }
+    .showcase-large { grid-column: span 2; grid-row: span 2; }
+    .showcase-card .showcase-arrow { opacity: 0; transition: all 0.2s; position: absolute; bottom: 12px; right: 12px; font-size: 16px; color: var(--ink-4); }
+    .showcase-card:hover .showcase-arrow { opacity: 1; transform: translate(2px, -2px); }
+    
+    /* Login / Setup Cards */
+    .auth-container { display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 80px); }
+    .auth-card { width: 100%; max-width: 440px; padding: 40px; }
+    
+    /* Dashboard Shell */
+    .dash-grid { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+    .mobile .dash-grid { grid-template-columns: 1fr; }
+    .dash-sidebar { background: var(--paper); border-right: 1px solid var(--border); padding: 16px 12px; display: flex; flex-direction: column; }
+    .mobile .dash-sidebar { display: none; }
+    .dash-main { padding: 40px; background: var(--surface); max-height: 100vh; overflow-y: auto; }
+    .mobile .dash-main { padding: 24px; }
+    .nav-item {
+      display: flex; align-items: center; padding: 8px 12px; border-radius: var(--r-sm);
+      color: var(--ink-2); font-weight: 500; margin-bottom: 2px; cursor: pointer; border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: var(--surface-2); color: var(--ink); }
+    .nav-item.active { background: var(--blue-tint-08); color: var(--blue-600); border-left-color: var(--blue-600); }
+    
+    /* Customer Site */
+    .site-nav { display: flex; justify-content: space-between; padding: 20px 40px; border-bottom: 1px solid var(--border); background: #fff; }
+    .site-hero { padding: 100px 40px; text-align: center; background: #fff; border-bottom: 1px solid var(--border); }
+    .site-section { padding: 80px 40px; background: #fff; }
+    
+    /* Drawer */
+    .drawer-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(10,12,16,0.4); z-index: 100; display: flex; justify-content: flex-end;
+    }
+    .drawer {
+      width: 440px; height: 100%; background: var(--paper);
+      box-shadow: 0 24px 60px rgba(10,12,16,0.18); display: flex; flex-direction: column;
+      transform: translateX(0);
+    }
+    .mobile .drawer { width: 100%; }
+    .drawer-header { padding: 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .drawer-body { padding: 24px; flex: 1; overflow-y: auto; }
+    .drawer-footer { padding: 24px; border-top: 1px solid var(--border); }
+
+    /* Frame Navigator (The Tool) */
+    .frame-nav-wrapper {
+      position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); z-index: 1000;
+    }
+    .frame-nav {
+      background: var(--ink); color: #fff; border-radius: 40px; padding: 6px;
+      display: flex; align-items: center; gap: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      font-family: 'Geist Mono', monospace; font-size: 13px;
+    }
+    .nav-btn {
+      background: transparent; border: none; color: #fff; padding: 8px 12px;
+      border-radius: 30px; cursor: pointer; transition: background 0.1s;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,0.1); }
+    .nav-label {
+      padding: 8px 16px; cursor: pointer; border-radius: 30px;
+      transition: background 0.1s; font-weight: 500;
+    }
+    .nav-label:hover { background: rgba(255,255,255,0.1); }
+    .mode-toggle { display: flex; background: rgba(255,255,255,0.1); border-radius: 30px; padding: 2px; }
+    .mode-btn {
+      background: transparent; border: none; color: rgba(255,255,255,0.6); padding: 6px 12px;
+      border-radius: 30px; cursor: pointer; font-family: 'Geist Mono', monospace; font-size: 12px;
+    }
+    .mode-btn.active { background: var(--blue-600); color: #fff; }
+    
+    .frame-dropdown {
+      position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%);
+      background: var(--paper); border: 1px solid var(--border-strong); border-radius: var(--r-lg);
+      box-shadow: 0 12px 48px rgba(0,0,0,0.15); width: 320px; max-height: 400px; overflow-y: auto;
+      display: none; flex-direction: column; padding: 8px 0; z-index: 1000;
+    }
+    .frame-dropdown.open { display: flex; }
+    .dropdown-group { padding: 8px 16px 4px 16px; font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--ink-4); letter-spacing: 0.05em; text-transform: uppercase; }
+    .dropdown-item {
+      padding: 8px 16px; cursor: pointer; font-size: 13px; color: var(--ink); border-left: 2px solid transparent;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .dropdown-item:hover { background: var(--surface-2); }
+    .dropdown-item.active { background: var(--blue-tint-08); color: var(--blue-600); border-left-color: var(--blue-600); font-weight: 500; }
+    
+    /* Toast */
+    .toast-container { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast {
+      background: var(--ink); color: #fff; padding: 12px 20px; border-radius: var(--r);
+      font-size: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+      transform: translateY(20px); opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    
+    /* Utility & Special components */
+    .chip {
+      padding: 12px; border: 1px solid var(--border-2); border-radius: var(--r);
+      background: var(--paper); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; font-weight: 500; transition: 0.15s;
+    }
+    .chip:hover { border-color: var(--blue-400); }
+    .chip.selected { border-color: var(--blue-600); background: var(--blue-tint-04); box-shadow: 0 0 0 1px var(--blue-600); }
+    
+    .spinner {
+      width: 48px; height: 48px; border: 4px solid var(--blue-tint-12);
+      border-top-color: var(--blue-600); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 24px auto;
+    }
+    
+    .step-progress { height: 4px; background: var(--surface-3); border-radius: 2px; overflow: hidden; margin-bottom: 24px; }
+    .step-bar { height: 100%; background: var(--blue-600); transition: width 0.3s; }
+  </style>
+</head>
+<body>
+  <h2 class="sr-only">LokalWeb Interactive Prototype</h2>
+  
+  <div class="shell-container">
+    <div class="shell desktop" id="shell">
+      
+      <!-- ================= SECTION 1: PUBLIC ================= -->
+      
+      <!-- Frame 1.1: Landing Desktop -->
+      <div class="frame active" data-frame="1.1" data-name="Landing (Desktop)" data-mode="desktop">
+        <nav class="nav-blur">
+          <div class="logo">LokalWeb</div>
+          <div class="nav-links">
+            <a href="#" class="text-ink">Si funksionon</a>
+            <a href="#" class="text-ink">Çmimet</a>
+            <a href="#" class="text-ink">Shembuj</a>
+            <a href="#" class="text-ink">Pyetje</a>
+          </div>
+          <div class="flex gap-3">
+            <button class="btn btn-ghost" onclick="goto('1.3')">Kyçu</button>
+            <button class="btn btn-primary" onclick="goto('1.4')">Fillo falas</button>
+          </div>
+        </nav>
+        
+        <main>
+          <section class="hero-grid">
+            <div>
+              <span class="eyebrow">Për biznese shërbimesh</span>
+              <h1 class="display mb-4">Biznesi yt online, <span class="italic-accent text-blue">në 12 sekonda.</span></h1>
+              <p class="mb-8" style="font-size: 18px; color: var(--ink-2); max-width: 480px;">Faqe interneti dhe sistem rezervimesh për berbertari, sallone, palestra, klinika dhe restorante. AI dizajnon. Ti pranon klientët.</p>
+              <div class="flex gap-4 items-center mb-6">
+                <button class="btn btn-primary btn-lg" onclick="goto('1.4')">Fillo falas</button>
+                <button class="btn btn-secondary btn-lg">Shiko si funksionon</button>
+              </div>
+              <div class="flex items-center gap-2 mono" style="font-size: 12px; color: var(--ink-3);">
+                <span class="pulse-dot"></span> Pa kartë krediti · Merr 2 minuta
+              </div>
+            </div>
+            <div class="hero-image-container">
+              <div class="laptop">
+                <div class="laptop-lid">
+                  <div class="laptop-screen">
+                    <div class="laptop-nav">
+                      <span style="font-weight:700;">Arbër's Chair</span>
+                      <span style="color:var(--blue-600);">Rezervo</span>
+                    </div>
+                    <div class="laptop-hero">
+                      <div class="mono" style="font-size:10px; margin-bottom:12px; letter-spacing:0.1em;">SINCE 1987</div>
+                      <div style="font-size:42px; font-weight:600; line-height:1; margin-bottom:16px;">Three chairs.<br><span class="italic-accent">Forty years.</span></div>
+                      <div style="padding:8px 16px; background:var(--blue-600); color:#fff; border-radius:4px; font-size:12px;">Book a chair</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="laptop-hinge"></div>
+                <div class="laptop-base"></div>
+              </div>
+              <div class="phone-mock">
+                <div class="lp-phone-notch"></div>
+                <div class="laptop-screen">
+                  <div style="padding:40px 16px; text-align:center;">
+                    <div style="font-size:24px; font-weight:600; line-height:1; margin-bottom:12px;">Three chairs.<br><span class="italic-accent">Forty years.</span></div>
+                    <div style="padding:8px 16px; background:var(--blue-600); color:#fff; border-radius:4px; font-size:12px; display:inline-block;">Book a chair</div>
+                  </div>
+                </div>
+              </div>
+              <div class="hero-floating-badge">
+                <span class="pulse-dot"></span>
+                <div>
+                  <div class="mono" style="font-size:10px; color:var(--blue-600);">GENERATED</div>
+                  <div style="font-size:13px; font-weight:500;">12 sekonda më parë</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section style="background: var(--surface-2); padding: 16px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center;">
+            <div class="mono" style="font-size: 12px; color: var(--ink-3);">
+              <span style="margin-right:16px;">PUNON PËR</span>
+              <span class="text-ink">Berbertari</span> <span style="margin:0 12px; opacity:0.3;">|</span>
+              <span class="text-ink">Sallone</span> <span style="margin:0 12px; opacity:0.3;">|</span>
+              <span class="text-ink">Palestra</span> <span style="margin:0 12px; opacity:0.3;">|</span>
+              <span class="text-ink">Klinika</span> <span style="margin:0 12px; opacity:0.3;">|</span>
+              <span class="text-ink">Restorante</span>
+            </div>
+          </section>
+
+          <section class="py-20 px-6" style="max-width: 1080px; margin: 0 auto;">
+            <div class="text-center mb-12">
+              <h2 class="heading-2 mb-4">Si funksionon</h2>
+              <p style="color: var(--ink-3);">Gjithçka që të duhet për të nisur, pa pasur nevojë për agjenci.</p>
+            </div>
+            <div class="grid grid-cols-3 gap-6">
+              <div class="card text-center">
+                <div class="mono badge-neutral mb-4" style="font-size:14px; padding:4px 12px; display:inline-block;">01</div>
+                <h3 class="mb-2">Përshkruaj</h3>
+                <p style="font-size:14px; color:var(--ink-3);">Trego çfarë bën biznesi yt dhe çfarë stili kërkon.</p>
+              </div>
+              <div class="card text-center">
+                <div class="mono badge-blue mb-4" style="font-size:14px; padding:4px 12px; display:inline-block;">02</div>
+                <h3 class="mb-2">Gjenero</h3>
+                <p style="font-size:14px; color:var(--ink-3);">AI-ja jonë shkruan tekstin dhe dizajnon faqen tënde.</p>
+              </div>
+              <div class="card text-center">
+                <div class="mono badge-success mb-4" style="font-size:14px; padding:4px 12px; display:inline-block;">03</div>
+                <h3 class="mb-2">Lansoje</h3>
+                <p style="font-size:14px; color:var(--ink-3);">Faqja është gati për të pranuar rezervimet e para.</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="py-20 px-6" style="background: var(--paper); border-top: 1px solid var(--border);">
+            <div style="max-width: 1080px; margin: 0 auto;">
+              <h2 class="heading-2 mb-8">Faqe reale, nga AI-ja jonë.</h2>
+              <div class="showcase-grid">
+                <!-- Large card -->
+                <div class="showcase-card showcase-large" onclick="showToast('Lidhja e faqes u kopjua')" style="background: var(--ink); color: #fff; padding: 40px; text-align: center; justify-content: center; align-items: center;">
+                  <div class="mono" style="font-size:12px; color:var(--blue-400); margin-bottom:16px; letter-spacing:0.1em;">SINCE 1987</div>
+                  <div style="font-family:'Geist', serif; font-size:48px; line-height:1; margin-bottom:12px;">Three chairs.<br><span class="italic-accent">Forty years.</span></div>
+                  <div style="width:40px; height:1px; background:var(--blue-400); margin:0 auto 24px auto;"></div>
+                  <div class="btn btn-primary" style="pointer-events:none;">Book a chair</div>
+                  <div style="position:absolute; bottom:16px; left:16px; font-size:13px; color:var(--ink-4);">Arbër's Chair</div>
+                  <div class="mono" style="position:absolute; bottom:16px; left:120px; font-size:11px; color:var(--blue-400);">PRISHTINË</div>
+                  <div class="showcase-arrow" style="color:#fff;">↗</div>
+                </div>
+                <!-- Small 1 -->
+                <div class="showcase-card" onclick="showToast('Lidhja e faqes u kopjua')" style="background: #fff; padding: 24px; justify-content: center; align-items: center; text-align:center;">
+                  <div class="mono" style="font-size:10px; color:var(--ink-3); margin-bottom:8px;">ATELIER · 2019</div>
+                  <div style="font-weight:300; font-size:24px; letter-spacing:-0.05em; margin-bottom:8px;">Lumière.</div>
+                  <div style="width:24px; height:2px; background:var(--blue-600);"></div>
+                  <div style="position:absolute; bottom:12px; left:12px; font-size:11px; color:var(--ink-3);">Lumière Salon</div>
+                  <div class="showcase-arrow">↗</div>
+                </div>
+                <!-- Small 2 -->
+                <div class="showcase-card" onclick="showToast('Lidhja e faqes u kopjua')" style="background: var(--ink); color: #fff; padding: 24px; justify-content: center; align-items: center; text-align:center;">
+                  <div style="font-weight:700; font-style:italic; font-size:32px; color:#fff; line-height:1;">FORGE.</div>
+                  <div style="font-weight:700; font-style:italic; font-size:16px; color:var(--blue-400); line-height:1;">FITNESS.</div>
+                  <div class="mono" style="position:absolute; bottom:12px; right:12px; font-size:10px; color:var(--ink-4);">STRENGTH · TIRANË</div>
+                  <div style="position:absolute; bottom:12px; left:12px; font-size:11px; color:var(--ink-4);">Forge Gym</div>
+                  <div class="showcase-arrow" style="bottom:28px; color:#fff;">↗</div>
+                </div>
+                <!-- Small 3 -->
+                <div class="showcase-card" onclick="showToast('Lidhja e faqes u kopjua')" style="background: var(--surface-2); padding: 24px; justify-content: center; align-items: center; text-align:center;">
+                  <div class="mono" style="font-size:10px; color:var(--blue-600); margin-bottom:4px;">DENTAL CARE</div>
+                  <div style="font-weight:600; font-size:20px; color:var(--ink);">Dr. Blerta</div>
+                  <div class="mono" style="font-size:11px; color:var(--ink-3); margin-top:8px;">+383 44 100 200</div>
+                  <div style="position:absolute; bottom:12px; left:12px; font-size:11px; color:var(--ink-3);">Dr. Blerta</div>
+                  <div class="showcase-arrow">↗</div>
+                </div>
+                <!-- Small 4 -->
+                <div class="showcase-card" onclick="showToast('Lidhja e faqes u kopjua')" style="background: var(--ink); padding: 24px; justify-content: center; align-items: center; text-align:center;">
+                  <div style="font-weight:400; font-size:24px; color:#fff; font-family:'Geist Mono', monospace;">BESA</div>
+                  <div style="font-size:11px; color:var(--blue-400); margin-top:4px; letter-spacing:0.2em;">BISTRO</div>
+                  <div style="font-style:italic; font-size:12px; color:var(--ink-4); margin-top:8px;">est. 1992</div>
+                  <div style="position:absolute; bottom:12px; left:12px; font-size:11px; color:var(--ink-4);">Besa Bistro</div>
+                  <div class="showcase-arrow" style="color:#fff;">↗</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="py-20 px-6" style="background: var(--surface);">
+            <div style="max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;">
+              <div>
+                <span class="eyebrow">PLUS</span>
+                <h2 class="heading-2 mb-4">Çdo rezervim,<br><span class="text-blue italic-accent">drejt teje.</span></h2>
+                <p style="color:var(--ink-3); font-size:16px;">Sistemi i rezervimeve është i integruar direkt në faqen tënde. Asnjë aplikacion i tretë. Asnjë komision për rezervim.</p>
+              </div>
+              <div class="card-elevated" style="position:relative;">
+                <div class="flex justify-between items-center mb-6">
+                  <div style="font-weight:600;">Sot</div>
+                  <span class="pulse-dot"></span>
+                </div>
+                <div class="flex justify-between py-3 border-bottom" style="border-bottom: 1px solid var(--border);">
+                  <div>
+                    <div style="font-weight:500; font-size:14px;">Ilir Krasniqi</div>
+                    <div style="font-size:12px; color:var(--ink-3);">Prerje Klasike · €10</div>
+                  </div>
+                  <div class="text-right">
+                    <div style="font-size:14px; font-weight:500;">14:30</div>
+                    <div class="badge badge-warning mt-1" style="font-size:9px;">PRITET</div>
+                  </div>
+                </div>
+                <div class="flex justify-between py-3 border-bottom" style="border-bottom: 1px solid var(--border);">
+                  <div>
+                    <div style="font-weight:500; font-size:14px;">Agon Gashi</div>
+                    <div style="font-size:12px; color:var(--ink-3);">Fade · €15</div>
+                  </div>
+                  <div class="text-right">
+                    <div style="font-size:14px; font-weight:500;">15:00</div>
+                    <div class="badge badge-success mt-1" style="font-size:9px;">KONFIRMUAR</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="py-20 px-6" style="background: var(--paper); border-top: 1px solid var(--border);">
+            <div style="max-width: 1080px; margin: 0 auto;">
+              <div class="text-center mb-12">
+                <h2 class="heading-2">Çmimet</h2>
+              </div>
+              <div class="grid grid-cols-3 gap-6">
+                <div class="card text-center" style="padding: 40px 24px;">
+                  <h3 class="mb-2">Faqe</h3>
+                  <div style="font-size:32px; font-weight:700; margin-bottom:24px;">€9<span style="font-size:14px; font-weight:400; color:var(--ink-3);">/muaj</span></div>
+                  <button class="btn btn-secondary w-full mb-6">Zgjidh Faqe</button>
+                  <ul style="text-align:left; list-style:none; font-size:14px; color:var(--ink-2); display:flex; flex-direction:column; gap:12px;">
+                    <li>✓ Faqe e gjeneruar nga AI</li>
+                    <li>✓ Domain .lokalweb.com</li>
+                    <li>✓ Hostim i shpejtë</li>
+                  </ul>
+                </div>
+                <div class="card text-center" style="background: var(--ink); color: #fff; border-color: var(--ink); position: relative; padding: 40px 24px; transform: scale(1.05); z-index: 10;">
+                  <div class="badge badge-blue" style="position:absolute; top:-12px; left:50%; transform:translateX(-50%);">MË E ZGJEDHURA</div>
+                  <h3 class="mb-2">Biznes</h3>
+                  <div style="font-size:32px; font-weight:700; margin-bottom:24px; color:var(--blue-400);">€19<span style="font-size:14px; font-weight:400; color:var(--ink-4);">/muaj</span></div>
+                  <button class="btn btn-primary w-full mb-6">Zgjidh Biznes</button>
+                  <ul style="text-align:left; list-style:none; font-size:14px; color:var(--surface-3); display:flex; flex-direction:column; gap:12px;">
+                    <li>✓ Gjithçka në Faqe</li>
+                    <li>✓ Sistem rezervimesh</li>
+                    <li>✓ Menaxhim i shërbimeve</li>
+                  </ul>
+                </div>
+                <div class="card text-center" style="padding: 40px 24px;">
+                  <h3 class="mb-2">Rritje</h3>
+                  <div style="font-size:32px; font-weight:700; margin-bottom:24px;">€39<span style="font-size:14px; font-weight:400; color:var(--ink-3);">/muaj</span></div>
+                  <button class="btn btn-secondary w-full mb-6">Zgjidh Rritje</button>
+                  <ul style="text-align:left; list-style:none; font-size:14px; color:var(--ink-2); display:flex; flex-direction:column; gap:12px;">
+                    <li>✓ Gjithçka në Biznes</li>
+                    <li>✓ Staf i shumëfishtë</li>
+                    <li>✓ Domain i personalizuar</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="py-20 px-6 text-center" style="background: var(--ink); color: #fff;">
+            <h2 class="display heavy mb-4" style="color: #fff;">Filloje <span class="italic-accent text-blue" style="color:var(--blue-400);">sot.</span></h2>
+            <p class="mb-8" style="color: var(--ink-4); font-size: 18px;">Gati në 12 sekonda. Pa kartë krediti.</p>
+            <button class="btn btn-primary btn-lg" onclick="goto('1.4')">Fillo falas</button>
+          </section>
+
+          <footer style="background: #fff; border-top: 1px solid var(--border); padding: 40px 64px;">
+            <div class="flex justify-between items-center">
+              <div class="logo">LokalWeb</div>
+              <div class="flex gap-6" style="font-size:14px;">
+                <a href="#" class="text-ink-2">Kushtet</a>
+                <a href="#" class="text-ink-2">Privatësia</a>
+                <a href="#" class="text-ink-2">Kontakt</a>
+              </div>
+              <div class="mono" style="font-size:12px; color:var(--ink-4);">© BËRË NË PRISHTINË</div>
+            </div>
+          </footer>
+        </main>
+      </div>
+
+      <!-- Frame 1.2: Landing Mobile -->
+      <div class="frame" data-frame="1.2" data-name="Landing (Mobile)" data-mode="mobile">
+        <nav class="nav-blur" style="padding: 16px 20px;">
+          <div class="logo">LokalWeb</div>
+          <button class="btn btn-ghost btn-sm" style="padding:4px;" onclick="goto('1.1')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+          </button>
+        </nav>
+        <main>
+          <section class="hero-grid text-center">
+            <div>
+              <span class="eyebrow">Për biznese shërbimesh</span>
+              <h1 class="display mb-4" style="font-size: 36px;">Biznesi yt online,<br><span class="italic-accent text-blue">në 12 sekonda.</span></h1>
+              <p class="mb-8" style="font-size: 15px; color: var(--ink-2);">Faqe interneti dhe sistem rezervimesh për berbertari, sallone dhe klinika.</p>
+              <button class="btn btn-primary btn-lg w-full mb-3" onclick="goto('1.4')">Fillo falas</button>
+              <div class="flex items-center justify-center gap-2 mono" style="font-size: 11px; color: var(--ink-3);">
+                <span class="pulse-dot"></span> Pa kartë krediti
+              </div>
+            </div>
+            <div class="hero-image-container" style="height:340px; perspective:none;">
+              <div class="phone-mock" style="position:static; transform:none; width: 220px; height: 460px; margin: 0 auto;">
+                <div class="laptop-screen">
+                  <div style="padding:40px 16px; text-align:center;">
+                    <div style="font-size:24px; font-weight:600; line-height:1; margin-bottom:12px;">Three chairs.<br><span class="italic-accent">Forty years.</span></div>
+                    <div style="padding:8px 16px; background:var(--blue-600); color:#fff; border-radius:4px; font-size:12px; display:inline-block;">Book a chair</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <!-- Frame 1.3: Login -->
+      <div class="frame" data-frame="1.3" data-name="Login" data-mode="desktop">
+        <div class="auth-container">
+          <div class="card-elevated auth-card text-center">
+            <div class="logo mb-8 text-center" style="font-size:24px; cursor:pointer;" onclick="goto('1.1')">LokalWeb</div>
+            <h1 class="heading-2 mb-2">Mirë se erdhe sërish.</h1>
+            <p style="color:var(--ink-3); margin-bottom:32px;">Kyçu për të menaxhuar biznesin tënd.</p>
+            
+            <div class="text-left mb-4">
+              <label class="label">Email</label>
+              <input type="email" class="input" placeholder="emri@biznesi.com" value="arber@gmail.com">
+            </div>
+            <div class="text-left mb-4">
+              <label class="label">Fjalëkalimi</label>
+              <input type="password" class="input" placeholder="••••••••" value="password123">
+            </div>
+            <div class="flex justify-between items-center mb-6" style="font-size:13px;">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox"> <span style="color:var(--ink-2);">Më kujto</span>
+              </label>
+              <a href="#" onclick="goto('1.5')">Ke harruar fjalëkalimin?</a>
+            </div>
+            
+            <button class="btn btn-primary w-full mb-6 btn-lg" onclick="goto('5.1')">Kyçu</button>
+            
+            <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
+              <div class="divider"></div>
+              <span style="font-size:13px; color:var(--ink-4);">ose</span>
+              <div class="divider"></div>
+            </div>
+            
+            <button class="btn btn-secondary w-full" onclick="goto('1.4')">Krijo një llogari të re</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 1.4: Registration -->
+      <div class="frame" data-frame="1.4" data-name="Registration" data-mode="desktop">
+        <div class="auth-container">
+          <div class="card-elevated auth-card text-center">
+            <div class="logo mb-6 text-center" style="font-size:20px; cursor:pointer;" onclick="goto('1.1')">LokalWeb</div>
+            <h1 class="heading-2 mb-2">Krijo biznesin tënd.</h1>
+            <p style="color:var(--ink-3); margin-bottom:24px;">Pa kartë krediti. Mban 2 minuta.</p>
+            
+            <div class="text-left mb-4">
+              <label class="label">Emri yt</label>
+              <input type="text" class="input" placeholder="p.sh. Arbër Hoxha">
+            </div>
+            <div class="text-left mb-4">
+              <label class="label">Email</label>
+              <input type="email" class="input" placeholder="emri@email.com">
+            </div>
+            <div class="text-left mb-4">
+              <label class="label">Fjalëkalimi</label>
+              <input type="password" class="input" placeholder="Krijo një fjalëkalim" value="s3cr3t!">
+              <div class="flex gap-1 mt-2">
+                <div style="height:4px; flex:1; background:var(--blue-600); border-radius:2px;"></div>
+                <div style="height:4px; flex:1; background:var(--blue-600); border-radius:2px;"></div>
+                <div style="height:4px; flex:1; background:var(--surface-3); border-radius:2px;"></div>
+              </div>
+            </div>
+            <div class="text-left mb-6">
+              <label class="label">Emri i biznesit</label>
+              <input type="text" class="input" placeholder="p.sh. Arbër's Chair" value="Arbër's Chair">
+              <div class="flex items-center gap-1 mt-2" style="font-size:12px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                <span class="mono" style="color:var(--success);">arbers-chair.lokalweb.com</span>
+              </div>
+            </div>
+            
+            <button class="btn btn-primary w-full mb-4 btn-lg" onclick="goto('2.1')">Vazhdo</button>
+            <div style="font-size:11px; color:var(--ink-4); margin-bottom:16px;">Duke vazhduar pranon Kushtet dhe Privatësinë.</div>
+            <div style="font-size:13px;"><span style="color:var(--ink-3);">Ke llogari?</span> <a href="#" onclick="goto('1.3')">Kyçu.</a></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 1.5: Forgot Password -->
+      <div class="frame" data-frame="1.5" data-name="Forgot Password" data-mode="desktop">
+        <div class="auth-container">
+          <div class="card-elevated auth-card text-center">
+            <h1 class="heading-2 mb-2">Rikthe fjalëkalimin</h1>
+            <p style="color:var(--ink-3); margin-bottom:32px;">Vendos emailin tënd dhe do të dërgojmë një lidhje për rikthim.</p>
+            <div class="text-left mb-6">
+              <label class="label">Email</label>
+              <input type="email" class="input" placeholder="emri@biznesi.com">
+            </div>
+            <button class="btn btn-primary w-full mb-4 btn-lg" onclick="showToast('Email-i u dërgua!')">Dërgo lidhjen</button>
+            <div style="font-size:13px;"><a href="#" onclick="goto('1.3')">Kthehu te Kyçu</a></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 1.6: Email Verified -->
+      <div class="frame" data-frame="1.6" data-name="Email Verified" data-mode="desktop">
+        <div class="auth-container">
+          <div class="card-elevated auth-card text-center">
+            <div style="width:56px; height:56px; background:var(--blue-600); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 24px auto;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+            </div>
+            <h1 class="heading-2 mb-2">Email-i u verifikua.</h1>
+            <p style="color:var(--ink-3); margin-bottom:32px;">Llogaria jote është gati për përdorim.</p>
+            <button class="btn btn-primary w-full btn-lg" onclick="goto('5.1')">Vazhdo në panel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 2: ONBOARDING FORK ================= -->
+      
+      <!-- Frame 2.1: Onboarding Fork -->
+      <div class="frame" data-frame="2.1" data-name="Onboarding Fork" data-mode="desktop">
+        <div style="padding: 60px 40px; max-width: 960px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; justify-content: center;">
+          <div class="text-center mb-12">
+            <h1 class="heading-2 mb-2">Si dëshiron të fillosh?</h1>
+            <p style="color:var(--ink-3);">Zgjidh rrugën më të mirë për ty.</p>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-6 mb-8">
+            <!-- AI Generator Card -->
+            <div class="card-elevated text-center" style="display:flex; flex-direction:column; padding:40px;">
+              <span class="eyebrow" style="color:var(--blue-600);">✦ I REKOMANDUAR</span>
+              <h2 class="mb-2" style="font-size:24px;">Lëre AI të dizajnojë</h2>
+              <p style="color:var(--ink-3); margin-bottom:32px; font-size:14px;">Tre pyetje. Dy variante. Ti zgjedh.</p>
+              
+              <div style="background:var(--surface-2); border-radius:var(--r); padding:16px; margin-bottom:32px; flex:1; display:flex; flex-direction:column; gap:8px; text-align:left;">
+                <div style="width:40%; height:8px; background:var(--ink-4); border-radius:4px;"></div>
+                <div style="width:80%; height:8px; background:var(--surface-3); border-radius:4px;"></div>
+                <div style="width:60%; height:8px; background:var(--surface-3); border-radius:4px;"></div>
+                <div style="margin-top:auto; display:flex; gap:8px;">
+                  <div style="width:24px; height:24px; border-radius:4px; background:var(--blue-tint-12);"></div>
+                  <div style="width:24px; height:24px; border-radius:4px; background:var(--blue-tint-12);"></div>
+                </div>
+              </div>
+              
+              <button class="btn btn-primary w-full btn-lg" onclick="goto('3.1')">Fillo me AI</button>
+            </div>
+            
+            <!-- Templates Card -->
+            <div class="card-elevated text-center" style="display:flex; flex-direction:column; padding:40px;">
+              <span class="eyebrow" style="color:var(--ink-4);">GALERIA</span>
+              <h2 class="mb-2" style="font-size:24px;">Zgjidh nga galeria</h2>
+              <p style="color:var(--ink-3); margin-bottom:32px; font-size:14px;">Dizajne të gatshme për industrinë tënde.</p>
+              
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:32px; flex:1;">
+                <div style="background:var(--ink); border-radius:var(--r-sm); opacity:0.9;"></div>
+                <div style="background:var(--surface-2); border-radius:var(--r-sm);"></div>
+                <div style="background:var(--paper); border:1px solid var(--border); border-radius:var(--r-sm);"></div>
+                <div style="background:var(--ink); border-radius:var(--r-sm);"></div>
+              </div>
+              
+              <button class="btn btn-secondary w-full btn-lg" onclick="goto('4.1')">Shiko galerinë</button>
+            </div>
+          </div>
+          
+          <div class="text-center">
+            <button class="btn btn-ghost" onclick="goto('5.1')">Anashkalo tani — do të dizajnoj më vonë</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 3: AI BUILDER ================= -->
+      
+      <!-- Frame 3.1: AI Step 1 -->
+      <div class="frame" data-frame="3.1" data-name="Wizard 1: Basics" data-mode="desktop">
+        <div style="max-width: 600px; margin: 60px auto; padding: 20px;">
+          <div class="step-progress"><div class="step-bar" style="width: 33%;"></div></div>
+          <div class="mono" style="font-size:12px; color:var(--ink-3); margin-bottom:8px;">Hapi 1 nga 3 · Bazat</div>
+          <h1 class="heading-2 mb-8">Çfarë është biznesi yt?</h1>
+          
+          <div class="grid grid-cols-3 gap-4 mb-8">
+            <div class="chip selected"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg><span style="font-size:13px;">Berbertari</span></div>
+            <div class="chip"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg><span style="font-size:13px;">Sallon</span></div>
+            <div class="chip"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 5v14M18 5v14M4 8h2v8H4zM18 8h2v8h-2zM8 12h8"/></svg><span style="font-size:13px;">Palestra</span></div>
+            <div class="chip"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg><span style="font-size:13px;">Klinika</span></div>
+            <div class="chip"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg><span style="font-size:13px;">Restorant</span></div>
+            <div class="chip"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg><span style="font-size:13px;">Tjetër</span></div>
+          </div>
+          
+          <div class="mb-10">
+            <label class="label" style="font-size:15px; margin-bottom:8px;">Çfarë e bën të veçantë biznesin tënd?</label>
+            <textarea class="input" rows="3" placeholder="p.sh. Punojmë që 20 vite, mjeshtër të stilit klasik, gjithmonë me rezervime...">Jemi hapur në vitin 1987. Stili klasik, klientë besnikë.</textarea>
+          </div>
+          
+          <div class="flex justify-end">
+            <button class="btn btn-primary btn-lg" onclick="goto('3.2')">Vazhdo</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 3.2: AI Step 2 -->
+      <div class="frame" data-frame="3.2" data-name="Wizard 2: Vibe" data-mode="desktop">
+        <div style="max-width: 640px; margin: 60px auto; padding: 20px;">
+          <div class="step-progress"><div class="step-bar" style="width: 66%;"></div></div>
+          <div class="mono" style="font-size:12px; color:var(--ink-3); margin-bottom:8px;">Hapi 2 nga 3 · Pamja</div>
+          <h1 class="heading-2 mb-8">Çfarë vibe ke?</h1>
+          
+          <div class="grid grid-cols-2 gap-4 mb-10">
+            <!-- Klasik -->
+            <div class="card" style="padding:16px; border-color:var(--blue-600); box-shadow:0 0 0 1px var(--blue-600); position:relative; cursor:pointer;">
+              <div style="position:absolute; top:12px; right:12px; background:var(--blue-600); color:#fff; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+              </div>
+              <div style="height:120px; background:var(--paper); border:1px solid var(--border); border-radius:var(--r-sm); margin-bottom:12px; padding:16px; display:flex; flex-direction:column; justify-content:center;">
+                <div style="font-family:'Geist', serif; font-style:italic; font-size:20px; color:var(--ink);">Traditë.</div>
+                <div style="width:20px; height:2px; background:var(--blue-600); margin-top:8px;"></div>
+              </div>
+              <div style="font-weight:600;">Klasik</div>
+              <div style="font-size:12px; color:var(--ink-3);">Elegante, e pastër.</div>
+            </div>
+            <!-- Modern -->
+            <div class="card" style="padding:16px; cursor:pointer;">
+              <div style="height:120px; background:var(--ink); border-radius:var(--r-sm); margin-bottom:12px; padding:16px; display:flex; flex-direction:column; justify-content:center;">
+                <div style="font-family:'Geist', sans-serif; font-weight:700; font-size:20px; color:#fff;">SHARP</div>
+                <div style="width:4px; height:4px; background:var(--blue-400); margin-top:4px;"></div>
+              </div>
+              <div style="font-weight:600;">Modern</div>
+              <div style="font-size:12px; color:var(--ink-3);">E errët, kontraste.</div>
+            </div>
+            <!-- Gjallërues -->
+            <div class="card" style="padding:16px; cursor:pointer;">
+              <div style="height:120px; background:var(--blue-600); border-radius:var(--r-sm); margin-bottom:12px; padding:16px; display:flex; flex-direction:column; justify-content:center;">
+                <div style="font-weight:600; font-size:24px; color:#fff; letter-spacing:-1px;">Vibe.</div>
+              </div>
+              <div style="font-weight:600;">Gjallërues</div>
+              <div style="font-size:12px; color:var(--ink-3);">Ngjyra të plota.</div>
+            </div>
+            <!-- Premium -->
+            <div class="card" style="padding:16px; cursor:pointer;">
+              <div style="height:120px; background:var(--surface-2); border-radius:var(--r-sm); margin-bottom:12px; padding:16px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                <div style="font-weight:400; font-size:16px; color:var(--ink); letter-spacing:4px; text-transform:uppercase;">Luxury</div>
+              </div>
+              <div style="font-weight:600;">Premium</div>
+              <div style="font-size:12px; color:var(--ink-3);">Hapësirë, minimalizëm.</div>
+            </div>
+          </div>
+          
+          <div class="flex justify-between items-center">
+            <button class="btn btn-ghost" onclick="goto('3.1')">Kthehu</button>
+            <button class="btn btn-primary btn-lg" onclick="goto('3.3'); setTimeout(() => goto('3.4'), 6500);">Gjenero</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 3.3: Loading -->
+      <div class="frame" data-frame="3.3" data-name="Wizard 3: Loading" data-mode="desktop">
+        <div style="max-width: 600px; margin: 120px auto; text-align: center;">
+          <div class="spinner"></div>
+          <h2 class="heading-2 mb-8">AI po dizajnon biznesin tënd…</h2>
+          
+          <div class="card text-left" style="max-width: 440px; margin: 0 auto; background: var(--paper);">
+            <div class="mb-4">
+              <span class="eyebrow">POZICIONIMI</span>
+              <p class="mono" style="font-size:13px; color:var(--ink);">Krijimi i një hapësire autentike për zotërinjtë që vlerësojnë traditën dhe mjeshtërinë e vërtetë.<span style="animation:blink 1s infinite;">|</span></p>
+            </div>
+            <div class="mb-4">
+              <span class="eyebrow">TIPARET</span>
+              <div class="flex gap-2">
+                <span class="badge badge-blue">KLASIKE</span>
+                <span class="badge badge-blue">BESUESHMËRI</span>
+                <span class="badge badge-blue">PROFESIONALE</span>
+              </div>
+            </div>
+            <div>
+              <span class="eyebrow">ANKORA KULTURORE</span>
+              <p class="italic-accent" style="color:var(--ink-3); font-size:14px;">"Një vend ku koha ndalet dhe stili mbetet."</p>
+            </div>
+          </div>
+          
+          <div class="mono mt-8" style="font-size:12px; color:var(--ink-4);">Hapi 2 nga 4 · Po krijon variantet…</div>
+        </div>
+      </div>
+      <style>@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }</style>
+
+      <!-- Frame 3.4: Pick Variant -->
+      <div class="frame" data-frame="3.4" data-name="Wizard 4: Pick Variant" data-mode="desktop">
+        <div style="padding: 40px; max-width: 1080px; margin: 0 auto;">
+          <h1 class="heading-2 mb-8 text-center">Dy versione. Cili të flet?</h1>
+          
+          <div class="grid grid-cols-2 gap-8 mb-8">
+            <!-- Variant 1 -->
+            <div class="card-elevated" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
+              <div style="height:320px; background:var(--paper); padding:40px; border-bottom:1px solid var(--border); position:relative;">
+                <div class="mono" style="font-size:10px; color:var(--blue-600); margin-bottom:12px; letter-spacing:0.1em;">SINCE 1987</div>
+                <div style="font-family:'Geist', serif; font-size:36px; line-height:1; margin-bottom:16px;">Three chairs.<br><span class="italic-accent">Forty years.</span></div>
+                <div style="padding:8px 16px; background:var(--blue-600); color:#fff; border-radius:4px; font-size:12px; display:inline-block;">Rezervo një karrige</div>
+              </div>
+              <div style="padding:24px;">
+                <div class="flex justify-between items-center mb-4">
+                  <div>
+                    <div style="font-weight:600;">Klasik Refined</div>
+                    <div style="font-size:12px; color:var(--ink-3);">Geist Serif & Sans</div>
+                  </div>
+                  <div class="flex gap-1">
+                    <div style="width:16px; height:16px; border-radius:50%; background:#fff; border:1px solid var(--border);"></div>
+                    <div style="width:16px; height:16px; border-radius:50%; background:var(--ink);"></div>
+                    <div style="width:16px; height:16px; border-radius:50%; background:var(--blue-600);"></div>
+                  </div>
+                </div>
+                <p style="font-size:13px; color:var(--ink-3); margin-bottom:20px; font-style:italic;">"Ankoruar në traditë — për klientë që duan zanat të vërtetë."</p>
+                <button class="btn btn-primary w-full" onclick="goto('3.5')">Zgjidh këtë</button>
+              </div>
+            </div>
+            
+            <!-- Variant 2 -->
+            <div class="card-elevated" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
+              <div style="height:320px; background:var(--ink); padding:40px; border-bottom:1px solid var(--border); position:relative;">
+                <div class="mono" style="font-size:10px; color:var(--blue-400); margin-bottom:12px; letter-spacing:0.1em;">EST. 1987</div>
+                <div style="font-family:'Geist', sans-serif; font-weight:700; font-size:42px; line-height:1; margin-bottom:16px; color:#fff; letter-spacing:-1px;">THE<br>TRADITION.</div>
+                <div style="padding:8px 16px; background:#fff; color:var(--ink); border-radius:4px; font-size:12px; display:inline-block; font-weight:600;">Rezervo</div>
+              </div>
+              <div style="padding:24px;">
+                <div class="flex justify-between items-center mb-4">
+                  <div>
+                    <div style="font-weight:600;">Contrarian Bold</div>
+                    <div style="font-size:12px; color:var(--ink-3);">Geist Sans Bold</div>
+                  </div>
+                  <div class="flex gap-1">
+                    <div style="width:16px; height:16px; border-radius:50%; background:var(--ink);"></div>
+                    <div style="width:16px; height:16px; border-radius:50%; background:#fff; border:1px solid var(--border);"></div>
+                    <div style="width:16px; height:16px; border-radius:50%; background:var(--blue-400);"></div>
+                  </div>
+                </div>
+                <p style="font-size:13px; color:var(--ink-3); margin-bottom:20px; font-style:italic;">"Provokative — për klientë që duan dallimin."</p>
+                <button class="btn btn-secondary w-full" onclick="goto('3.5')">Zgjidh këtë</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="text-center">
+            <button class="btn btn-ghost" onclick="goto('3.3'); setTimeout(() => goto('3.4'), 2000);">Provo edhe dy të tjera</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 3.5: Success Overlay -->
+      <div class="frame" data-frame="3.5" data-name="Wizard 5: Success" data-mode="desktop">
+        <div class="drawer-overlay" style="justify-content: center; align-items: center; background: rgba(10,12,16,0.6);">
+          <div class="card-elevated text-center" style="max-width: 400px; padding: 48px 32px; box-shadow: 0 24px 60px rgba(0,0,0,0.2);">
+            <div style="width:72px; height:72px; background:var(--blue-600); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 24px auto;">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+            </div>
+            <h1 class="heading-2 mb-2">Faqja jote është gati.</h1>
+            <p style="color:var(--ink-3); margin-bottom:16px;">Tashmë e hapur për botën në:</p>
+            <div class="mono mb-8" style="padding:12px; background:var(--surface-2); border-radius:var(--r-sm); font-size:14px; color:var(--blue-600); cursor:pointer;" onclick="showToast('Lidhja u kopjua')">
+              arbers-chair.lokalweb.com
+            </div>
+            <div class="flex flex-col gap-3">
+              <button class="btn btn-primary btn-lg w-full" onclick="goto('6.1')">Shiko faqen</button>
+              <button class="btn btn-secondary w-full" onclick="goto('5.1')">Hap panelin</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 4: TEMPLATES ================= -->
+
+      <!-- Frame 4.1: Template Gallery -->
+      <div class="frame" data-frame="4.1" data-name="Templates Gallery" data-mode="desktop">
+        <div class="flex h-full">
+          <!-- Sidebar -->
+          <div style="width: 240px; background: var(--paper); border-right: 1px solid var(--border); padding: 32px 24px;">
+            <div class="logo mb-8" style="cursor:pointer;" onclick="goto('1.1')">LokalWeb</div>
+            <div class="mb-8">
+              <div class="eyebrow">Industria</div>
+              <div class="flex flex-col gap-2">
+                <div class="badge badge-blue text-center py-2" style="cursor:pointer;">Të gjitha</div>
+                <div class="badge badge-neutral text-center py-2" style="cursor:pointer;">Berbertari</div>
+                <div class="badge badge-neutral text-center py-2" style="cursor:pointer;">Sallon</div>
+                <div class="badge badge-neutral text-center py-2" style="cursor:pointer;">Klinika</div>
+              </div>
+            </div>
+            <div>
+              <div class="eyebrow">Stili</div>
+              <div class="flex flex-col gap-2">
+                <div class="badge badge-neutral text-center py-2" style="cursor:pointer;">Klasik</div>
+                <div class="badge badge-neutral text-center py-2" style="cursor:pointer;">Modern</div>
+                <div class="badge badge-neutral text-center py-2" style="cursor:pointer;">Premium</div>
+              </div>
+            </div>
+          </div>
+          <!-- Main Gallery -->
+          <div style="flex: 1; padding: 40px; background: var(--surface); overflow-y: auto;">
+            <h1 class="heading-2 mb-2">Galeria e dizajneve</h1>
+            <p style="color:var(--ink-3); margin-bottom:32px;">Zgjidh pikënisjen e duhur për biznesin tënd.</p>
+            
+            <div class="grid grid-cols-3 gap-6">
+              <!-- Template 1 -->
+              <div class="card" style="padding:0; overflow:hidden; cursor:pointer;" onclick="goto('4.2')">
+                <div style="height:200px; background:var(--ink); padding:24px; position:relative;">
+                   <div style="font-family:'Geist', serif; font-size:24px; color:#fff; line-height:1;">The Classic.</div>
+                </div>
+                <div style="padding:16px;">
+                  <div style="font-weight:600; margin-bottom:8px;">Heritage Barber</div>
+                  <div class="flex gap-2">
+                    <span class="badge badge-neutral">Berbertari</span>
+                    <span class="badge badge-neutral">Klasik</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Template 2 -->
+              <div class="card" style="padding:0; overflow:hidden; cursor:pointer;">
+                <div style="height:200px; background:#fff; padding:24px; border-bottom:1px solid var(--border);">
+                   <div style="font-weight:300; font-size:24px; letter-spacing:-0.05em;">Lumière.</div>
+                   <div style="width:24px; height:2px; background:var(--blue-600); margin-top:8px;"></div>
+                </div>
+                <div style="padding:16px;">
+                  <div style="font-weight:600; margin-bottom:8px;">Minimalist Salon</div>
+                  <div class="flex gap-2">
+                    <span class="badge badge-neutral">Sallon</span>
+                    <span class="badge badge-neutral">Premium</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Template 3 -->
+              <div class="card" style="padding:0; overflow:hidden; cursor:pointer;">
+                <div style="height:200px; background:var(--blue-600); padding:24px;">
+                   <div style="font-weight:700; font-size:28px; color:#fff; font-style:italic; line-height:1;">FORGE.</div>
+                </div>
+                <div style="padding:16px;">
+                  <div style="font-weight:600; margin-bottom:8px;">Energy Gym</div>
+                  <div class="flex gap-2">
+                    <span class="badge badge-neutral">Palestra</span>
+                    <span class="badge badge-neutral">Modern</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 4.2: Template Detail -->
+      <div class="frame" data-frame="4.2" data-name="Template Detail" data-mode="desktop">
+        <div class="flex h-full">
+          <div style="flex: 1; background: var(--surface-2); padding: 40px; display: flex; justify-content: center; align-items: flex-start; overflow-y: auto;">
+             <div style="width: 100%; max-width: 800px; background: var(--ink); border-radius: var(--r); box-shadow: 0 24px 60px rgba(0,0,0,0.1); overflow: hidden;">
+                <!-- Full Preview Mock -->
+                <div style="padding: 12px 20px; background: #fff; border-bottom: 1px solid var(--border); display: flex; gap: 8px;">
+                  <div style="width:10px; height:10px; border-radius:50%; background:var(--surface-3);"></div>
+                  <div style="width:10px; height:10px; border-radius:50%; background:var(--surface-3);"></div>
+                  <div style="width:10px; height:10px; border-radius:50%; background:var(--surface-3);"></div>
+                </div>
+                <div style="padding: 100px 60px; color: #fff;">
+                  <div class="mono" style="color:var(--blue-400); margin-bottom:16px; letter-spacing:0.1em;">EST. 1987</div>
+                  <div style="font-family:'Geist', serif; font-size:64px; line-height:1; margin-bottom:32px;">The Classic<br><span class="italic-accent text-blue">Experience.</span></div>
+                  <div class="btn btn-primary" style="pointer-events:none;">Rezervo</div>
+                </div>
+                <div style="background: var(--paper); padding: 60px; color: var(--ink);">
+                  <div style="font-weight:600; font-size:24px; margin-bottom:24px;">Shërbimet tona</div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                    <div style="padding:16px; border:1px solid var(--border); border-radius:var(--r-sm);">Prerje Klasike</div>
+                    <div style="padding:16px; border:1px solid var(--border); border-radius:var(--r-sm);">Rruajtje</div>
+                  </div>
+                </div>
+             </div>
+          </div>
+          <div style="width: 320px; background: var(--paper); border-left: 1px solid var(--border); padding: 32px 24px; display: flex; flex-direction: column;">
+            <button class="btn btn-ghost btn-sm mb-6 w-full justify-center" onclick="goto('4.1')">← Kthehu në galeri</button>
+            <h2 class="mb-2" style="font-size:24px;">Heritage Barber</h2>
+            <div class="flex gap-2 mb-6">
+              <span class="badge badge-neutral">Berbertari</span>
+              <span class="badge badge-neutral">Klasik</span>
+            </div>
+            <p style="color:var(--ink-3); font-size:14px; margin-bottom:32px;">Një dizajn i pasur dhe i errët që i jep theks traditës dhe elegancës. Ideale për berbertari klasike.</p>
+            
+            <div class="eyebrow">SEKSIONET</div>
+            <ul style="list-style:none; font-size:14px; color:var(--ink-2); display:flex; flex-direction:column; gap:12px; margin-bottom:auto;">
+              <li>✓ Hero Seksioni</li>
+              <li>✓ Lista e Shërbimeve</li>
+              <li>✓ Galeria e Punëve</li>
+              <li>✓ Orari i Punës</li>
+              <li>✓ Informacionet e Kontaktit</li>
+            </ul>
+            
+            <div style="margin-top: 32px;">
+              <button class="btn btn-primary w-full btn-lg mb-3" onclick="goto('4.3')">Përdor këtë dizajn</button>
+              <button class="btn btn-secondary w-full" onclick="goto('4.1')">Shiko të tjera</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 4.3: Template Setup -->
+      <div class="frame" data-frame="4.3" data-name="Template Setup" data-mode="desktop">
+        <div class="auth-container">
+          <div class="card-elevated auth-card text-center">
+            <h1 class="heading-2 mb-2">Si do ta quash?</h1>
+            <p style="color:var(--ink-3); margin-bottom:32px;">Vendos emrin e biznesit për të filluar.</p>
+            
+            <div class="text-left mb-6">
+              <label class="label">Emri i biznesit</label>
+              <input type="text" class="input" placeholder="p.sh. Arbër's Chair" value="Arbër's Chair">
+            </div>
+            <div class="text-left mb-8">
+              <label class="label">Nën-domaini yt falas</label>
+              <input type="text" class="input" value="arbers-chair">
+              <div class="flex items-center justify-between mt-2" style="font-size:12px;">
+                <span class="mono" style="color:var(--ink-4);">.lokalweb.com</span>
+                <span style="color:var(--success); display:flex; align-items:center; gap:4px;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg> E lirë
+                </span>
+              </div>
+            </div>
+            
+            <button class="btn btn-primary w-full btn-lg" onclick="goto('3.5')">Krijo faqen</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 5: DASHBOARD ================= -->
+      
+      <!-- Frame 5.1: Dashboard Overview -->
+      <div class="frame" data-frame="5.1" data-name="Dashboard Overview" data-mode="desktop">
+        <div class="dash-grid">
+          <!-- Sidebar -->
+          <div class="dash-sidebar">
+            <div class="logo mb-6 px-3">LokalWeb</div>
+            <div class="card mb-6" style="padding:12px; background:var(--blue-tint-08); border:none;">
+              <div style="font-weight:600; font-size:14px; color:var(--ink);">Arbër's Chair</div>
+              <div class="mono" style="font-size:11px; color:var(--blue-600);">arbers.lokalweb.com</div>
+            </div>
+            
+            <div class="eyebrow px-3">MENAXHIMI</div>
+            <div class="nav-item active" onclick="goto('5.1')">Përmbledhje</div>
+            <div class="nav-item" onclick="goto('5.2')">Rezervime <span class="badge badge-warning" style="margin-left:auto;">1</span></div>
+            <div class="nav-item" onclick="goto('5.3')">Shërbime</div>
+            <div class="nav-item" onclick="goto('5.4')">Orari</div>
+            <div class="nav-item" onclick="goto('5.5')">Galeri</div>
+            <div class="nav-item" onclick="goto('5.7')">Profili</div>
+            
+            <div class="eyebrow px-3 mt-6">DIZAJNI</div>
+            <div class="nav-item" onclick="goto('5.6')">Personalizo</div>
+            
+            <div style="margin-top:auto;">
+              <button class="btn btn-primary w-full mb-4" onclick="goto('2.1')">✦ Gjenero website</button>
+              <div class="flex items-center gap-3 px-3 py-2 cursor-pointer" style="border-radius:var(--r-sm);">
+                <div style="width:32px; height:32px; background:var(--surface-3); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:600;">A</div>
+                <div style="flex:1;">
+                  <div style="font-size:13px; font-weight:500; line-height:1.2;">Arbër Hoxha</div>
+                  <div style="font-size:11px; color:var(--ink-4);" onclick="goto('1.3')">Dil</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Main -->
+          <div class="dash-main">
+            <div class="flex justify-between items-center mb-8">
+              <div>
+                <h1 class="heading-2"><span class="italic-accent text-blue">Mirëdita</span>, Arbër.</h1>
+                <p style="color:var(--ink-3);">Ja çfarë ndodh sot.</p>
+              </div>
+              <div class="flex gap-3">
+                <button class="btn btn-ghost" onclick="showToast('Lidhja u kopjua')">Kopjo lidhjen</button>
+                <button class="btn btn-secondary" onclick="goto('6.1')">Shiko faqen</button>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-6 mb-8">
+              <div class="card-elevated">
+                <div style="font-size:13px; color:var(--ink-3); margin-bottom:8px; font-weight:500;">Rezervime sot</div>
+                <div style="font-size:32px; font-weight:600; color:var(--blue-600); line-height:1; margin-bottom:4px;">3</div>
+                <div style="font-size:12px; color:var(--success);">+2 nga dje</div>
+              </div>
+              <div class="card-elevated">
+                <div style="font-size:13px; color:var(--ink-3); margin-bottom:8px; font-weight:500;">Të papranuara</div>
+                <div style="font-size:32px; font-weight:600; color:var(--warning); line-height:1; margin-bottom:4px;">1</div>
+                <div style="font-size:12px; color:var(--ink-4);">Kërkon vëmendje</div>
+              </div>
+              <div class="card-elevated">
+                <div style="font-size:13px; color:var(--ink-3); margin-bottom:8px; font-weight:500;">Të ardhura javore</div>
+                <div style="font-size:32px; font-weight:600; color:var(--blue-600); line-height:1; margin-bottom:4px;">€185</div>
+                <div style="font-size:12px; color:var(--success);">+12% këtë javë</div>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-6">
+              <div class="card-elevated" style="grid-column: span 2; padding: 24px;">
+                <h3 class="mb-4">Rezervime së fundmi</h3>
+                <div style="display:flex; flex-direction:column;">
+                  <!-- Row 1 -->
+                  <div class="flex items-center justify-between py-3" style="border-bottom:1px solid var(--border);">
+                    <div class="flex items-center gap-3">
+                      <div style="width:36px; height:36px; background:var(--surface-3); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600;">IK</div>
+                      <div>
+                        <div style="font-weight:500; font-size:14px;">Ilir Krasniqi</div>
+                        <div style="font-size:12px; color:var(--ink-3);">Prerje Klasike · €10</div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                      <div class="mono" style="font-size:13px;">14:30</div>
+                      <div class="badge badge-warning" style="width:80px; text-align:center;">PRITET</div>
+                    </div>
+                  </div>
+                  <!-- Row 2 -->
+                  <div class="flex items-center justify-between py-3" style="border-bottom:1px solid var(--border);">
+                    <div class="flex items-center gap-3">
+                      <div style="width:36px; height:36px; background:var(--surface-3); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600;">AG</div>
+                      <div>
+                        <div style="font-weight:500; font-size:14px;">Agon Gashi</div>
+                        <div style="font-size:12px; color:var(--ink-3);">Fade · €15</div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                      <div class="mono" style="font-size:13px;">15:00</div>
+                      <div class="badge badge-success" style="width:80px; text-align:center;">KONFIRMUAR</div>
+                    </div>
+                  </div>
+                  <!-- Row 3 -->
+                  <div class="flex items-center justify-between py-3 opacity-60">
+                    <div class="flex items-center gap-3">
+                      <div style="width:36px; height:36px; background:var(--surface-3); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600;">DK</div>
+                      <div>
+                        <div style="font-weight:500; font-size:14px;">Dren Kelmendi</div>
+                        <div style="font-size:12px; color:var(--ink-3);">Rruajtje · €10</div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                      <div class="mono" style="font-size:13px;">11:00</div>
+                      <div class="badge badge-neutral" style="width:80px; text-align:center;">PËRFUNDUAR</div>
+                    </div>
+                  </div>
+                </div>
+                <button class="btn btn-ghost w-full mt-4" onclick="goto('5.2')">Shiko të gjitha</button>
+              </div>
+              
+              <div class="card-elevated" style="padding: 24px; background: var(--ink); color: #fff; align-self: start;">
+                <div class="eyebrow" style="color:var(--blue-400);">FAQJA JOTE</div>
+                <div class="mono mb-4" style="font-size:14px; cursor:pointer;" onclick="goto('6.1')">arbers-chair.lokalweb.com</div>
+                <div style="padding:16px; background:rgba(255,255,255,0.1); border-radius:var(--r-sm); margin-bottom:24px;">
+                  <div style="font-size:12px; color:var(--ink-4); margin-bottom:4px;">Vizitorë këtë javë</div>
+                  <div style="font-size:24px; font-weight:600;">142</div>
+                </div>
+                <button class="btn btn-primary w-full" onclick="goto('5.6')">Personalizo dizajnin</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 5.2: Bookings -->
+      <div class="frame" data-frame="5.2" data-name="Bookings" data-mode="desktop">
+        <div class="dash-grid">
+          <!-- Sidebar Clone -->
+          <div class="dash-sidebar">
+            <div class="logo mb-6 px-3">LokalWeb</div>
+            <div class="card mb-6" style="padding:12px; background:var(--blue-tint-08); border:none;">
+              <div style="font-weight:600; font-size:14px; color:var(--ink);">Arbër's Chair</div>
+              <div class="mono" style="font-size:11px; color:var(--blue-600);">arbers.lokalweb.com</div>
+            </div>
+            <div class="eyebrow px-3">MENAXHIMI</div>
+            <div class="nav-item" onclick="goto('5.1')">Përmbledhje</div>
+            <div class="nav-item active" onclick="goto('5.2')">Rezervime</div>
+            <div class="nav-item" onclick="goto('5.3')">Shërbime</div>
+            <div class="nav-item" onclick="goto('5.4')">Orari</div>
+            <div class="nav-item" onclick="goto('5.5')">Galeri</div>
+            <div class="nav-item" onclick="goto('5.7')">Profili</div>
+            <div class="eyebrow px-3 mt-6">DIZAJNI</div>
+            <div class="nav-item" onclick="goto('5.6')">Personalizo</div>
+          </div>
+          <!-- Main -->
+          <div class="dash-main">
+            <div class="flex justify-between items-center mb-8">
+              <h1 class="heading-2">Rezervime</h1>
+              <div class="flex gap-3">
+                <input type="text" class="input" placeholder="Kërko..." style="width:200px;">
+                <button class="btn btn-secondary">Eksporto</button>
+              </div>
+            </div>
+            
+            <div class="card-elevated" style="padding: 0; overflow: hidden;">
+              <table style="width:100%; border-collapse:collapse; text-align:left;">
+                <thead>
+                  <tr style="background:var(--surface-2); font-size:12px; color:var(--ink-3); text-transform:uppercase; letter-spacing:0.05em;">
+                    <th style="padding:16px 24px; font-weight:600;">Klienti</th>
+                    <th style="padding:16px 24px; font-weight:600;">Shërbimi</th>
+                    <th style="padding:16px 24px; font-weight:600;">Data</th>
+                    <th style="padding:16px 24px; font-weight:600;">Ora</th>
+                    <th style="padding:16px 24px; font-weight:600;">Statusi</th>
+                    <th style="padding:16px 24px; font-weight:600; text-align:right;">Veprime</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:16px 24px; font-weight:500; color:var(--ink);">Ilir Krasniqi</td>
+                    <td style="padding:16px 24px;">Prerje Klasike</td>
+                    <td style="padding:16px 24px; font-family:'Geist Mono'; font-size:13px;">Sot</td>
+                    <td style="padding:16px 24px; font-family:'Geist Mono'; font-size:13px;">14:30</td>
+                    <td style="padding:16px 24px;"><span class="badge badge-warning">PRITET</span></td>
+                    <td style="padding:16px 24px; text-align:right;">
+                      <button class="btn-icon text-success" onclick="showToast('U pranua')">✓</button>
+                      <button class="btn-icon text-danger" onclick="showToast('U refuzua')">✗</button>
+                    </td>
+                  </tr>
+                  <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:16px 24px; font-weight:500; color:var(--ink);">Agon Gashi</td>
+                    <td style="padding:16px 24px;">Fade</td>
+                    <td style="padding:16px 24px; font-family:'Geist Mono'; font-size:13px;">Sot</td>
+                    <td style="padding:16px 24px; font-family:'Geist Mono'; font-size:13px;">15:00</td>
+                    <td style="padding:16px 24px;"><span class="badge badge-success">KONFIRMUAR</span></td>
+                    <td style="padding:16px 24px; text-align:right;">
+                      <button class="btn-icon" style="font-size:10px;">✓✓</button>
+                    </td>
+                  </tr>
+                  <tr style="border-bottom:1px solid var(--border); opacity:0.6;">
+                    <td style="padding:16px 24px; font-weight:500; color:var(--ink);">Dren Kelmendi</td>
+                    <td style="padding:16px 24px;">Rruajtje</td>
+                    <td style="padding:16px 24px; font-family:'Geist Mono'; font-size:13px;">Sot</td>
+                    <td style="padding:16px 24px; font-family:'Geist Mono'; font-size:13px;">11:00</td>
+                    <td style="padding:16px 24px;"><span class="badge badge-neutral">PËRFUNDUAR</span></td>
+                    <td style="padding:16px 24px; text-align:right;"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 5.3: Services -->
+      <div class="frame" data-frame="5.3" data-name="Services" data-mode="desktop">
+        <div class="dash-grid">
+          <div class="dash-sidebar">
+            <div class="logo mb-6 px-3">LokalWeb</div>
+            <div class="card mb-6" style="padding:12px; background:var(--blue-tint-08); border:none;">
+              <div style="font-weight:600; font-size:14px; color:var(--ink);">Arbër's Chair</div>
+              <div class="mono" style="font-size:11px; color:var(--blue-600);">arbers.lokalweb.com</div>
+            </div>
+            <div class="eyebrow px-3">MENAXHIMI</div>
+            <div class="nav-item" onclick="goto('5.1')">Përmbledhje</div>
+            <div class="nav-item" onclick="goto('5.2')">Rezervime</div>
+            <div class="nav-item active" onclick="goto('5.3')">Shërbime</div>
+            <div class="nav-item" onclick="goto('5.4')">Orari</div>
+            <div class="nav-item" onclick="goto('5.5')">Galeri</div>
+            <div class="nav-item" onclick="goto('5.7')">Profili</div>
+            <div class="eyebrow px-3 mt-6">DIZAJNI</div>
+            <div class="nav-item" onclick="goto('5.6')">Personalizo</div>
+          </div>
+          <div class="dash-main">
+            <div class="flex justify-between items-center mb-8">
+              <h1 class="heading-2">Shërbimet</h1>
+              <button class="btn btn-primary">Shto shërbim</button>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-6">
+              <!-- Service 1 -->
+              <div class="card-elevated">
+                <div class="flex justify-between items-start mb-4">
+                  <div style="font-weight:600; font-size:16px; color:var(--ink);">Prerje Klasike</div>
+                  <div style="font-size:20px; font-weight:700; color:var(--blue-600);">€10</div>
+                </div>
+                <p style="font-size:13px; color:var(--ink-3); margin-bottom:16px;">Prerje me gërshërë ose makinë sipas stilit klasik. Përfshin larjen.</p>
+                <div class="flex justify-between items-center">
+                  <div class="mono" style="font-size:12px; background:var(--surface-2); padding:4px 8px; border-radius:4px;">30 min</div>
+                  <div class="flex gap-2">
+                    <button class="btn-icon" style="font-size:12px;">✎</button>
+                    <button class="btn-icon text-danger" style="font-size:12px;">🗑</button>
+                  </div>
+                </div>
+              </div>
+              <!-- Service 2 -->
+              <div class="card-elevated">
+                <div class="flex justify-between items-start mb-4">
+                  <div style="font-weight:600; font-size:16px; color:var(--ink);">Fade & Mjekërr</div>
+                  <div style="font-size:20px; font-weight:700; color:var(--blue-600);">€15</div>
+                </div>
+                <p style="font-size:13px; color:var(--ink-3); margin-bottom:16px;">Prerje moderne fade kombinuar me rregullim detajuar të mjekrrës.</p>
+                <div class="flex justify-between items-center">
+                  <div class="mono" style="font-size:12px; background:var(--surface-2); padding:4px 8px; border-radius:4px;">45 min</div>
+                  <div class="flex gap-2">
+                    <button class="btn-icon" style="font-size:12px;">✎</button>
+                    <button class="btn-icon text-danger" style="font-size:12px;">🗑</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 5.4: Business Hours -->
+      <div class="frame" data-frame="5.4" data-name="Business Hours" data-mode="desktop">
+        <div class="dash-grid">
+          <div class="dash-sidebar">
+            <div class="logo mb-6 px-3">LokalWeb</div>
+            <div class="eyebrow px-3">MENAXHIMI</div>
+            <div class="nav-item" onclick="goto('5.1')">Përmbledhje</div>
+            <div class="nav-item" onclick="goto('5.2')">Rezervime</div>
+            <div class="nav-item" onclick="goto('5.3')">Shërbime</div>
+            <div class="nav-item active" onclick="goto('5.4')">Orari</div>
+            <div class="nav-item" onclick="goto('5.5')">Galeri</div>
+            <div class="nav-item" onclick="goto('5.7')">Profili</div>
+            <div class="eyebrow px-3 mt-6">DIZAJNI</div>
+            <div class="nav-item" onclick="goto('5.6')">Personalizo</div>
+          </div>
+          <div class="dash-main">
+            <h1 class="heading-2 mb-8">Orari i Punës</h1>
+            <div class="card-elevated" style="max-width: 600px; padding: 0; overflow: hidden;">
+              <div style="padding: 24px; border-bottom: 1px solid var(--border);">
+                <!-- Mon -->
+                <div class="flex items-center gap-4 py-3 border-bottom">
+                  <div style="width:100px; font-weight:500;">E Hënë</div>
+                  <div style="width:40px; height:24px; background:var(--blue-600); border-radius:12px; position:relative;"><div style="width:20px; height:20px; background:#fff; border-radius:50%; position:absolute; right:2px; top:2px;"></div></div>
+                  <input type="text" class="input" style="width:100px; padding:6px 12px; font-family:'Geist Mono';" value="09:00">
+                  <span>-</span>
+                  <input type="text" class="input" style="width:100px; padding:6px 12px; font-family:'Geist Mono';" value="19:00">
+                  <button class="btn btn-ghost btn-sm" style="margin-left:auto;">+ Shto</button>
+                </div>
+                <!-- Tue -->
+                <div class="flex items-center gap-4 py-3 border-bottom">
+                  <div style="width:100px; font-weight:500;">E Martë</div>
+                  <div style="width:40px; height:24px; background:var(--blue-600); border-radius:12px; position:relative;"><div style="width:20px; height:20px; background:#fff; border-radius:50%; position:absolute; right:2px; top:2px;"></div></div>
+                  <input type="text" class="input" style="width:100px; padding:6px 12px; font-family:'Geist Mono';" value="09:00">
+                  <span>-</span>
+                  <input type="text" class="input" style="width:100px; padding:6px 12px; font-family:'Geist Mono';" value="19:00">
+                  <button class="btn btn-ghost btn-sm" style="margin-left:auto;">+ Shto</button>
+                </div>
+                <!-- Sun Closed -->
+                <div class="flex items-center gap-4 py-3 opacity-60">
+                  <div style="width:100px; font-weight:500;">E Diel</div>
+                  <div style="width:40px; height:24px; background:var(--surface-3); border-radius:12px; position:relative;"><div style="width:20px; height:20px; background:#fff; border-radius:50%; position:absolute; left:2px; top:2px;"></div></div>
+                  <div style="color:var(--ink-4); font-size:13px; font-style:italic;">Mbyllur</div>
+                </div>
+              </div>
+              <div style="padding:24px; background:var(--surface-2); display:flex; justify-content:flex-end;">
+                <button class="btn btn-primary" onclick="showToast('U ruajt me sukses')">Ruaj Ndryshimet</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 5.5: Gallery -->
+      <div class="frame" data-frame="5.5" data-name="Gallery" data-mode="desktop">
+        <div class="dash-grid">
+          <div class="dash-sidebar">
+            <div class="logo mb-6 px-3">LokalWeb</div>
+            <div class="eyebrow px-3">MENAXHIMI</div>
+            <div class="nav-item" onclick="goto('5.1')">Përmbledhje</div>
+            <div class="nav-item" onclick="goto('5.2')">Rezervime</div>
+            <div class="nav-item" onclick="goto('5.3')">Shërbime</div>
+            <div class="nav-item" onclick="goto('5.4')">Orari</div>
+            <div class="nav-item active" onclick="goto('5.5')">Galeri</div>
+            <div class="nav-item" onclick="goto('5.7')">Profili</div>
+            <div class="eyebrow px-3 mt-6">DIZAJNI</div>
+            <div class="nav-item" onclick="goto('5.6')">Personalizo</div>
+          </div>
+          <div class="dash-main">
+            <h1 class="heading-2 mb-8">Galeria</h1>
+            
+            <div class="mb-12">
+              <h3 class="mb-4">Hero Seksioni (Kryesore)</h3>
+              <div class="grid grid-cols-3 gap-4">
+                <div style="border:2px dashed var(--border-2); border-radius:var(--r); height:160px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; background:var(--paper);">
+                  <div style="font-size:24px; color:var(--blue-600); margin-bottom:8px;">+</div>
+                  <div style="font-size:13px; font-weight:500;">Ngarko foto</div>
+                </div>
+                <div style="border-radius:var(--r); height:160px; background:linear-gradient(to bottom right, var(--surface-2), var(--surface-3)); border:1px solid var(--border);"></div>
+              </div>
+            </div>
+            
+            <div>
+               <h3 class="mb-4">Punët</h3>
+               <div class="grid grid-cols-4 gap-4">
+                 <div style="border:2px dashed var(--border-2); border-radius:var(--r); height:120px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; background:var(--paper);">
+                  <div style="font-size:20px; color:var(--blue-600);">+</div>
+                 </div>
+                 <div style="border-radius:var(--r); height:120px; background:linear-gradient(to bottom right, var(--surface-2), var(--surface-3)); border:1px solid var(--border);"></div>
+                 <div style="border-radius:var(--r); height:120px; background:linear-gradient(to bottom right, var(--surface-2), var(--surface-3)); border:1px solid var(--border);"></div>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 5.6: Customization -->
+      <div class="frame" data-frame="5.6" data-name="Customization" data-mode="desktop">
+        <div class="dash-grid">
+          <div class="dash-sidebar">
+            <div class="logo mb-6 px-3">LokalWeb</div>
+            <div class="eyebrow px-3">MENAXHIMI</div>
+            <div class="nav-item" onclick="goto('5.1')">Përmbledhje</div>
+            <div class="nav-item" onclick="goto('5.2')">Rezervime</div>
+            <div class="nav-item" onclick="goto('5.3')">Shërbime</div>
+            <div class="nav-item" onclick="goto('5.4')">Orari</div>
+            <div class="nav-item" onclick="goto('5.5')">Galeri</div>
+            <div class="nav-item" onclick="goto('5.7')">Profili</div>
+            <div class="eyebrow px-3 mt-6">DIZAJNI</div>
+            <div class="nav-item active" onclick="goto('5.6')">Personalizo</div>
+          </div>
+          <div class="dash-main" style="padding:0; display:flex; flex-direction:column;">
+            <div style="padding:16px 24px; background:var(--blue-tint-08); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+              <div class="flex items-center gap-2 font-weight:500; color:var(--blue-600);">
+                <span>✦</span> Asistenti i AI
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="goto('3.1')">Rigjenero faqen</button>
+            </div>
+            
+            <div class="flex" style="flex:1;">
+               <!-- Editor Panel -->
+               <div style="width:320px; background:var(--paper); border-right:1px solid var(--border); padding:24px;">
+                 <div class="flex gap-4 mb-6" style="border-bottom:1px solid var(--border); padding-bottom:12px;">
+                   <div style="font-weight:600; color:var(--ink); cursor:pointer;">Pamja</div>
+                   <div style="color:var(--ink-4); cursor:pointer;">Përmbajtja</div>
+                 </div>
+                 
+                 <div class="grid grid-cols-2 gap-4">
+                   <div class="card" style="padding:16px; cursor:pointer;">
+                     <div class="eyebrow">NGJYRAT</div>
+                     <div class="flex gap-1 mt-2">
+                       <div style="width:16px; height:16px; border-radius:50%; background:var(--ink);"></div>
+                       <div style="width:16px; height:16px; border-radius:50%; background:#fff; border:1px solid var(--border);"></div>
+                       <div style="width:16px; height:16px; border-radius:50%; background:var(--blue-600);"></div>
+                     </div>
+                   </div>
+                   <div class="card" style="padding:16px; cursor:pointer;">
+                     <div class="eyebrow">FONTI</div>
+                     <div style="font-family:'Geist', serif; font-size:16px; margin-top:4px;">Geist</div>
+                   </div>
+                   <div class="card" style="padding:16px; cursor:pointer;">
+                     <div class="eyebrow">STRUKTURA</div>
+                     <div style="font-size:13px; margin-top:4px;">Klasike</div>
+                   </div>
+                   <div class="card" style="padding:16px; cursor:pointer;">
+                     <div class="eyebrow">SEKSIONE</div>
+                     <div style="font-size:13px; margin-top:4px;">5 aktive</div>
+                   </div>
+                 </div>
+                 
+                 <button class="btn btn-primary w-full mt-8" onclick="showToast('Ndryshimet u publikuan')">Publiko Ndryshimet</button>
+               </div>
+               
+               <!-- Canvas -->
+               <div style="flex:1; background:var(--surface-3); padding:40px; display:flex; justify-content:center; align-items:flex-start; overflow-y:auto;">
+                 <div style="width:100%; max-width:800px; background:#fff; border-radius:var(--r); box-shadow:0 12px 48px rgba(0,0,0,0.1); overflow:hidden; border:1px solid var(--border);">
+                    <div style="padding:16px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;">
+                      <div style="font-weight:700;">Arbër's Chair</div>
+                      <div class="flex gap-4 font-size:13px"><span style="color:var(--ink-2);">Shërbimet</span><span style="color:var(--ink-2);">Orari</span></div>
+                    </div>
+                    <div style="padding:100px 40px; text-align:center; background:var(--ink); color:#fff;">
+                      <div class="mono" style="color:var(--blue-400); margin-bottom:16px; letter-spacing:0.1em;">SINCE 1987</div>
+                      <div style="font-family:'Geist', sans-serif; font-size:48px; line-height:1; margin-bottom:24px; font-weight:700;">Three chairs.<br>Forty years.</div>
+                      <div style="padding:10px 20px; background:var(--blue-600); color:#fff; border-radius:4px; font-size:14px; display:inline-block;">Rezervo</div>
+                    </div>
+                 </div>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 5.7: Profile -->
+      <div class="frame" data-frame="5.7" data-name="Profile" data-mode="desktop">
+        <div class="dash-grid">
+          <div class="dash-sidebar">
+            <div class="logo mb-6 px-3">LokalWeb</div>
+            <div class="eyebrow px-3">MENAXHIMI</div>
+            <div class="nav-item" onclick="goto('5.1')">Përmbledhje</div>
+            <div class="nav-item" onclick="goto('5.2')">Rezervime</div>
+            <div class="nav-item" onclick="goto('5.3')">Shërbime</div>
+            <div class="nav-item" onclick="goto('5.4')">Orari</div>
+            <div class="nav-item" onclick="goto('5.5')">Galeri</div>
+            <div class="nav-item active" onclick="goto('5.7')">Profili</div>
+            <div class="eyebrow px-3 mt-6">DIZAJNI</div>
+            <div class="nav-item" onclick="goto('5.6')">Personalizo</div>
+          </div>
+          <div class="dash-main">
+            <h1 class="heading-2 mb-8">Profili i Biznesit</h1>
+            
+            <div class="card-elevated" style="max-width: 600px; padding: 0;">
+              <div style="padding: 32px; border-bottom: 1px solid var(--border);">
+                <h3 class="mb-4">Informacioni bazë</h3>
+                <div class="mb-4">
+                  <label class="label">Emri i biznesit</label>
+                  <input type="text" class="input" value="Arbër's Chair">
+                </div>
+                <div>
+                  <label class="label">Përshkrimi i shkurtër</label>
+                  <textarea class="input" rows="3">Berbertari klasike në qendër të Prishtinës. Traditë që nga viti 1987.</textarea>
+                </div>
+              </div>
+              <div style="padding: 32px; border-bottom: 1px solid var(--border);">
+                <h3 class="mb-4">Kontakt & Lokacioni</h3>
+                <div class="mb-4">
+                  <label class="label">Telefoni</label>
+                  <input type="text" class="input" value="+383 44 123 456">
+                </div>
+                <div>
+                  <label class="label">Adresa</label>
+                  <input type="text" class="input" value="Rr. Agim Ramadani, Prishtinë">
+                </div>
+                <div style="height:120px; background:var(--surface-3); border-radius:var(--r-sm); margin-top:16px; display:flex; align-items:center; justify-content:center; color:var(--ink-4); border:1px solid var(--border);">
+                  [ Harta ]
+                </div>
+              </div>
+              <div style="padding: 32px; border-bottom: 1px solid var(--border);">
+                <h3 class="mb-4">Rrjetet Sociale</h3>
+                <div class="mb-4">
+                  <label class="label">Instagram URL</label>
+                  <input type="text" class="input" placeholder="https://instagram.com/...">
+                </div>
+              </div>
+              <div style="padding:24px; background:var(--surface-2); display:flex; justify-content:flex-end;">
+                <button class="btn btn-primary" onclick="showToast('U ruajt me sukses')">Ruaj Ndryshimet</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 6: CUSTOMER SITE ================= -->
+
+      <!-- Frame 6.1: Customer Site -->
+      <div class="frame" data-frame="6.1" data-name="Public Homepage" data-mode="desktop">
+        <div style="background: var(--paper); min-height: 100vh;">
+          <nav class="site-nav">
+            <div class="flex items-center gap-3">
+              <div style="width:32px; height:32px; background:var(--ink); color:#fff; border-radius:4px; display:flex; align-items:center; justify-content:center; font-weight:700;">A</div>
+              <span style="font-weight:700; font-size:18px;">Arbër's Chair</span>
+            </div>
+            <div class="flex items-center gap-6">
+              <a href="#" class="text-ink-2">Shërbimet</a>
+              <a href="#" class="text-ink-2">Galeria</a>
+              <a href="#" class="text-ink-2">Orari</a>
+              <button class="btn btn-primary" onclick="goto('6.2')">Rezervo</button>
+            </div>
+          </nav>
+          
+          <header class="site-hero">
+            <div class="mono" style="color:var(--blue-600); margin-bottom:24px; letter-spacing:0.1em; font-size:12px;">SINCE 1987</div>
+            <h1 class="display mb-6" style="max-width:800px; margin-left:auto; margin-right:auto;">Three chairs. <span class="italic-accent text-blue">Forty years.</span></h1>
+            <p style="color:var(--ink-3); font-size:18px; max-width:600px; margin:0 auto 40px auto;">Traditë, saktësi dhe mjeshtëri e vërtetë. Rezervo karrigen tënde dhe përjeto dallimin.</p>
+            <button class="btn btn-primary btn-lg" onclick="goto('6.2')">Rezervo një karrige</button>
+          </header>
+          
+          <section class="site-section text-center">
+            <h2 class="heading-2 mb-12">Shërbimet</h2>
+            <div class="grid grid-cols-3 gap-8" style="max-width:1080px; margin:0 auto;">
+              <div class="card text-left" style="border:1px solid var(--border-2);">
+                <div class="flex justify-between items-start mb-4">
+                  <div style="font-weight:600; font-size:18px;">Prerje Klasike</div>
+                  <div style="font-size:24px; font-weight:700; color:var(--blue-600);">€10</div>
+                </div>
+                <div class="mono mb-4" style="font-size:12px; color:var(--ink-4);">30 MIN</div>
+                <p style="color:var(--ink-3); font-size:14px; margin-bottom:24px;">Prerje me gërshërë ose makinë sipas stilit klasik. Përfshin larjen.</p>
+                <button class="btn btn-secondary w-full" onclick="goto('6.2')">Rezervo</button>
+              </div>
+              <div class="card text-left" style="border:1px solid var(--border-2); box-shadow:0 12px 32px rgba(0,0,0,0.05); transform:scale(1.02); border-color:var(--blue-600);">
+                <div class="flex justify-between items-start mb-4">
+                  <div style="font-weight:600; font-size:18px;">Fade & Mjekërr</div>
+                  <div style="font-size:24px; font-weight:700; color:var(--blue-600);">€15</div>
+                </div>
+                <div class="mono mb-4" style="font-size:12px; color:var(--ink-4);">45 MIN</div>
+                <p style="color:var(--ink-3); font-size:14px; margin-bottom:24px;">Prerje moderne fade kombinuar me rregullim detajuar të mjekrrës.</p>
+                <button class="btn btn-primary w-full" onclick="goto('6.2')">Rezervo</button>
+              </div>
+              <div class="card text-left" style="border:1px solid var(--border-2);">
+                <div class="flex justify-between items-start mb-4">
+                  <div style="font-weight:600; font-size:18px;">Rruajtje</div>
+                  <div style="font-size:24px; font-weight:700; color:var(--blue-600);">€10</div>
+                </div>
+                <div class="mono mb-4" style="font-size:12px; color:var(--ink-4);">30 MIN</div>
+                <p style="color:var(--ink-3); font-size:14px; margin-bottom:24px;">Rruajtje tradicionale me brisk dhe peshqir të nxehtë.</p>
+                <button class="btn btn-secondary w-full" onclick="goto('6.2')">Rezervo</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Frame 6.2: Booking Drawer -->
+      <div class="frame" data-frame="6.2" data-name="Booking Drawer" data-mode="desktop">
+        <div style="background: var(--paper); min-height: 100vh;">
+          <header class="site-hero" style="filter: brightness(0.9); pointer-events:none;">
+            <div class="mono" style="color:var(--blue-600); margin-bottom:24px;">SINCE 1987</div>
+            <h1 class="display mb-6">Three chairs. <span class="italic-accent text-blue">Forty years.</span></h1>
+          </header>
+          
+          <div class="drawer-overlay" onclick="if(event.target === this) goto('6.1')">
+            <div class="drawer" onclick="event.stopPropagation()">
+              <div class="drawer-header">
+                <h2 style="font-size:20px;">Rezervo një karrige</h2>
+                <button class="btn-icon" onclick="goto('6.1')">✕</button>
+              </div>
+              <div class="drawer-body">
+                <div class="mb-8">
+                  <div class="eyebrow">1. SHËRBIMI</div>
+                  <div class="flex flex-col gap-2">
+                    <div class="chip selected" style="flex-direction:row; justify-content:space-between; padding:16px;">
+                      <div>
+                        <div style="font-weight:600; font-size:15px;">Prerje Klasike</div>
+                        <div style="font-size:12px; color:var(--ink-3);">30 min</div>
+                      </div>
+                      <div style="font-weight:700; color:var(--blue-600);">€10</div>
+                    </div>
+                    <div class="chip" style="flex-direction:row; justify-content:space-between; padding:16px;">
+                      <div>
+                        <div style="font-weight:600; font-size:15px;">Fade & Mjekërr</div>
+                        <div style="font-size:12px; color:var(--ink-3);">45 min</div>
+                      </div>
+                      <div style="font-weight:700; color:var(--ink);">€15</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="mb-8">
+                  <div class="eyebrow">2. DATA</div>
+                  <div class="flex gap-2 overflow-x-auto" style="padding-bottom:8px;">
+                    <div class="chip selected" style="min-width:64px; text-align:center;">
+                      <div style="font-size:11px; text-transform:uppercase;">Sot</div>
+                      <div style="font-size:18px; font-weight:700;">12</div>
+                    </div>
+                    <div class="chip" style="min-width:64px; text-align:center;">
+                      <div style="font-size:11px; text-transform:uppercase;">Nesër</div>
+                      <div style="font-size:18px; font-weight:700;">13</div>
+                    </div>
+                    <div class="chip" style="min-width:64px; text-align:center;">
+                      <div style="font-size:11px; text-transform:uppercase;">Mër</div>
+                      <div style="font-size:18px; font-weight:700;">14</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="mb-8">
+                  <div class="eyebrow">3. ORA</div>
+                  <div class="grid grid-cols-3 gap-2">
+                    <div class="chip py-2">09:00</div>
+                    <div class="chip py-2">10:00</div>
+                    <div class="chip py-2 selected">11:00</div>
+                    <div class="chip py-2" style="opacity:0.4; text-decoration:line-through; cursor:not-allowed;">13:30</div>
+                    <div class="chip py-2">14:00</div>
+                    <div class="chip py-2">15:00</div>
+                  </div>
+                </div>
+                
+                <div class="mb-4">
+                  <div class="eyebrow">4. TË DHËNAT E TUA</div>
+                  <input type="text" class="input mb-3" placeholder="Emri yt">
+                  <input type="text" class="input" placeholder="Numri i telefonit">
+                </div>
+              </div>
+              <div class="drawer-footer">
+                <button class="btn btn-primary w-full btn-lg" onclick="goto('6.3')">Konfirmo rezervimin</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 6.3: Booking Success -->
+      <div class="frame" data-frame="6.3" data-name="Booking Success" data-mode="desktop">
+        <div style="background: var(--paper); min-height: 100vh;">
+          <header class="site-hero" style="filter: brightness(0.9); pointer-events:none;">
+            <div class="mono" style="color:var(--blue-600); margin-bottom:24px;">SINCE 1987</div>
+            <h1 class="display mb-6">Three chairs. <span class="italic-accent text-blue">Forty years.</span></h1>
+          </header>
+          
+          <div class="drawer-overlay">
+            <div class="drawer" style="justify-content: center; align-items: center; text-align:center;">
+               <div style="width:72px; height:72px; background:var(--success); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 24px auto;">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+              </div>
+              <h2 class="heading-2 mb-2">U konfirmua!</h2>
+              <p style="color:var(--ink-3); margin-bottom:32px; padding:0 24px;">Rezervimi yt te Arbër's Chair u konfirmua me sukses.</p>
+              
+              <div style="background:var(--surface-2); padding:20px; border-radius:var(--r); width:calc(100% - 48px); margin:0 auto 32px auto; text-align:left;">
+                <div class="flex justify-between mb-2">
+                  <span style="color:var(--ink-3);">Shërbimi</span>
+                  <span style="font-weight:500;">Prerje Klasike</span>
+                </div>
+                <div class="flex justify-between mb-2">
+                  <span style="color:var(--ink-3);">Data</span>
+                  <span style="font-weight:500;">Sot, 12 Maj</span>
+                </div>
+                <div class="flex justify-between mb-2">
+                  <span style="color:var(--ink-3);">Ora</span>
+                  <span style="font-weight:500;">11:00</span>
+                </div>
+                <div class="flex justify-between mt-4 pt-4" style="border-top:1px solid var(--border);">
+                  <span style="color:var(--ink-3);">Totali</span>
+                  <span style="font-weight:700; color:var(--blue-600);">€10</span>
+                </div>
+              </div>
+              
+              <div class="flex flex-col gap-3 w-full px-6">
+                <button class="btn btn-primary w-full btn-lg">Shto në kalendar</button>
+                <button class="btn btn-ghost w-full" onclick="goto('6.1')">Kthehu te faqja</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 7: EMPTY STATES ================= -->
+      
+      <!-- Frame 7.1: Bookings Empty -->
+      <div class="frame" data-frame="7.1" data-name="Empty: Bookings" data-mode="desktop">
+        <div class="dash-grid">
+          <div class="dash-sidebar">
+            <div class="logo mb-6 px-3">LokalWeb</div>
+            <div class="eyebrow px-3">MENAXHIMI</div>
+            <div class="nav-item" onclick="goto('5.1')">Përmbledhje</div>
+            <div class="nav-item active" onclick="goto('7.1')">Rezervime</div>
+            <div class="nav-item" onclick="goto('5.3')">Shërbime</div>
+          </div>
+          <div class="dash-main flex" style="align-items:center; justify-content:center;">
+             <div class="text-center">
+               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="1.5" style="margin:0 auto 24px auto;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+               <h2 class="heading-2 mb-2">Asnjë rezervim ende.</h2>
+               <p style="color:var(--ink-3); margin-bottom:32px;">Ndaj lidhjen e faqes me klientët e tu për të filluar.</p>
+               <div class="flex justify-center gap-3">
+                 <button class="btn btn-primary" onclick="showToast('Lidhja u kopjua')">Kopjo lidhjen</button>
+                 <button class="btn btn-ghost" onclick="goto('6.1')">Shiko shembull</button>
+               </div>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 7.2: Services Empty -->
+      <div class="frame" data-frame="7.2" data-name="Empty: Services" data-mode="desktop">
+        <div class="dash-grid">
+          <div class="dash-sidebar">
+            <div class="logo mb-6 px-3">LokalWeb</div>
+            <div class="eyebrow px-3">MENAXHIMI</div>
+            <div class="nav-item" onclick="goto('5.1')">Përmbledhje</div>
+            <div class="nav-item active" onclick="goto('7.2')">Shërbime</div>
+          </div>
+          <div class="dash-main flex" style="align-items:center; justify-content:center;">
+             <div class="text-center">
+               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="1.5" style="margin:0 auto 24px auto;"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+               <h2 class="heading-2 mb-2">Shto shërbimet e tua.</h2>
+               <p style="color:var(--ink-3); margin-bottom:32px;">Përcakto çfarë ofron dhe çmimet përkatëse.</p>
+               <button class="btn btn-primary" onclick="goto('5.3')">Shto shërbimin e parë</button>
+             </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Frame 7.3: Gallery Empty -->
+      <div class="frame" data-frame="7.3" data-name="Empty: Gallery" data-mode="desktop">
+        <div class="dash-grid">
+          <div class="dash-sidebar">
+            <div class="logo mb-6 px-3">LokalWeb</div>
+            <div class="eyebrow px-3">MENAXHIMI</div>
+            <div class="nav-item active" onclick="goto('7.3')">Galeri</div>
+          </div>
+          <div class="dash-main flex" style="align-items:center; justify-content:center;">
+             <div class="text-center">
+               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="1.5" style="margin:0 auto 24px auto;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+               <h2 class="heading-2 mb-2">Tregoji punën tënde.</h2>
+               <p style="color:var(--ink-3); margin-bottom:32px;">Ngarko foto të ambientit dhe punëve tuaja më të mira.</p>
+               <button class="btn btn-primary" onclick="goto('5.5')">Ngarko foto</button>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 7.4: Customization Empty -->
+      <div class="frame" data-frame="7.4" data-name="Empty: Customization" data-mode="desktop">
+        <div class="dash-grid">
+          <div class="dash-sidebar">
+            <div class="logo mb-6 px-3">LokalWeb</div>
+            <div class="eyebrow px-3 mt-6">DIZAJNI</div>
+            <div class="nav-item active" onclick="goto('7.4')">Personalizo</div>
+          </div>
+          <div class="dash-main flex" style="align-items:center; justify-content:center;">
+             <div class="text-center">
+               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="1.5" style="margin:0 auto 24px auto;"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+               <h2 class="heading-2 mb-2">Faqja jote nuk është personalizuar ende.</h2>
+               <p style="color:var(--ink-3); margin-bottom:32px;">Lëre AI-në të krijojë magji, ose zgjidh një dizajn nga galeria.</p>
+               <button class="btn btn-primary" onclick="goto('3.1')">Hap asistentin AI</button>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 8: MOBILE SPECIFIC ================= -->
+
+      <!-- Frame 8.1: Mobile Dashboard -->
+      <div class="frame" data-frame="8.1" data-name="Mobile Dashboard" data-mode="mobile">
+        <div style="background: var(--surface); min-height: 100vh;">
+          <nav class="nav-blur" style="padding: 16px 20px;">
+            <button class="btn-icon" style="background:transparent; padding:0;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+            </button>
+            <div style="font-weight:600; font-size:15px;">Arbër's Chair</div>
+            <div style="width:28px; height:28px; background:var(--surface-3); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:12px;">A</div>
+          </nav>
+          
+          <div style="padding: 24px;">
+            <h2 class="heading-2 mb-6" style="font-size:24px;"><span class="italic-accent text-blue">Mirëdita</span>, Arbër.</h2>
+            
+            <div class="card-elevated mb-4 text-center">
+              <div style="font-size:12px; color:var(--ink-3); margin-bottom:4px;">Rezervime sot</div>
+              <div style="font-size:32px; font-weight:600; color:var(--blue-600); line-height:1;">3</div>
+            </div>
+            
+            <div class="flex gap-4 mb-8">
+              <div class="card-elevated text-center w-full">
+                <div style="font-size:12px; color:var(--ink-3); margin-bottom:4px;">Të papranuara</div>
+                <div style="font-size:24px; font-weight:600; color:var(--warning); line-height:1;">1</div>
+              </div>
+              <div class="card-elevated text-center w-full">
+                <div style="font-size:12px; color:var(--ink-3); margin-bottom:4px;">Java</div>
+                <div style="font-size:24px; font-weight:600; color:var(--blue-600); line-height:1;">€185</div>
+              </div>
+            </div>
+            
+            <h3 class="mb-4">Së fundmi</h3>
+            <div class="card-elevated" style="padding:0;">
+               <div class="flex items-center justify-between p-4 border-bottom" style="border-bottom:1px solid var(--border); padding:16px;">
+                 <div>
+                   <div style="font-weight:500; font-size:14px;">Ilir K.</div>
+                   <div style="font-size:12px; color:var(--ink-3);">Prerje Klasike</div>
+                 </div>
+                 <div class="text-right">
+                   <div class="mono" style="font-size:13px;">14:30</div>
+                   <div class="badge badge-warning" style="font-size:9px;">PRITET</div>
+                 </div>
+               </div>
+               <div class="flex items-center justify-between p-4" style="padding:16px;">
+                 <div>
+                   <div style="font-weight:500; font-size:14px;">Agon G.</div>
+                   <div style="font-size:12px; color:var(--ink-3);">Fade</div>
+                 </div>
+                 <div class="text-right">
+                   <div class="mono" style="font-size:13px;">15:00</div>
+                   <div class="badge badge-success" style="font-size:9px;">KONF</div>
+                 </div>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frame 8.2: Mobile Booking Full Screen -->
+      <div class="frame" data-frame="8.2" data-name="Mobile Booking" data-mode="mobile">
+        <div style="background: var(--paper); min-height: 100vh; display: flex; flex-direction: column;">
+          <div class="drawer-header" style="background:#fff; z-index:10;">
+            <h2 style="font-size:18px;">Rezervo një karrige</h2>
+            <button class="btn-icon" onclick="goto('1.2')">✕</button>
+          </div>
+          <div class="drawer-body" style="padding-bottom:100px;">
+            <div class="mb-6">
+              <div class="eyebrow">1. SHËRBIMI</div>
+              <div class="flex flex-col gap-2">
+                <div class="chip selected" style="flex-direction:row; justify-content:space-between; padding:12px;">
+                  <div>
+                    <div style="font-weight:600; font-size:14px;">Prerje Klasike</div>
+                  </div>
+                  <div style="font-weight:700; color:var(--blue-600);">€10</div>
+                </div>
+                <div class="chip" style="flex-direction:row; justify-content:space-between; padding:12px;">
+                  <div>
+                    <div style="font-weight:600; font-size:14px;">Fade & Mjekërr</div>
+                  </div>
+                  <div style="font-weight:700; color:var(--ink);">€15</div>
+                </div>
+              </div>
+            </div>
+            <div class="mb-6">
+              <div class="eyebrow">2. DATA</div>
+              <div class="flex gap-2 overflow-x-auto" style="padding-bottom:8px;">
+                <div class="chip selected" style="min-width:60px; padding:8px;">
+                  <div style="font-size:11px;">SOT</div>
+                  <div style="font-size:16px; font-weight:700;">12</div>
+                </div>
+                <div class="chip" style="min-width:60px; padding:8px;">
+                  <div style="font-size:11px;">NES</div>
+                  <div style="font-size:16px; font-weight:700;">13</div>
+                </div>
+              </div>
+            </div>
+            <div class="mb-6">
+              <div class="eyebrow">3. ORA</div>
+              <div class="grid grid-cols-3 gap-2">
+                <div class="chip py-2">09:00</div>
+                <div class="chip py-2 selected">11:00</div>
+                <div class="chip py-2" style="opacity:0.4; text-decoration:line-through;">13:30</div>
+              </div>
+            </div>
+            <div>
+              <div class="eyebrow">4. TË DHËNAT</div>
+              <input type="text" class="input mb-3" placeholder="Emri yt">
+              <input type="text" class="input" placeholder="Telefoni">
+            </div>
+          </div>
+          <div style="position:fixed; bottom:0; width:100%; max-width:390px; padding:16px 20px; background:#fff; border-top:1px solid var(--border); z-index:10;">
+            <button class="btn btn-primary w-full btn-lg" onclick="goto('6.3')">Konfirmo (€10)</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Navigator Tool -->
+  <div class="frame-nav-wrapper">
+    <div class="frame-nav">
+      <button class="nav-btn" id="nav-prev">←</button>
+      <div class="nav-label" id="nav-current">1.1 Landing (Desktop)</div>
+      <button class="nav-btn" id="nav-next">→</button>
+      <div style="width:1px; height:16px; background:rgba(255,255,255,0.2); margin:0 4px;"></div>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="mode-desktop">Desktop</button>
+        <button class="mode-btn" id="mode-mobile">Mobile</button>
+      </div>
+    </div>
+    <div class="frame-dropdown" id="frame-list"></div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-container">
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script>
+    const FRAMES = [
+      { section: "PUBLIC SURFACES", items: [
+        { id: "1.1", name: "Landing (Desktop)", mode: "desktop" },
+        { id: "1.2", name: "Landing (Mobile)", mode: "mobile" },
+        { id: "1.3", name: "Login", mode: "desktop" },
+        { id: "1.4", name: "Registration", mode: "desktop" },
+        { id: "1.5", name: "Forgot Password", mode: "desktop" },
+        { id: "1.6", name: "Email Verified", mode: "desktop" }
+      ]},
+      { section: "ONBOARDING FORK", items: [
+        { id: "2.1", name: "Onboarding Fork", mode: "desktop" }
+      ]},
+      { section: "AI BUILDER", items: [
+        { id: "3.1", name: "Wizard 1: Basics", mode: "desktop" },
+        { id: "3.2", name: "Wizard 2: Vibe", mode: "desktop" },
+        { id: "3.3", name: "Wizard 3: Loading", mode: "desktop" },
+        { id: "3.4", name: "Wizard 4: Pick Variant", mode: "desktop" },
+        { id: "3.5", name: "Wizard 5: Success", mode: "desktop" }
+      ]},
+      { section: "TEMPLATES", items: [
+        { id: "4.1", name: "Templates Gallery", mode: "desktop" },
+        { id: "4.2", name: "Template Detail", mode: "desktop" },
+        { id: "4.3", name: "Template Setup", mode: "desktop" }
+      ]},
+      { section: "DASHBOARD", items: [
+        { id: "5.1", name: "Dashboard Overview", mode: "desktop" },
+        { id: "5.2", name: "Bookings", mode: "desktop" },
+        { id: "5.3", name: "Services", mode: "desktop" },
+        { id: "5.4", name: "Business Hours", mode: "desktop" },
+        { id: "5.5", name: "Gallery", mode: "desktop" },
+        { id: "5.6", name: "Customization", mode: "desktop" },
+        { id: "5.7", name: "Profile", mode: "desktop" }
+      ]},
+      { section: "CUSTOMER SITE", items: [
+        { id: "6.1", name: "Public Homepage", mode: "desktop" },
+        { id: "6.2", name: "Booking Drawer", mode: "desktop" },
+        { id: "6.3", name: "Booking Success", mode: "desktop" }
+      ]},
+      { section: "EMPTY STATES", items: [
+        { id: "7.1", name: "Empty: Bookings", mode: "desktop" },
+        { id: "7.2", name: "Empty: Services", mode: "desktop" },
+        { id: "7.3", name: "Empty: Gallery", mode: "desktop" },
+        { id: "7.4", name: "Empty: Customization", mode: "desktop" }
+      ]},
+      { section: "MOBILE", items: [
+        { id: "8.1", name: "Mobile Dashboard", mode: "mobile" },
+        { id: "8.2", name: "Mobile Booking", mode: "mobile" }
+      ]}
+    ];
+
+    const flatFrames = FRAMES.flatMap(g => g.items);
+    let currentIndex = 0;
+    
+    const shell = document.getElementById('shell');
+    const navCurrent = document.getElementById('nav-current');
+    const dropdown = document.getElementById('frame-list');
+    let dropdownOpen = false;
+
+    // Initialize Dropdown
+    FRAMES.forEach(group => {
+      const gLabel = document.createElement('div');
+      gLabel.className = 'dropdown-group mt-2';
+      gLabel.textContent = group.section;
+      dropdown.appendChild(gLabel);
+      
+      group.items.forEach(item => {
+        const dItem = document.createElement('div');
+        dItem.className = 'dropdown-item';
+        dItem.dataset.id = item.id;
+        dItem.innerHTML = `<span>${item.id}</span> <span>${item.name}</span>`;
+        dItem.onclick = () => { goto(item.id); toggleDropdown(); };
+        dropdown.appendChild(dItem);
+      });
+    });
+
+    function goto(id) {
+      const idx = flatFrames.findIndex(f => f.id === id);
+      if (idx === -1) return;
+      currentIndex = idx;
+      const targetFrame = flatFrames[idx];
+      
+      // Update DOM
+      document.querySelectorAll('.frame').forEach(el => el.classList.remove('active'));
+      const activeEl = document.querySelector(`.frame[data-frame="${id}"]`);
+      if(activeEl) activeEl.classList.add('active');
+      
+      // Update Shell Mode
+      setMode(targetFrame.mode);
+      
+      // Update Nav
+      navCurrent.textContent = `${targetFrame.id} ${targetFrame.name}`;
+      
+      // Update Dropdown Selection
+      document.querySelectorAll('.dropdown-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.id === id);
+      });
+    }
+
+    function navStep(dir) {
+      let newIdx = currentIndex + dir;
+      if(newIdx < 0) newIdx = flatFrames.length - 1;
+      if(newIdx >= flatFrames.length) newIdx = 0;
+      goto(flatFrames[newIdx].id);
+    }
+
+    function setMode(mode) {
+      shell.className = `shell ${mode}`;
+      document.getElementById('mode-desktop').classList.toggle('active', mode === 'desktop');
+      document.getElementById('mode-mobile').classList.toggle('active', mode === 'mobile');
+    }
+
+    function toggleDropdown() {
+      dropdownOpen = !dropdownOpen;
+      dropdown.classList.toggle('open', dropdownOpen);
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // Event Listeners
+    document.getElementById('nav-prev').onclick = () => navStep(-1);
+    document.getElementById('nav-next').onclick = () => navStep(1);
+    navCurrent.onclick = toggleDropdown;
+    
+    document.getElementById('mode-desktop').onclick = () => setMode('desktop');
+    document.getElementById('mode-mobile').onclick = () => setMode('mobile');
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') navStep(1);
+      if (e.key === 'ArrowLeft') navStep(-1);
+      if (e.key === 'Escape' && dropdownOpen) toggleDropdown();
+    });
+
+    window.addEventListener('click', (e) => {
+      if (dropdownOpen && !e.target.closest('.frame-nav-wrapper')) {
+        toggleDropdown();
+      }
+    });
+
+    // Start
+    goto('1.1');
+  </script>
+</body>
+</html>

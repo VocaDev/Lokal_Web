@@ -7,9 +7,9 @@ interface PreviewServicesProps {
 }
 
 const cardStyleMap = {
-  minimal: 'rounded-lg border-0 bg-[var(--surface-color)]',
-  rounded: 'rounded-3xl border-0 bg-[var(--surface-color)] shadow-xl',
-  bordered: 'rounded-xl border-2 border-[rgba(120,120,255,0.22)] bg-transparent',
+  minimal: 'rounded-lg border-0 bg-card',
+  rounded: 'rounded-3xl border-0 bg-card shadow-xl',
+  bordered: 'rounded-xl border-2 border-primary/40 bg-transparent',
 };
 
 export default function PreviewServices({
@@ -23,16 +23,10 @@ export default function PreviewServices({
 
   return (
     <section className="px-6 py-24 max-w-6xl mx-auto w-full text-center">
-      <h2 
-        className="text-3xl md:text-4xl font-extrabold text-[var(--text-color)] mb-4"
-        style={{ fontFamily: `${customization.heading_font || 'dm-sans'}, sans-serif` }}
-      >
+      <h2 className="font-heading text-3xl md:text-4xl font-extrabold text-foreground mb-4">
         Our Premium Services
       </h2>
-      <p 
-        className="text-[var(--muted-text-color)] max-w-xl mx-auto mb-16 text-lg"
-        style={{ fontFamily: `${customization.body_font || 'dm-sans'}, sans-serif` }}
-      >
+      <p className="text-muted-foreground max-w-xl mx-auto mb-16 text-lg">
         Explore our curated selection of professional services tailored for your needs.
       </p>
 
@@ -41,33 +35,21 @@ export default function PreviewServices({
           <div
             key={idx}
             className={`group p-8 transition-all hover:-translate-y-2 hover:shadow-2xl flex flex-col items-center ${cardStyleMap[customization.card_style || 'minimal']}`}
-            style={{ 
-              borderColor: customization.card_style === 'bordered' ? 'var(--primary-color)' : undefined,
-              boxShadow: customization.card_style === 'rounded' ? '0 20px 40px -20px var(--primary-color)/20' : undefined
-            }}
           >
-            <div className="text-4xl mb-6 p-4 bg-[var(--primary-color)]/10 rounded-2xl group-hover:scale-110 transition-transform">
+            <div className="text-4xl mb-6 p-4 bg-primary/10 rounded-2xl group-hover:scale-110 transition-transform">
               {service.icon}
             </div>
-            <h3 
-              className="text-xl font-bold text-[var(--text-color)] mb-3"
-              style={{ fontFamily: `${customization.heading_font || 'dm-sans'}, sans-serif` }}
-            >
+            <h3 className="font-heading text-xl font-bold text-foreground mb-3">
               {service.name}
             </h3>
-            <p 
-              className="text-[var(--muted-text-color)] text-sm mb-6 flex-grow leading-relaxed"
-              style={{ fontFamily: `${customization.body_font || 'dm-sans'}, sans-serif` }}
-            >
+            <p className="text-muted-foreground text-sm mb-6 flex-grow leading-relaxed">
               Professional service with quality guarantee and full customer satisfaction support.
             </p>
             <div className="flex flex-col items-center gap-4 w-full mt-4">
-              <span className="text-2xl font-black text-[var(--primary-color)]">
+              <span className="text-2xl font-black text-primary">
                 {service.price}
               </span>
-              <button 
-                className="w-full bg-[var(--primary-color)] text-white font-bold py-3 rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-lg hover:shadow-[var(--primary-color)]/20 shadow-[var(--primary-color)]/10"
-              >
+              <button className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-lg">
                 Book Now
               </button>
             </div>

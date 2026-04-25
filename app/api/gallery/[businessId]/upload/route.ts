@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { requireBusinessOwner } from '@/lib/api-auth';
 
 export async function POST(
   request: NextRequest,
@@ -8,6 +9,10 @@ export async function POST(
   const { businessId } = await params;
   try {
     const supabase = await createClient();
+
+    const auth = await requireBusinessOwner(supabase, businessId);
+    if (auth instanceof NextResponse) return auth;
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const sectionKey = formData.get('section_key') as string;

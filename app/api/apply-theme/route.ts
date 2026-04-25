@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { requireBusinessOwner } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,13 +11,15 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
+    const auth = await requireBusinessOwner(supabase, businessId);
+    if (auth instanceof NextResponse) return auth;
+
     const { data: bizUpdated, error: bizErr } = await supabase
       .from('businesses')
       .update({
         template_id: theme.templateId,
         website_creation_method: 'ai_generated',
         website_builder_completed: true,
-        custom_website_html: null,
       })
       .eq('id', businessId)
       .select('subdomain')

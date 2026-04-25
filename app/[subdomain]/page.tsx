@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Business, BusinessHours, Service } from "@/lib/types";
 import { normalizeIndustry } from "@/lib/industries";
+import { hexToHsl, fontFamilyOf } from "@/lib/utils";
 import TemplateRouter from "@/components/templates";
 
 export async function generateMetadata({ params }: { params: Promise<{ subdomain: string }> }) {
@@ -23,9 +24,32 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
   const { subdomain } = await params;
   const supabase = await createClient();
 
+  // Explicit column allowlist — never `select('*')` on a publicly-readable
+  // table. Anything we don't render to a public visitor stays out of the
+  // payload (e.g. internal flags, AI setup data, owner_id), so future column
+  // additions don't accidentally leak. RLS hardening follows in migration
+  // 011; this is the application-layer half of decision (5) in demo-status.
   const { data: bizData } = await supabase
     .from("businesses")
-    .select("*")
+    .select(`
+      id,
+      name,
+      subdomain,
+      industry,
+      template_id,
+      phone,
+      address,
+      description,
+      logo_url,
+      accent_color,
+      social_links,
+      gallery_images,
+      tagline,
+      founded_year,
+      timezone,
+      website_creation_method,
+      created_at
+    `)
     .eq("subdomain", subdomain)
     .maybeSingle();
 
@@ -75,10 +99,12 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
     socialLinks: bizData.social_links ?? { instagram: '', facebook: '', whatsapp: '' },
     galleryImages: allGalleryImages,
     gallerySections: galleryBySection,
-    ownerId: bizData.owner_id,
+    // ownerId omitted — public visitors don't need to know who owns the business.
     createdAt: bizData.created_at,
     websiteCreationMethod: bizData.website_creation_method,
-    customWebsiteHtml: bizData.custom_website_html,
+    tagline: bizData.tagline ?? undefined,
+    foundedYear: bizData.founded_year ?? undefined,
+    timezone: bizData.timezone ?? 'Europe/Belgrade',
     showTestimonials: customData?.show_testimonials ?? true,
     showTeam: customData?.show_team ?? true,
     showContact: customData?.show_contact ?? true,
@@ -91,23 +117,41 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
     ctaSecondary: customData?.cta_secondary || undefined,
   };
 
-  const themeStyles = customData
-    ? {
-        '--primary-color': customData.primary_color,
-        '--accent-color': customData.accent_color,
-        '--text-color': customData.text_color,
-        '--muted-text-color': customData.muted_text_color,
-        '--bg-color': customData.bg_color,
-        '--surface-color': customData.surface_color,
-        '--border-color': customData.border_color,
-        '--heading-font': customData.heading_font === 'dm-sans' ? 'DM Sans' :
-                         customData.heading_font === 'playfair' ? 'Playfair Display' :
-                         customData.heading_font.charAt(0).toUpperCase() + customData.heading_font.slice(1),
-        '--body-font': customData.body_font === 'dm-sans' ? 'DM Sans' :
-                       customData.body_font === 'playfair' ? 'Playfair Display' :
-                       customData.body_font.charAt(0).toUpperCase() + customData.body_font.slice(1),
-      } as React.CSSProperties
-    : {};
+  // Build inline theme overrides as shadcn-named CSS vars in HSL component
+  // format. Mirrors src/lib/customization/ThemeProvider.tsx.applyThemeToDocument.
+  // DB stores hex; we convert at this boundary so shadcn primitives + every
+  // template (which use bg-background, text-foreground, etc.) pick up tenant
+  // theming on first paint, no client-side hydration required.
+  const themeStyles: React.CSSProperties = {};
+  if (customData) {
+    const setVar = (name: string, hex: string | null | undefined) => {
+      if (!hex) return;
+      const hsl = hexToHsl(hex);
+      if (hsl) (themeStyles as Record<string, string>)[name] = hsl;
+    };
+    setVar('--primary', customData.primary_color);
+    setVar('--accent', customData.accent_color);
+    setVar('--background', customData.bg_color);
+    setVar('--card', customData.surface_color);
+    setVar('--popover', customData.surface_color);
+    setVar('--muted', customData.surface_color);
+    setVar('--foreground', customData.text_color);
+    setVar('--card-foreground', customData.text_color);
+    setVar('--popover-foreground', customData.text_color);
+    setVar('--secondary-foreground', customData.text_color);
+    setVar('--muted-foreground', customData.muted_text_color);
+    setVar('--border', customData.border_color);
+    setVar('--input', customData.border_color);
+    setVar('--ring', customData.primary_color);
+
+    const headingFamily = fontFamilyOf(customData.heading_font);
+    if (headingFamily) (themeStyles as Record<string, string>)['--font-heading'] = headingFamily;
+    const bodyFamily = fontFamilyOf(customData.body_font);
+    if (bodyFamily) (themeStyles as Record<string, string>)['--font-sans'] = bodyFamily;
+
+    if (customData.hero_height) (themeStyles as Record<string, string>)['--hero-height'] = customData.hero_height;
+    if (customData.card_style) (themeStyles as Record<string, string>)['--card-style'] = customData.card_style;
+  }
 
   const services: Service[] = (servicesData ?? []).map((row) => ({
     id: row.id,

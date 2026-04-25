@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { WebsiteCustomization } from '@/lib/types';
+import { hexToHsl, fontFamilyOf } from '@/lib/utils';
 import PreviewHero from './PreviewHero';
 import PreviewServices from './PreviewServices';
 import { Button } from '@/components/ui/button';
@@ -23,28 +24,47 @@ export default function PreviewPane({
   const containerWidth =
     device === 'desktop' ? 'w-full max-w-5xl' : 'w-[375px]';
 
-  // Apply colors to preview
-  const previewStyle = {
-    '--primary-color': customization.primary_color || '#4f8ef7',
-    '--accent-color': customization.accent_color || '#8b5cf6',
-    '--text-color': customization.text_color || '#e8e8f0',
-    '--muted-text-color': customization.muted_text_color || '#8888aa',
-    '--bg-color': customization.bg_color || '#0a0a0f',
-    '--surface-color': customization.surface_color || '#151522',
-  } as React.CSSProperties;
+  /*
+   * Scoped theme overrides — same shadcn names + HSL component format as
+   * ThemeProvider.applyThemeToDocument() and the SSR themeStyles builder. Set
+   * on a div so descendants resolve `hsl(var(--primary))` etc. against the
+   * tenant's hex inputs (converted at runtime). The Hub UI itself sits OUTSIDE
+   * this div and continues to use the chrome's own tokens.
+   */
+  const previewStyle: React.CSSProperties = {};
+  const setVar = (name: string, hex: string | null | undefined) => {
+    if (!hex) return;
+    const hsl = hexToHsl(hex);
+    if (hsl) (previewStyle as Record<string, string>)[name] = hsl;
+  };
+  setVar('--primary', customization.primary_color || '#1d4ed8');
+  setVar('--accent', customization.accent_color || '#8b5cf6');
+  setVar('--background', customization.bg_color || '#0a0a0f');
+  setVar('--card', customization.surface_color || '#151522');
+  setVar('--popover', customization.surface_color || '#151522');
+  setVar('--muted', customization.surface_color || '#151522');
+  setVar('--foreground', customization.text_color || '#e8e8f0');
+  setVar('--card-foreground', customization.text_color || '#e8e8f0');
+  setVar('--popover-foreground', customization.text_color || '#e8e8f0');
+  setVar('--muted-foreground', customization.muted_text_color || '#8888aa');
+  setVar('--border', customization.border_color || '#1c1c2c');
+  const bodyFont = fontFamilyOf(customization.body_font);
+  if (bodyFont) (previewStyle as Record<string, string>)['--font-sans'] = bodyFont;
+  const headingFont = fontFamilyOf(customization.heading_font);
+  if (headingFont) (previewStyle as Record<string, string>)['--font-heading'] = headingFont;
 
   return (
     <div className="space-y-6 flex flex-col items-center">
-      {/* Device Switcher */}
-      <div className="flex gap-2 p-1 bg-[#151522] rounded-lg border border-[rgba(120,120,255,0.12)]">
+      {/* Device Switcher — chrome UI, uses chrome tokens */}
+      <div className="flex gap-2 p-1 bg-card rounded-lg border border-border">
         <Button
           onClick={() => setDevice('desktop')}
           variant="ghost"
           size="sm"
           className={`px-4 rounded-md transition-all ${
             device === 'desktop'
-              ? 'bg-[#4f8ef7] text-white'
-              : 'text-[#8888aa] hover:text-[#e8e8f0]'
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           <Monitor className="w-4 h-4 mr-2" />
@@ -56,8 +76,8 @@ export default function PreviewPane({
           size="sm"
           className={`px-4 rounded-md transition-all ${
             device === 'mobile'
-              ? 'bg-[#4f8ef7] text-white'
-              : 'text-[#8888aa] hover:text-[#e8e8f0]'
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           <Phone className="w-4 h-4 mr-2" />
@@ -65,32 +85,31 @@ export default function PreviewPane({
         </Button>
       </div>
 
-      {/* Preview Container Wrapper */}
-      <div className="w-full flex justify-center bg-[#05050a] p-4 lg:p-8 rounded-2xl border border-[rgba(120,120,255,0.06)] overflow-auto max-h-[800px]">
+      {/* Preview Container — scope overrides to children */}
+      <div className="w-full flex justify-center bg-background/60 p-4 lg:p-8 rounded-2xl border border-border overflow-auto max-h-[800px]">
         <div
-          className={`mx-auto ${containerWidth} transition-all duration-300 bg-[var(--bg-color)] rounded-xl border border-[rgba(120,120,255,0.22)] overflow-hidden shadow-2xl origin-top`}
+          className={`mx-auto ${containerWidth} transition-all duration-300 bg-background rounded-xl border border-border overflow-hidden shadow-2xl origin-top`}
           style={previewStyle}
         >
-          {/* Mock Website Content */}
+          {/* Mock Website Content — uses scoped tokens */}
           <div className="min-h-screen flex flex-col font-sans">
-            {/* Navbar */}
-            <header className="bg-[var(--surface-color)] border-b border-[rgba(120,120,255,0.12)] px-6 py-4 flex justify-between items-center z-10 sticky top-0">
-              <div className="text-lg font-bold text-[var(--text-color)]">
+            <header className="bg-card border-b border-border px-6 py-4 flex justify-between items-center z-10 sticky top-0">
+              <div className="text-lg font-bold text-foreground">
                 Your Business
               </div>
               <div className="space-x-6 hidden md:flex">
-                <a className="text-sm font-medium text-[var(--muted-text-color)] hover:text-[var(--text-color)] transition-colors">
+                <a className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                   Services
                 </a>
-                <a className="text-sm font-medium text-[var(--muted-text-color)] hover:text-[var(--text-color)] transition-colors">
+                <a className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                   About
                 </a>
-                <a className="text-sm font-medium text-[var(--muted-text-color)] hover:text-[var(--text-color)] transition-colors">
+                <a className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                   Contact
                 </a>
               </div>
-              <button 
-                className="md:hidden text-[var(--text-color)]"
+              <button
+                className="md:hidden text-foreground"
                 aria-label="Menu"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,32 +119,27 @@ export default function PreviewPane({
             </header>
 
             <main>
-              {/* Hero Section */}
               <PreviewHero customization={customization} />
-
-              {/* Services Section */}
               <PreviewServices customization={customization} />
-              
-              {/* Section Visibility Previews */}
+
               {customization.show_testimonials && (
-                <section className="px-6 py-16 bg-[var(--surface-color)]/50 text-center">
-                  <h2 className="text-2xl font-bold text-[var(--text-color)] mb-4">Reviews</h2>
-                  <p className="text-[var(--muted-text-color)] italic max-w-lg mx-auto">
+                <section className="px-6 py-16 bg-card/50 text-center">
+                  <h2 className="text-2xl font-bold text-foreground mb-4">Reviews</h2>
+                  <p className="text-muted-foreground italic max-w-lg mx-auto">
                     "Amazing service, highly recommend to everyone in the area!"
                   </p>
                 </section>
               )}
             </main>
 
-            {/* Footer */}
-            <footer className="bg-[var(--surface-color)] border-t border-[rgba(120,120,255,0.12)] px-6 py-12 mt-auto text-center">
-              <p className="text-sm font-medium text-[var(--text-color)]">Your Business</p>
+            <footer className="bg-card border-t border-border px-6 py-12 mt-auto text-center">
+              <p className="text-sm font-medium text-foreground">Your Business</p>
               <div className="mt-4 flex justify-center space-x-4">
-                <div className="w-8 h-8 rounded-full bg-[var(--primary-color)]/20" />
-                <div className="w-8 h-8 rounded-full bg-[var(--primary-color)]/20" />
-                <div className="w-8 h-8 rounded-full bg-[var(--primary-color)]/20" />
+                <div className="w-8 h-8 rounded-full bg-primary/20" />
+                <div className="w-8 h-8 rounded-full bg-primary/20" />
+                <div className="w-8 h-8 rounded-full bg-primary/20" />
               </div>
-              <p className="mt-8 text-xs text-[var(--muted-text-color)]">
+              <p className="mt-8 text-xs text-muted-foreground">
                 © {new Date().getFullYear()} Your Business. All rights reserved.
               </p>
             </footer>
@@ -133,9 +147,9 @@ export default function PreviewPane({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 bg-[#151522] border border-[rgba(120,120,255,0.12)] px-4 py-2 rounded-full shadow-lg">
-        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-        <p className="text-xs text-[#8888aa]">
+      <div className="flex items-center gap-2 bg-card border border-border px-4 py-2 rounded-full shadow-lg">
+        <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+        <p className="text-xs text-muted-foreground">
           Live Preview: Changes appear instantly
         </p>
       </div>

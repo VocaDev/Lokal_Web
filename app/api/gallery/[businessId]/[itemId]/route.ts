@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { requireBusinessOwner } from '@/lib/api-auth';
 
 export async function DELETE(
   request: NextRequest,
@@ -9,7 +10,10 @@ export async function DELETE(
   try {
     const supabase = await createClient();
 
-    // Verify ownership indirectly by joining onto business or just check if it exists for this businessId
+    const auth = await requireBusinessOwner(supabase, businessId);
+    if (auth instanceof NextResponse) return auth;
+
+    // Existing ownership check on the gallery_items row stays as a defense-in-depth pass.
     const { data: item, error: itemError } = await supabase
       .from('gallery_items')
       .select('id, image_url')

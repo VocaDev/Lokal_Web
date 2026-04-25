@@ -62,7 +62,8 @@ export default function BookingsPage() {
       .catch(() => showToast("Nuk u ngarkuan të dhënat. Provo përsëri.", "error"));
   }, [business?.id]);
 
-  const getServiceName = (serviceId: string) => services.find(s => s.id === serviceId)?.name || 'Unknown';
+  const getServiceName = (serviceId: string | null) =>
+    serviceId == null ? 'Reservation' : (services.find(s => s.id === serviceId)?.name || 'Unknown');
 
   const handleAction = async (
     booking: Booking,
@@ -158,7 +159,12 @@ export default function BookingsPage() {
                         <div className="text-xs text-[#5a5a7a] mt-0.5">{b.customerPhone}</div>
                       </td>
                       <td className="py-4 px-6 text-[#8888aa]">
-                        {getServiceName(b.serviceId)}
+                        <div>{getServiceName(b.serviceId)}</div>
+                        {b.partySize != null && (
+                          <div className="text-xs text-[#5a5a7a] mt-0.5">
+                            Party of {b.partySize === 6 ? '6+' : b.partySize}
+                          </div>
+                        )}
                       </td>
                       <td className="py-4 px-6 text-[#8888aa]">
                         <div>{dt.toLocaleDateString()}</div>

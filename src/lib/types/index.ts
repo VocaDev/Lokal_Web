@@ -31,11 +31,12 @@ export interface BusinessHours {
 export interface Booking {
   id: string;
   businessId: string;
-  serviceId: string;
+  serviceId: string | null;       // null for restaurant table reservations
   customerName: string;
   customerPhone: string;
-  appointmentAt: string; // ISO datetime
+  appointmentAt: string; // ISO datetime (timestamptz from Postgres)
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  partySize?: number | null;       // restaurant reservations only (migration 008)
   createdAt: string;
 }
 
@@ -56,6 +57,10 @@ export interface Business {
   gallerySections?: Record<string, string[]>;
   ownerId?: string;
   createdAt: string;
+  // Editable metadata (migration 007)
+  tagline?: string;
+  foundedYear?: number;
+  timezone?: string;               // IANA zone, defaults to 'Europe/Belgrade'
   // Customization Flags
   showTestimonials?: boolean;
   showTeam?: boolean;
@@ -70,7 +75,6 @@ export interface Business {
   ctaSecondary?: string;
   // Website Builder
   websiteCreationMethod?: string;
-  customWebsiteHtml?: string;
   aiSetupData?: Record<string, unknown>;
   websiteBuilderCompleted?: boolean;
 }

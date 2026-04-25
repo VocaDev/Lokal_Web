@@ -39,16 +39,34 @@ export interface WebsiteCustomization {
   updated_at: string;
 }
 
+/*
+ * Runtime CSS variables written by ThemeProvider.applyThemeToDocument() and
+ * the SSR themeStyles builder in app/[subdomain]/page.tsx. Names follow shadcn
+ * convention; values are HSL components (e.g. "220 91% 58%") wrapped at the
+ * Tailwind layer with hsl(var(--name)). Hex storage in DB is converted at
+ * runtime via hexToHsl() in src/lib/utils.ts.
+ *
+ * This is informational; the actual writes use root.style.setProperty so they
+ * are not type-checked against this shape, but keep this in sync as the
+ * canonical contract.
+ */
 export interface ThemeVariables {
-  '--primary-color': string;
-  '--accent-color': string;
-  '--text-color': string;
-  '--muted-text-color': string;
-  '--bg-color': string;
-  '--surface-color': string;
-  '--border-color': string;
-  '--heading-font': string;
-  '--body-font': string;
+  '--primary': string;
+  '--accent': string;
+  '--background': string;
+  '--foreground': string;
+  '--card': string;
+  '--card-foreground': string;
+  '--popover': string;
+  '--popover-foreground': string;
+  '--muted': string;
+  '--muted-foreground': string;
+  '--secondary-foreground': string;
+  '--border': string;
+  '--input': string;
+  '--ring': string;
+  '--font-heading': string;
+  '--font-sans': string;
   '--hero-height': string;
   '--card-style': string;
 }

@@ -1,59 +1,101 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;900&family=DM+Mono&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Tokens are derived from docs/design/lokalweb-prototype.html.
+ * Reference: docs/design-tokens.md
+ *
+ * Naming follows shadcn convention. Tenant-customizable tokens are overridden
+ * at runtime by src/lib/customization/ThemeProvider.tsx (Customization Hub) and
+ * by app/[subdomain]/page.tsx (SSR for public sites). Hex storage in DB; runtime
+ * conversion to HSL components via hexToHsl() in src/lib/utils.ts.
+ *
+ * Fonts are loaded once in app/layout.tsx — do NOT @import them here.
+ */
+
 @layer base {
-  /* LIGHT MODE */
+  /* LIGHT MODE — prototype "shell" default */
   :root {
-    --background: 240 20% 96%;       /* soft blue-gray, not pure white */
-    --foreground: 240 22% 12%;
-    --card: 240 18% 98%;             /* cards slightly lighter than bg */
-    --card-foreground: 240 22% 12%;
-    --popover: 240 18% 98%;
-    --popover-foreground: 240 22% 12%;
-    --primary: 220 91% 58%;
+    /* Surfaces */
+    --background: 60 14% 98%;        /* #fafaf7 cream */
+    --foreground: 222 47% 11%;       /* #0f172a ink */
+    --card: 0 0% 100%;               /* #ffffff */
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Brand */
+    --primary: 224 76% 48%;          /* #1d4ed8 cobalt */
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 15% 91%;        /* slightly darker than bg for sections */
-    --secondary-foreground: 240 22% 12%;
-    --muted: 240 15% 91%;
-    --muted-foreground: 240 10% 42%;
-    --accent: 255 80% 67%;
+    --accent: 258 90% 66%;           /* #8b5cf6 */
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
+
+    /* Sections */
+    --secondary: 40 17% 93%;         /* #f3f1ec */
+    --secondary-foreground: 222 47% 11%;
+    --muted: 40 17% 93%;
+    --muted-foreground: 215 19% 35%; /* #475569 */
+
+    /* States */
+    --destructive: 0 73% 50%;        /* #dc2626 */
     --destructive-foreground: 0 0% 100%;
-    --border: 240 15% 82%;           /* visible but not harsh */
-    --input: 240 18% 94%;
-    --ring: 220 91% 58%;
-    --radius: 0.75rem;
-    --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
-    --font-mono: 'DM Mono', monospace;
+    --success: 142 71% 36%;          /* #16a34a */
+    --success-foreground: 0 0% 100%;
+    --warning: 30 91% 44%;           /* #d97706 */
+    --warning-foreground: 0 0% 100%;
+    --info: 221 83% 53%;             /* #2563eb */
+    --info-foreground: 0 0% 100%;
+
+    /* Lines — opaque HSL approximations of prototype rgba(15,23,42,0.08/0.14) over cream bg.
+       Kept opaque so border-border/50 etc. opacity utilities compose correctly. */
+    --border: 40 6% 90%;             /* ≈ rgba(15,23,42,0.08) over #fafaf7 */
+    --input: 40 6% 84%;              /* ≈ rgba(15,23,42,0.14) over #fafaf7 */
+    --ring: 224 76% 48%;
+
+    /* Shape */
+    --radius: 0.625rem;              /* 10px — prototype mid */
+
+    /* Typography */
+    --font-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', monospace;
+    --font-heading: 'Geist', system-ui, -apple-system, sans-serif;
   }
 
-  /* DARK MODE */
+  /* DARK MODE — prototype "shell.dark" */
   .dark {
-    --background: 230 20% 5%;
-    --foreground: 240 20% 91%;
-    --card: 240 22% 12%;
-    --card-foreground: 240 20% 91%;
-    --popover: 240 22% 12%;
-    --popover-foreground: 240 20% 91%;
-    --primary: 220 91% 62%;
+    --background: 240 22% 5%;        /* #0a0a0f */
+    --foreground: 240 19% 92%;       /* #e8e8f0 */
+    --card: 240 23% 11%;             /* #151522 */
+    --card-foreground: 240 19% 92%;
+    --popover: 240 23% 11%;
+    --popover-foreground: 240 19% 92%;
+
+    --primary: 224 76% 56%;           /* slightly brighter cobalt for dark contrast */
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 22% 15%;
-    --secondary-foreground: 240 20% 91%;
-    --muted: 240 22% 18%;
-    --muted-foreground: 240 10% 67%;
-    --accent: 255 80% 67%;
+    --accent: 258 90% 70%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
+
+    --secondary: 240 28% 16%;         /* #1e1e35 */
+    --secondary-foreground: 240 19% 92%;
+    --muted: 240 28% 16%;
+    --muted-foreground: 240 18% 60%;  /* #8888aa */
+
+    --destructive: 0 73% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 30% 30%;
-    --input: 240 22% 18%;
-    --ring: 220 91% 62%;
-    --radius: 0.75rem;
-    --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
-    --font-mono: 'DM Mono', monospace;
+    --success: 142 71% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 30 91% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 221 83% 60%;
+    --info-foreground: 0 0% 100%;
+
+    /* Opaque approximations of prototype rgba(120,120,255,0.12/0.22) over #0a0a0f bg */
+    --border: 240 22% 14%;            /* ≈ rgba(120,120,255,0.12) over #0a0a0f */
+    --input: 240 28% 19%;             /* ≈ rgba(120,120,255,0.22) over #0a0a0f */
+    --ring: 224 76% 56%;
+
+    /* Shape & fonts inherit from :root unless tenant overrides */
   }
 }
 

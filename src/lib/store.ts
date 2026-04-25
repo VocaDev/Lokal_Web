@@ -19,7 +19,9 @@ function fromSnakeBusiness(data: any): Business {
     ownerId: data.owner_id,
     createdAt: data.created_at ?? new Date().toISOString(),
     websiteCreationMethod: data.website_creation_method,
-    customWebsiteHtml: data.custom_website_html,
+    tagline: data.tagline ?? undefined,
+    foundedYear: data.founded_year ?? undefined,
+    timezone: data.timezone ?? 'Europe/Belgrade',
     aiSetupData: data.ai_setup_data,
     websiteBuilderCompleted: data.website_builder_completed ?? false,
   };
@@ -161,12 +163,17 @@ export async function getBookings(businessId: string): Promise<Booking[]> {
     customerPhone: d.customer_phone,
     appointmentAt: d.appointment_at,
     status: d.status,
+    partySize: d.party_size ?? null,
     createdAt: d.created_at
   }));
 }
 
-// ✅ Add Booking
-export async function addBooking(businessId: string, booking: Omit<Booking, "id" | "status" | "createdAt">): Promise<void> {
+// ✅ Add Booking — throws raw Supabase error so callers can detect 23505
+// unique-constraint violations via bookingService::isUniqueViolation().
+export async function addBooking(
+  businessId: string,
+  booking: Omit<Booking, "id" | "status" | "createdAt">
+): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase
     .from("bookings")
@@ -176,9 +183,10 @@ export async function addBooking(businessId: string, booking: Omit<Booking, "id"
       customer_name: booking.customerName,
       customer_phone: booking.customerPhone,
       appointment_at: booking.appointmentAt,
+      party_size: booking.partySize ?? null,
       status: "pending"
     });
-  
+
   if (error) throw error;
 }
 

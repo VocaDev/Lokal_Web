@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { anthropic } from '@/lib/anthropic';
 import { normalizeIndustry, type Industry } from '@/lib/industries';
+import { createClient } from '@/lib/supabase/server';
+import { requireUser, bumpAiUsage } from '@/lib/api-auth';
 
 export const maxDuration = 60;
 
@@ -242,6 +244,15 @@ export async function POST(request: NextRequest) {
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json({ error: 'AI not configured' }, { status: 503 });
     }
+
+    // Auth + per-user daily rate limit. Each call here is two parallel
+    // Claude requests, so it counts toward the same ai_usage budget as
+    // brand-brief.
+    const supabase = await createClient();
+    const userOrResponse = await requireUser(supabase);
+    if (userOrResponse instanceof NextResponse) return userOrResponse;
+    const limited = await bumpAiUsage(supabase, userOrResponse.id);
+    if (limited) return limited;
 
     const { brief, businessName, industry, userProvidedServices } = await request.json();
     if (!brief || !businessName || !industry) {

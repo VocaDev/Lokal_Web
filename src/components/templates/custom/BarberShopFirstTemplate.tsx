@@ -36,13 +36,8 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
   }, []);
 
   return (
-    <div 
-      className="text-white min-h-screen transition-colors duration-500" 
-      style={{ 
-        backgroundColor: 'var(--bg-color, #0a0a0f)',
-        color: 'var(--text-color, white)',
-        fontFamily: 'var(--body-font, "Inter", sans-serif)' 
-      }}
+    <div
+      className="text-foreground bg-background min-h-screen transition-colors duration-500 font-sans"
     >
       {/* NAVBAR */}
       <nav
@@ -76,11 +71,10 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
             EST. 2015
           </span>
           <h1
-            className="font-black text-white leading-[0.95] mb-6"
+            className="font-heading font-black text-white leading-[0.95] mb-6"
             style={{
               fontSize: "clamp(3rem, 8vw, 7rem)",
               letterSpacing: "-0.02em",
-              fontFamily: 'var(--heading-font, inherit)'
             }}
           >
             {business.heroHeadline ? business.heroHeadline : <>THE ART OF<br />THE CUT</>}
@@ -109,22 +103,20 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
       </section>
 
       {/* SERVICES */}
-      <section 
-        id="services" 
-        className="py-32 px-8"
-        style={{ backgroundColor: 'var(--bg-color, #0a0a0f)' }}
+      <section
+        id="services"
+        className="py-32 px-8 bg-background"
       >
         <div className="max-w-6xl mx-auto">
           <p className="text-white/40 text-xs tracking-[0.4em] uppercase mb-4">OUR SERVICES</p>
-          <h2 className="font-black text-white" style={{ fontSize: "clamp(2rem, 5vw, 4rem)", fontFamily: 'var(--heading-font, inherit)' }}>WHAT WE DO</h2>
+          <h2 className="font-heading font-black text-white" style={{ fontSize: "clamp(2rem, 5vw, 4rem)" }}>WHAT WE DO</h2>
           <div className="w-16 h-px bg-white/20 mt-6 mb-16" />
         </div>
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-px" style={{ backgroundColor: 'var(--border-color, rgba(255,255,255,0.1))' }}>
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-px bg-border">
           {services.map((s, i) => (
-            <div 
-              key={s.id} 
-              className="p-10 cursor-pointer group hover:bg-white/5 transition-colors" 
-              style={{ backgroundColor: 'var(--surface-color, #0a0a0f)' }}
+            <div
+              key={s.id}
+              className="p-10 cursor-pointer group hover:bg-white/5 transition-colors bg-card"
               onClick={() => openBooking(s)}
             >
               <span className="text-white/10 text-6xl font-black block mb-4">
@@ -179,11 +171,11 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
 
       {/* HOURS & CONTACT */}
       {business.showContact !== false && (
-        <section className="bg-[#0a0a0f] py-32 px-8" style={{ backgroundColor: 'var(--bg-color, #0a0a0f)' }}>
+        <section className="bg-background py-32 px-8">
           <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20">
             <div>
               <p className="text-white/40 text-xs tracking-[0.4em] uppercase mb-4">HOURS</p>
-              <h2 className="text-white font-black text-4xl mb-10" style={{ fontFamily: 'var(--heading-font, inherit)' }}>WHEN WE'RE OPEN</h2>
+              <h2 className="font-heading text-white font-black text-4xl mb-10">WHEN WE'RE OPEN</h2>
               <div>
                 {(() => {
                   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -210,7 +202,7 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
             </div>
             <div>
               <p className="text-white/40 text-xs tracking-[0.4em] uppercase mb-4">CONTACT</p>
-              <h2 className="text-white font-black text-4xl mb-10" style={{ fontFamily: 'var(--heading-font, inherit)' }}>FIND US</h2>
+              <h2 className="font-heading text-white font-black text-4xl mb-10">FIND US</h2>
               <p className="text-white/60 text-sm leading-loose mb-8">{business.address}</p>
               <p className="text-white font-medium mb-8">{business.phone}</p>
               <div className="flex flex-col gap-3">

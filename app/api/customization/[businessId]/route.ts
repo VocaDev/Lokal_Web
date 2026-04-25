@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { requireBusinessOwner } from '@/lib/api-auth';
 
 export async function GET(
   request: NextRequest,
@@ -8,6 +9,9 @@ export async function GET(
   const { businessId } = await params;
   try {
     const supabase = await createClient();
+
+    const auth = await requireBusinessOwner(supabase, businessId);
+    if (auth instanceof NextResponse) return auth;
 
     // Get or create default customization
     const { data, error } = await supabase
@@ -62,6 +66,10 @@ export async function PATCH(
   const { businessId } = await params;
   try {
     const supabase = await createClient();
+
+    const auth = await requireBusinessOwner(supabase, businessId);
+    if (auth instanceof NextResponse) return auth;
+
     const body = await request.json();
 
     // Sanitize body to only include updatable fields
@@ -104,15 +112,6 @@ export async function PATCH(
     Object.keys(updates).forEach(
       (key) => (updates as any)[key] === undefined && delete (updates as any)[key]
     );
-
-    // Verify ownership
-    const { data: business, error: bizError } = await supabase
-      .from('businesses')
-      .select('owner_id')
-      .eq('id', businessId)
-      .single();
-
-    if (bizError || !business) throw new Error('Business not found');
 
     const { data, error } = await supabase
       .from('website_customization')

@@ -69,7 +69,8 @@ export default function OverviewPage() {
     { label: "Pending", value: pending, icon: AlertCircle, color: "text-warning" },
   ];
 
-  const getServiceName = (serviceId: string) => services.find(s => s.id === serviceId)?.name || 'Unknown';
+  const getServiceName = (serviceId: string | null) =>
+    serviceId == null ? 'Reservation' : (services.find(s => s.id === serviceId)?.name || 'Unknown');
 
   return (
     <div>

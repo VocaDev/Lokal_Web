@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { anthropic } from '@/lib/anthropic';
 import { normalizeIndustry } from '@/lib/industries';
+import { createClient } from '@/lib/supabase/server';
+import { requireUser, bumpAiUsage } from '@/lib/api-auth';
 
 export const maxDuration = 30;
 
@@ -46,6 +48,14 @@ export async function POST(request: NextRequest) {
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json({ error: 'AI not configured' }, { status: 503 });
     }
+
+    // Require auth + per-user daily rate limit. AI calls cost money — never
+    // expose them to anonymous traffic.
+    const supabase = await createClient();
+    const userOrResponse = await requireUser(supabase);
+    if (userOrResponse instanceof NextResponse) return userOrResponse;
+    const limited = await bumpAiUsage(supabase, userOrResponse.id);
+    if (limited) return limited;
 
     const { businessName, industry, industryLabel, tagline, moodKeywords, userProvidedServices } = await request.json();
     if (!businessName || !industry) {

@@ -39,13 +39,13 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
 
   return (
     <div className="flex gap-3 items-center">
-      {/* Color Square + Input */}
+      {/* Color Square */}
       <div className="relative">
         <input
           type="color"
           value={hexValue.startsWith('#') && (hexValue.length === 4 || hexValue.length === 7) ? hexValue : '#000000'}
           onChange={handleColorChange}
-          className="h-12 w-12 rounded-lg border border-[rgba(120,120,255,0.22)] cursor-pointer bg-[#0a0a0f] p-1"
+          className="h-12 w-12 rounded-lg border border-border cursor-pointer bg-background p-1"
         />
       </div>
 
@@ -55,12 +55,12 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
         value={hexValue}
         onChange={handleHexInput}
         placeholder="#4f8ef7"
-        className="flex-1 bg-[#0a0a0f] border border-[rgba(120,120,255,0.22)] rounded-lg px-3 py-2 text-[#e8e8f0] placeholder:text-[#5a5a7a] font-mono text-sm focus:outline-none focus:border-[#4f8ef7]"
+        className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground font-mono text-sm focus:outline-none focus:border-primary"
       />
 
       {/* Preview Box */}
       <div
-        className="h-12 w-12 rounded-lg border border-[rgba(120,120,255,0.22)]"
+        className="h-12 w-12 rounded-lg border border-border"
         style={{ backgroundColor: hexValue }}
         title={hexValue}
       />

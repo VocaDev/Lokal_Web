@@ -186,7 +186,8 @@ Before outputting, verify:
 - Do the 3 testimonials feel like 3 different real people, not 3 outputs of the same model?
 - Would the brief's target customer nod at every line, or roll their eyes?
 
-Output valid JSON matching the schema.`;
+Output valid JSON matching this schema:
+${JSON.stringify(THEME_SCHEMA.schema)}`;
 
   const userPrompt = `BRAND BRIEF (gospel — every design choice must serve it):
 - Positioning: ${brief.positioning}
@@ -207,7 +208,7 @@ Generate the theme as ${direction.name}.`;
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
     ],
-    response_format: { type: 'json_schema', json_schema: THEME_SCHEMA },
+    response_format: { type: 'json_object' },
     temperature: direction.temperature,
     max_completion_tokens: 3000,
   } as any);

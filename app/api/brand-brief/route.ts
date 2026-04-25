@@ -72,7 +72,8 @@ GOOD definingTraits: ["unapologetically traditional", "silent-while-working prec
 BAD culturalAnchor: "Kosovar hospitality"
 GOOD culturalAnchor: "The fifteen minutes of silence after the warm towel — the only moment of the week men don't have to talk."
 
-Every field must be surprising and specific. Output valid JSON matching the schema.`;
+Every field must be surprising and specific. Output valid JSON matching the following schema:
+${JSON.stringify(BRAND_BRIEF_SCHEMA.schema)}`;
 
     const userPrompt = `BUSINESS:
 - Name: ${businessName}
@@ -92,7 +93,7 @@ Write the brief. Every field must be specific enough that it couldn't describe a
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      response_format: { type: 'json_schema', json_schema: BRAND_BRIEF_SCHEMA },
+      response_format: { type: 'json_object' },
       temperature: 0.3,
       max_completion_tokens: 2000,
     } as any);

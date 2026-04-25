@@ -202,15 +202,14 @@ BUSINESS:
 Generate the theme as ${direction.name}.`;
 
   const completion = await groq.chat.completions.create({
-    model: 'openai/gpt-oss-120b',
+    model: 'llama-3.1-8b-instant',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
     ],
     response_format: { type: 'json_schema', json_schema: THEME_SCHEMA },
     temperature: direction.temperature,
-    max_completion_tokens: 8000,
-    reasoning_effort: 'low',
+    max_completion_tokens: 3000,
   } as any);
 
   return JSON.parse(completion.choices[0]?.message?.content || '{}');

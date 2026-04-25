@@ -21,13 +21,13 @@ export default function TypographySection({
   return (
     <div className="space-y-5">
       <div>
-        <label className="block text-sm font-semibold text-[#e8e8f0] mb-2">
+        <label className="block text-sm font-semibold text-foreground mb-2">
           Heading Font
         </label>
         <select
           value={formData.heading_font || 'dm-sans'}
           onChange={(e) => onChange('heading_font', e.target.value)}
-          className="w-full bg-[#0a0a0f] border border-[rgba(120,120,255,0.22)] rounded-lg px-4 py-2.5 text-[#e8e8f0] focus:outline-none focus:border-[#4f8ef7]"
+          className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:border-primary"
         >
           {fontOptions.map((font) => (
             <option key={font.value} value={font.value}>
@@ -35,19 +35,19 @@ export default function TypographySection({
             </option>
           ))}
         </select>
-        <p className="text-xs text-[#5a5a7a] mt-2">
+        <p className="text-xs text-muted-foreground mt-2">
           Used for all headings and titles
         </p>
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-[#e8e8f0] mb-2">
+        <label className="block text-sm font-semibold text-foreground mb-2">
           Body Font
         </label>
         <select
           value={formData.body_font || 'dm-sans'}
           onChange={(e) => onChange('body_font', e.target.value)}
-          className="w-full bg-[#0a0a0f] border border-[rgba(120,120,255,0.22)] rounded-lg px-4 py-2.5 text-[#e8e8f0] focus:outline-none focus:border-[#4f8ef7]"
+          className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:border-primary"
         >
           {fontOptions.map((font) => (
             <option key={font.value} value={font.value}>
@@ -55,14 +55,14 @@ export default function TypographySection({
             </option>
           ))}
         </select>
-        <p className="text-xs text-[#5a5a7a] mt-2">
+        <p className="text-xs text-muted-foreground mt-2">
           Used for body text, descriptions, and paragraphs
         </p>
       </div>
 
       {/* Font Preview */}
-      <div className="mt-6 pt-6 border-t border-[rgba(120,120,255,0.12)]">
-        <p className="text-xs text-[#5a5a7a] mb-3">Font Preview:</p>
+      <div className="mt-6 pt-6 border-t border-border">
+        <p className="text-xs text-muted-foreground mb-3">Font Preview:</p>
         <div className="space-y-2">
           <p
             className="text-xl font-bold"

@@ -21,11 +21,11 @@ export default async function WebsiteBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] py-12 px-6">
+    <div className="min-h-screen bg-background py-12 px-6">
       <div className="max-w-3xl mx-auto">
         <div className="mb-10 text-center">
-          <h1 className="text-3xl font-bold text-[#e8e8f0]">AI Website Builder</h1>
-          <p className="text-[#8888aa] mt-2">Krijoni një website profesional për {business.name} në pak hapa.</p>
+          <h1 className="text-3xl font-bold text-foreground font-heading">AI Website Builder</h1>
+          <p className="text-muted-foreground mt-2">Krijoni një website profesional për {business.name} në pak hapa.</p>
         </div>
         
         <WebsiteBuilderWizard />

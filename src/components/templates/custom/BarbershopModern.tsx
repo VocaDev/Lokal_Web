@@ -22,10 +22,13 @@ const BarbershopModern = ({ business, services, hours }: {
     setDrawerOpen(true)
   }
 
+  const currentYear = new Date().getFullYear();
+  const yearsActive = business.foundedYear ? currentYear - business.foundedYear : null;
+
   return (
-    <div className="bg-[#0a0a0f] min-h-screen text-white">
+    <div className="bg-background min-h-screen text-white font-sans">
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 bg-[#0a0a0f] border-b border-white/[0.06] h-14 flex items-center justify-between px-6 md:px-10">
+      <nav className="sticky top-0 z-50 bg-background border-b border-white/[0.06] h-14 flex items-center justify-between px-6 md:px-10">
         <div className="flex items-center gap-3">
           <div className="w-4 h-4 border border-white/40" />
           <span className="text-white text-xs tracking-[0.2em] uppercase font-light">{business.name}</span>
@@ -51,7 +54,7 @@ const BarbershopModern = ({ business, services, hours }: {
 
       {/* HERO */}
       <section className="min-h-screen grid grid-cols-1 md:grid-cols-[1fr_1.4fr]">
-        <div className="bg-[#0a0a0f] flex flex-col justify-end pb-20 pl-6 md:pl-10 pr-8 pt-32 relative">
+        <div className="bg-background flex flex-col justify-end pb-20 pl-6 md:pl-10 pr-8 pt-32 relative">
           <span className="absolute top-32 left-6 md:left-10 text-white/25 text-xs tracking-[0.3em] uppercase">
             No. 01 — Barbershop
           </span>
@@ -91,23 +94,33 @@ const BarbershopModern = ({ business, services, hours }: {
           </div>
         </div>
         <div className="relative overflow-hidden min-h-[60vh] md:min-h-0">
-          <img
-            src={business.galleryImages?.[0] ?? "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1200&q=80"}
-            alt="Barbershop interior"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#0a0a0f] to-transparent" />
-          <div className="absolute bottom-10 left-0 md:left-[-20px] bg-[#0a0a0f] border border-white/10 p-5 w-44">
-            <p className="text-white/30 text-[10px] tracking-widest uppercase mb-1">Est. 2015</p>
-            <p className="text-white text-sm font-light">Prishtina, KS</p>
-            <div className="w-6 h-px bg-white/20 my-3" />
-            <p className="text-white/40 text-[10px] tracking-widest uppercase">Open Mon–Fri</p>
-          </div>
+          {business.galleryImages?.[0] ? (
+            <img
+              src={business.galleryImages[0]}
+              alt={business.name}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-background to-accent/20" />
+          )}
+          <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-background to-transparent" />
+          {(business.foundedYear || business.address) && (
+            <div className="absolute bottom-10 left-0 md:left-[-20px] bg-background border border-white/10 p-5 w-44">
+              {business.foundedYear && (
+                <p className="text-white/30 text-[10px] tracking-widest uppercase mb-1">
+                  Est. {business.foundedYear}
+                </p>
+              )}
+              {business.address && (
+                <p className="text-white text-sm font-light line-clamp-1">{business.address}</p>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
       {/* SERVICES */}
-      <section id="services" className="bg-[#0a0a0f] py-32 px-6 md:px-10">
+      <section id="services" className="bg-background py-32 px-6 md:px-10">
         <div className="max-w-5xl mx-auto">
           <div className="flex justify-between items-end mb-20">
             <div>
@@ -150,37 +163,53 @@ const BarbershopModern = ({ business, services, hours }: {
       </section>
 
       {/* STORY */}
-      <section id="story" className="bg-[#080808] py-32 px-6 md:px-10">
+      <section id="story" className="bg-card py-32 px-6 md:px-10">
         <div className="max-w-5xl mx-auto grid md:grid-cols-[1.2fr_1fr] gap-16 md:gap-24 items-center">
           <div className="aspect-[3/4] overflow-hidden">
-            <img
-              src={business.galleryImages?.[1] ?? "https://images.unsplash.com/photo-1621605815971-b8f9d4fbb2b3?w=800&q=80"}
-              alt="Barber at work"
-              className="w-full h-full object-cover"
-            />
+            {business.galleryImages?.[1] ? (
+              <img
+                src={business.galleryImages[1]}
+                alt={business.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary/20 via-background to-accent/10" />
+            )}
           </div>
           <div>
             <p className="text-white/20 text-[10px] tracking-[0.4em] uppercase mb-6">03 — Story</p>
-            <h2 className="text-white font-light text-3xl tracking-wide mb-8">More Than a Haircut</h2>
-            <p className="text-white/40 text-sm leading-loose font-light mb-10">
-              {business.aboutCopy ?? business.description ?? "We believe every man deserves to look and feel his best."}
-            </p>
-            <div className="flex gap-16 mt-10 pt-10 border-t border-white/[0.06]">
-              <div>
-                <p className="text-white font-light text-3xl tracking-wide">12+</p>
-                <p className="text-white/25 text-[10px] tracking-widest uppercase mt-2">Years</p>
+            <h2 className="text-white font-light text-3xl tracking-wide mb-8">
+              {business.tagline ?? business.name}
+            </h2>
+            {(business.aboutCopy ?? business.description) && (
+              <p className="text-white/40 text-sm leading-loose font-light mb-10">
+                {business.aboutCopy ?? business.description}
+              </p>
+            )}
+            {(yearsActive || services.length > 0) && (
+              <div className="flex gap-16 mt-10 pt-10 border-t border-white/[0.06]">
+                {yearsActive && yearsActive > 0 && (
+                  <div>
+                    <p className="text-white font-light text-3xl tracking-wide">{yearsActive}+</p>
+                    <p className="text-white/25 text-[10px] tracking-widest uppercase mt-2">
+                      {yearsActive === 1 ? 'Year' : 'Years'}
+                    </p>
+                  </div>
+                )}
+                {services.length > 0 && (
+                  <div>
+                    <p className="text-white font-light text-3xl tracking-wide">{services.length}</p>
+                    <p className="text-white/25 text-[10px] tracking-widest uppercase mt-2">Services</p>
+                  </div>
+                )}
               </div>
-              <div>
-                <p className="text-white font-light text-3xl tracking-wide">2,000+</p>
-                <p className="text-white/25 text-[10px] tracking-widest uppercase mt-2">Clients</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
 
       {/* HOURS */}
-      <section id="hours" className="bg-[#0a0a0f] py-32 px-6 md:px-10">
+      <section id="hours" className="bg-background py-32 px-6 md:px-10">
         <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 md:gap-32">
           <div>
             <p className="text-white/20 text-[10px] tracking-[0.4em] uppercase mb-6">04 — Hours</p>

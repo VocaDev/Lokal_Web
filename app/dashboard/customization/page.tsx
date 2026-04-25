@@ -34,8 +34,8 @@ export default function CustomizationPage() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#8888aa] border-t-[#4f8ef7]"></div>
-          <p className="mt-4 text-[#8888aa]">Validating session...</p>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary"></div>
+          <p className="mt-4 text-muted-foreground">Validating session...</p>
         </div>
       </div>
     );
@@ -45,7 +45,7 @@ export default function CustomizationPage() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <p className="text-[#8888aa]">Business not found</p>
+          <p className="text-muted-foreground">Business not found</p>
         </div>
       </div>
     );

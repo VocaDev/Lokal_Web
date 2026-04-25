@@ -18,7 +18,7 @@ export default function BarbershopMinimal({ business, services, hours }: {
   }
 
   return (
-    <div className="bg-[#0a0a0f] text-[#e8e8f0] min-h-screen font-light">
+    <div className="bg-background text-foreground min-h-screen font-light">
       <nav className="p-8 flex justify-between items-center border-b border-white/5">
         <span className="tracking-[0.3em] font-bold text-sm uppercase">{business.name}</span>
         <button onClick={() => openBooking()} className="text-xs tracking-widest border border-white/20 px-6 py-2 hover:bg-white hover:text-black transition-colors">

@@ -35,15 +35,15 @@ export default function GallerySection({ businessId }: GallerySectionProps) {
             <AccordionItem
               key={key}
               value={key}
-              className="bg-[#0a0a0f] border border-[rgba(120,120,255,0.12)] rounded-lg px-4 py-3"
+              className="bg-background border border-border rounded-lg px-4 py-3"
             >
-              <AccordionTrigger className="hover:no-underline hover:text-[#4f8ef7] transition-colors">
+              <AccordionTrigger className="hover:no-underline hover:text-primary transition-colors">
                 <div className="text-left">
-                  <p className="font-semibold text-[#e8e8f0]">{label}</p>
-                  <p className="text-xs text-[#5a5a7a]">{description}</p>
+                  <p className="font-semibold text-foreground">{label}</p>
+                  <p className="text-xs text-muted-foreground">{description}</p>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="pt-4 border-t border-[rgba(120,120,255,0.06)]">
+              <AccordionContent className="pt-4 border-t border-border/60">
                 <GallerySectionItem
                   businessId={businessId}
                   sectionKey={key}

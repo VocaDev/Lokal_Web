@@ -15,6 +15,12 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerService, setDrawerService] = useState<Service | null>(null);
 
+  // Tenant-driven values (migration 007). Fall back to undefined → caller hides
+  // the eyebrow/stat. NO hardcoded "EST. 2015" / "12+ YEARS" / "2000+ CLIENTS".
+  const currentYear = new Date().getFullYear();
+  const yearsActive = business.foundedYear ? currentYear - business.foundedYear : null;
+  const tagline = business.tagline ?? business.heroSubheadline ?? business.description ?? null;
+
   const openBooking = (service?: Service) => {
     setDrawerService(service ?? null);
     setDrawerOpen(true);
@@ -60,16 +66,23 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
           minHeight: business.heroHeight === 'small' ? '60vh' : business.heroHeight === 'large' ? '100vh' : '85vh' 
         }}
       >
-        <img
-          src={business.galleryImages?.[0] ?? "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1600&q=80"}
-          alt="Barbershop"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        {business.galleryImages?.[0] ? (
+          <img
+            src={business.galleryImages[0]}
+            alt={business.name}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          // Empty-state hero — primary→accent gradient over the page bg.
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-background to-accent/20" />
+        )}
         <div className="absolute inset-0 bg-black/60" />
         <div className="relative z-10 text-center px-4">
-          <span className="inline-block border border-white/30 text-white/60 text-xs tracking-[0.4em] px-4 py-1.5 uppercase mb-8">
-            EST. 2015
-          </span>
+          {business.foundedYear && (
+            <span className="inline-block border border-white/30 text-white/60 text-xs tracking-[0.4em] px-4 py-1.5 uppercase mb-8">
+              EST. {business.foundedYear}
+            </span>
+          )}
           <h1
             className="font-heading font-black text-white leading-[0.95] mb-6"
             style={{
@@ -79,9 +92,11 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
           >
             {business.heroHeadline ? business.heroHeadline : <>THE ART OF<br />THE CUT</>}
           </h1>
-          <p className="text-white/60 text-lg tracking-wide mb-10">
-            {business.heroSubheadline || business.description || 'Precision cuts. Clean lines. Since 2015.'}
-          </p>
+          {tagline && (
+            <p className="text-white/60 text-lg tracking-wide mb-10">
+              {tagline}
+            </p>
+          )}
           <div className="flex items-center justify-center gap-4 flex-wrap">
             <button
               onClick={() => scrollTo("services")}
@@ -140,31 +155,48 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
       </section>
 
       {/* ABOUT */}
-      <section className="bg-[#0f0f0f] py-32">
+      <section className="bg-card py-32">
         <div className="max-w-6xl mx-auto px-8 grid md:grid-cols-2 gap-0">
           <div className="flex flex-col justify-center pr-0 md:pr-16 mb-12 md:mb-0">
             <p className="text-white/40 text-xs tracking-[0.4em] uppercase mb-6">OUR STORY</p>
-            <h2 className="text-white font-black text-4xl leading-tight mb-6">MORE THAN A HAIRCUT</h2>
-            <p className="text-white/50 leading-relaxed mb-10">
-              {business.aboutCopy || business.description || "We believe every man deserves to look and feel his best. Our barbers combine traditional techniques with modern style to deliver a cut that's uniquely yours."}
-            </p>
-            <div className="flex gap-12">
-              <div>
-                <span className="text-white font-black text-2xl block">12+</span>
-                <span className="text-white/40 text-xs tracking-widest uppercase mt-1 block">YEARS</span>
+            <h2 className="font-heading text-white font-black text-4xl leading-tight mb-6">
+              {business.tagline ?? business.name}
+            </h2>
+            {(business.aboutCopy || business.description) && (
+              <p className="text-white/50 leading-relaxed mb-10">
+                {business.aboutCopy || business.description}
+              </p>
+            )}
+            {(yearsActive || services.length > 0) && (
+              <div className="flex gap-12">
+                {yearsActive && yearsActive > 0 && (
+                  <div>
+                    <span className="text-white font-black text-2xl block">{yearsActive}+</span>
+                    <span className="text-white/40 text-xs tracking-widest uppercase mt-1 block">
+                      {yearsActive === 1 ? 'YEAR' : 'YEARS'}
+                    </span>
+                  </div>
+                )}
+                {services.length > 0 && (
+                  <div>
+                    <span className="text-white font-black text-2xl block">{services.length}</span>
+                    <span className="text-white/40 text-xs tracking-widest uppercase mt-1 block">SERVICES</span>
+                  </div>
+                )}
               </div>
-              <div>
-                <span className="text-white font-black text-2xl block">2000+</span>
-                <span className="text-white/40 text-xs tracking-widest uppercase mt-1 block">HAPPY CLIENTS</span>
-              </div>
-            </div>
+            )}
           </div>
           <div>
-            <img
-              src={business.galleryImages?.[1] ?? "https://images.unsplash.com/photo-1621605815971-b8f9d4fbb2b3?w=800&q=80"}
-              alt="Barber at work"
-              className="object-cover w-full h-full min-h-[400px]"
-            />
+            {business.galleryImages?.[1] ? (
+              <img
+                src={business.galleryImages[1]}
+                alt={business.name}
+                className="object-cover w-full h-full min-h-[400px]"
+              />
+            ) : (
+              // Empty state — gradient placeholder, no stock photo.
+              <div className="w-full h-full min-h-[400px] bg-gradient-to-br from-primary/20 via-card to-accent/10" />
+            )}
           </div>
         </div>
       </section>
@@ -221,7 +253,7 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
       {/* FOOTER */}
       <footer className="border-t border-white/[0.08] py-12 px-8">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <span className="text-white/30 text-xs tracking-widest">© 2026</span>
+          <span className="text-white/30 text-xs tracking-widest">© {currentYear}</span>
           <span className="text-white font-black text-sm tracking-[0.3em]">{business.name.toUpperCase()}</span>
           <span className="text-white/20 text-xs tracking-widest">Powered by LokalWeb</span>
         </div>

@@ -107,7 +107,7 @@ export default function GallerySectionItem({
           <img
             src={currentItem.image_url}
             alt={currentItem.alt_text || sectionKey}
-            className="w-full h-48 object-cover rounded-lg border border-[rgba(120,120,255,0.12)] transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-48 object-cover rounded-lg border border-border transition-transform duration-300 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 rounded-lg transition-opacity flex items-center justify-center gap-2">
             <Button
@@ -130,8 +130,8 @@ export default function GallerySectionItem({
         onDrop={handleDrop}
         className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer ${
           isDragging
-            ? 'border-[#4f8ef7] bg-[#4f8ef7]/10'
-            : 'border-[rgba(120,120,255,0.22)] bg-[#0a0a0f] hover:border-[#4f8ef7]/50'
+            ? 'border-primary bg-primary/10'
+            : 'border-border bg-background hover:border-primary/50'
         }`}
       >
         <input
@@ -145,19 +145,19 @@ export default function GallerySectionItem({
         <div className="flex flex-col items-center gap-3">
           {isUploading ? (
             <>
-              <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-[#8888aa] border-t-[#4f8ef7]"></div>
-              <p className="text-sm text-[#8888aa]">Uploading...</p>
+              <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary"></div>
+              <p className="text-sm text-muted-foreground">Uploading...</p>
             </>
           ) : (
             <>
-              <div className="p-3 bg-[#4f8ef7]/10 rounded-full">
-                <Upload className="w-6 h-6 text-[#4f8ef7]" />
+              <div className="p-3 bg-primary/10 rounded-full">
+                <Upload className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#e8e8f0]">
+                <p className="text-sm font-medium text-foreground">
                   {isDragging ? 'Drop to upload' : 'Drag and drop your image'}
                 </p>
-                <p className="text-xs text-[#5a5a7a] mt-1">or click to browse</p>
+                <p className="text-xs text-muted-foreground mt-1">or click to browse</p>
               </div>
             </>
           )}
@@ -165,7 +165,7 @@ export default function GallerySectionItem({
       </div>
 
       {/* Format Guide */}
-      <p className="text-xs text-[#5a5a7a] text-center">
+      <p className="text-xs text-muted-foreground text-center">
         Recommended: JPG or PNG, high resolution (at least 1200x800px)
       </p>
     </div>

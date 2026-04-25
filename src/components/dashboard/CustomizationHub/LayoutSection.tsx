@@ -14,7 +14,7 @@ export default function LayoutSection({
   return (
     <div className="space-y-5">
       <div>
-        <label className="block text-sm font-semibold text-[#e8e8f0] mb-3">
+        <label className="block text-sm font-semibold text-foreground mb-3">
           Hero Section Height
         </label>
         <div className="flex gap-3">
@@ -24,8 +24,8 @@ export default function LayoutSection({
               onClick={() => onChange('hero_height', size)}
               className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all ${
                 formData.hero_height === size
-                  ? 'bg-[#4f8ef7] text-white'
-                  : 'bg-[#0a0a0f] border border-[rgba(120,120,255,0.22)] text-[#e8e8f0] hover:border-[#4f8ef7]'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background border border-border text-foreground hover:border-primary'
               }`}
             >
               {size.charAt(0).toUpperCase() + size.slice(1)}
@@ -35,7 +35,7 @@ export default function LayoutSection({
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-[#e8e8f0] mb-3">
+        <label className="block text-sm font-semibold text-foreground mb-3">
           Card Style
         </label>
         <div className="flex gap-3">
@@ -45,8 +45,8 @@ export default function LayoutSection({
               onClick={() => onChange('card_style', style)}
               className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all ${
                 formData.card_style === style
-                  ? 'bg-[#4f8ef7] text-white'
-                  : 'bg-[#0a0a0f] border border-[rgba(120,120,255,0.22)] text-[#e8e8f0] hover:border-[#4f8ef7]'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background border border-border text-foreground hover:border-primary'
               }`}
             >
               {style.charAt(0).toUpperCase() + style.slice(1)}
@@ -55,8 +55,8 @@ export default function LayoutSection({
         </div>
       </div>
 
-      <div className="pt-4 border-t border-[rgba(120,120,255,0.12)]">
-        <label className="block text-sm font-semibold text-[#e8e8f0] mb-4">
+      <div className="pt-4 border-t border-border">
+        <label className="block text-sm font-semibold text-foreground mb-4">
           Show / Hide Sections
         </label>
 
@@ -73,9 +73,9 @@ export default function LayoutSection({
                 onChange={(e) =>
                   onChange(key as keyof WebsiteCustomization, e.target.checked)
                 }
-                className="w-4 h-4 rounded accent-[#4f8ef7]"
+                className="w-4 h-4 rounded accent-primary"
               />
-              <span className="text-sm text-[#e8e8f0]">{label}</span>
+              <span className="text-sm text-foreground">{label}</span>
             </label>
           ))}
         </div>

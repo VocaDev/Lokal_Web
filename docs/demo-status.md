@@ -62,16 +62,30 @@ Plan file: `C:\Users\genti\.claude\plans\lokalweb-polish-glowing-waffle.md`
 
 **Carried into Phase 2/3:** Hub UI itself still uses some hardcoded chrome hex (top bar, container shadows). Will be cleaned in Phase 2.5.
 
-### Phase 2 — Chrome Beauty Pass (PARTIAL)
-- ✅ **Landing page** — `app/page.tsx` audit found it already uses semantic tokens (`bg-background`, `text-foreground`, `text-primary`, `border-border`). Phase 1's token migration flows through automatically. No edits needed for tokens; visual aesthetic now matches the prototype's cobalt/cream palette + Geist typography.
-- ✅ **Dashboard shell** — `app/dashboard/layout.tsx` and `src/components/DashboardSidebar.tsx` already use semantic tokens. Inherits prototype palette automatically. No edits needed for tokens.
-- ✅ **CustomizationHub form fields** — `ColorSection.tsx` and `ColorPicker.tsx` migrated from `text-[#e8e8f0]`/`text-[#5a5a7a]`/`bg-[#0a0a0f]` to `text-foreground`/`text-muted-foreground`/`bg-background`. The Hub's color UI now lives on the chrome's palette, not on a hardcoded one.
-- ⏳ **Dashboard pages** (`bookings/services/hours/gallery/profile/new-business/website-builder` page.tsx) — not yet swept. Each has ~5–20 hardcoded `bg-[#1e1e35]`/`text-[#8888aa]`-style classes. Mechanical search-replace pass per file. Aim: keep current layout, swap to `bg-card`/`text-muted-foreground` etc.
-- ⏳ **Auth pages** — quick visual scan suggests they mostly use tokens already; may not need work.
-- ⏳ **website-builder-choice** — quick visual review needed.
+### Phase 2 — Chrome Beauty Pass ✅
+- ✅ **Landing page** — `app/page.tsx` already used semantic tokens; Phase 1's token migration flows through automatically.
+- ✅ **Dashboard shell** — `app/dashboard/layout.tsx` and `src/components/DashboardSidebar.tsx` already used semantic tokens.
+- ✅ **Dashboard pages swept** — `bookings/page.tsx` (50 hex literals → tokens), `customization/page.tsx`, `website-builder/page.tsx`, `register/page.tsx` (one stray). All semantic now.
+- ✅ **CustomizationHub UI swept** — `ColorPicker`, `ColorSection`, `TypographySection`, `LayoutSection`, `GallerySection`, `GallerySectionItem`, and the Hub `index.tsx`. Save button uses `from-primary to-accent` gradient. The Hub form uses chrome tokens, not hardcoded ones.
+- ✅ **`website-builder-choice` fork** — `bg-[#0a0a0f]` → `bg-background`, etc. Cobalt-tinted card aesthetic preserved.
 
-### Phase 3 — Template polish (DEFERRED)
-*Not yet started.* All 11 custom templates still ship hardcoded brand colors. Per the priority list, the demo can ship without these as long as Phase 1's tokens propagate through the public-site shell — the BarberShopFirstTemplate already does, and the others fall back to their own colors which is the current visible state. After demo, sweep through each template per the per-template checklist in the plan.
+### Phase 3 — Template polish ✅
+**Demo blockers:**
+- ✅ **`BarberShopFirstTemplate.tsx`** — `EST. 2015` → `EST. {business.foundedYear}` (conditional), `MORE THAN A HAIRCUT` → `business.tagline ?? business.name`, fake `12+ YEARS / 2000+ HAPPY CLIENTS` → `yearsActive` (computed from `foundedYear`) + `services.length`, Unsplash hero/about → gradient placeholders (`from-primary/30 via-background to-accent/20`), footer year now uses `currentYear`.
+- ✅ **`BarbershopModern.tsx`** — `Est. 2015 · Prishtina, KS` floating card → conditional `Est. {foundedYear}` + `business.address`. Fake `12+ / 2,000+` stats → `yearsActive` + `services.length`. Hero + story Unsplash → gradients. `bg-[#0a0a0f]` → `bg-background`, `bg-[#080808]` → `bg-card`.
+- ✅ **`RestaurantBistro.tsx`** — Hardcoded `Est. 2018 · Prishtina` → conditional `Est. {foundedYear}`. `WHERE EVERY PLATE TELLS A STORY` default → `business.name.toUpperCase()`. `FOOD IS OUR LANGUAGE` → `business.tagline ?? business.name.toUpperCase()`. Fake `6 YEARS OPEN / 100% SCRATCH KITCHEN / Daily FRESH SPECIALS` stats → `yearsActive` + `services.length`. Hero + story Unsplash → gradients. Hardcoded orange `#d97706` → `bg-primary`. `bg-[#0d0d0d]/[#111111]` → `bg-background`/`bg-card`.
+
+**Polish:**
+- ✅ **`ClinicPremium.tsx`** — 63 hex literals → tokens. Fake `15+ Years / 4.9★ / 2,000+` stats → conditional `yearsActive` + `services.length`. Fake doctor team with Unsplash stock photos + invented names (`Dr. Arben Krasniqi` etc) **REMOVED entirely** (commented out with note to re-add when team CRUD lands). Floating "4.9 ★ Patient Rating / 2,000+ patients served" card → removed. Hero Unsplash → gradient.
+- ✅ **`BarbershopMinimal.tsx`** — 1 hex literal swapped.
+- ✅ **`RestaurantElegant.tsx`** — 21 → 0. Orange `#d97706` → `primary`.
+- ✅ **`ClinicClean.tsx`** — already token-clean (audit count: 0).
+- ✅ **`ClinicModern.tsx`** — 16 → 0. Teal `#0d9488` → `primary`. Hero Unsplash → gradient.
+- ✅ **`BeautyLuxury.tsx`** — 21 → 0. Purple `#a855f7` → `primary`.
+- ✅ **`BeautyMinimal.tsx`** — 16 → 0. Pink `#f472b6` → `primary`.
+- ✅ **`RestaurantCasual.tsx`** — already token-clean.
+
+**Verification:** `grep -r '\[#' src/components/templates/custom/` returns zero. Every custom template now honors `--primary`/`--background`/`--card`/`--foreground` from the tenant's `WebsiteCustomization`. Changing the primary color in the Hub will visibly change every template's primary surfaces on the public site.
 
 ### Phase 4 — Bug fixes for demo safety
 - ✅ **4.1 booking timezone + duration + race** — extracted slot logic into `src/lib/services/bookingService.ts` (`generateAvailableSlots`, `fetchBookedSlots`, `wallClockToUtc`, `dayOfWeekInTz`, `ymdInTz`, `formatTimeInTz`, `isUniqueViolation`). Both drawers rewritten: business-timezone-aware (defaults to `Europe/Belgrade`), service-duration-aware conflict detection, RPC-based public slot lookup, 23505 unique-violation handling.
@@ -123,9 +137,10 @@ Plan file: `C:\Users\genti\.claude\plans\lokalweb-polish-glowing-waffle.md`
 
 ## What was deferred
 
-- **Phase 2.4 chrome restyle** of dashboard pages — mechanical sweep of `bg-[#…]` / `text-[#…]` / `border-[…]` literals → semantic tokens. ~525 occurrences across the dashboard pages per the audit. Not blocking demo (Phase 1 token migration already changes the chrome palette), but visually polishes individual cards/tables.
-- **Phase 3 template polish** — restyle all 11 custom templates against the prototype + remove hardcoded brand colors / Unsplash fallbacks / "Est. 2018 · Prishtina"-style copy. Each template needs ~30 minutes of focused work. Not blocking demo: existing templates render with their own (hardcoded) palettes, which is the demo state today.
-- **Hub UI restyle (full)** — ColorSection / ColorPicker done; the rest of `CustomizationHub/*` (TypographySection, LayoutSection, GallerySection, GallerySectionItem, index.tsx) still has hardcoded chrome hex literals that should be swept.
+- **Phase 4.8 cleanup deletions** — orphaned files identified during audit; deletion needs explicit user confirm. List below in "Manual steps."
+- **Auth-page chrome restyle (Phase 2.2)** — `/login`, `/forgot-password`, `/reset-password` already use semantic tokens; no edits made. They visually inherit Phase 1's tokens. If the prototype's centered-card aesthetic differs from the current layout enough to matter, that's a follow-up.
+- **Stats granularity** — templates now show only `yearsActive` and `services.length`. Bookings count, completed-appointments count, and rating average would be richer but require new fields on the businesses table.
+- **Per-template aesthetic polish** — token migration is complete (every template honors `--primary`/`--background`/`--card`/`--foreground`), but I did NOT redesign the layouts to match the prototype's spacing rhythm or type hierarchy. Each template kept its existing structure; only the colors+fonts now flow from tokens. A redesign-style pass per template (matching prototype's button shapes, container max-widths, etc.) is post-demo work.
 
 ## Quick reference for the next contributor
 

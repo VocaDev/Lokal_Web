@@ -104,71 +104,71 @@ export default function BookingsPage() {
 
   if (loading || !business) {
     return (
-      <div className="min-h-[200px] flex items-center justify-center text-[#8888aa] text-sm">
+      <div className="min-h-[200px] flex items-center justify-center text-muted-foreground text-sm">
         Loading bookings...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] p-6 lg:p-8 text-[#e8e8f0] font-sans">
+    <div className="min-h-screen bg-background p-6 lg:p-8 text-foreground font-sans">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold">Rezervimet</h1>
         <div className="flex flex-col items-end gap-2">
           <button
             onClick={handleExportReport}
             disabled={exportLoading}
-            className="bg-[#1e1e35] border border-[rgba(120,120,255,0.12)] hover:border-[rgba(120,120,255,0.22)] text-[#8888aa] hover:text-[#e8e8f0] rounded-lg px-4 py-2 text-sm transition-all duration-150 disabled:opacity-50"
+            className="bg-muted border border-border hover:border-border text-muted-foreground hover:text-foreground rounded-lg px-4 py-2 text-sm transition-all duration-150 disabled:opacity-50"
           >
             {exportLoading ? 'Duke gjeneruar...' : 'Eksporto Raportin (.txt)'}
           </button>
         </div>
       </div>
 
-      <div className="bg-[#151522] border border-[rgba(120,120,255,0.12)] rounded-xl overflow-hidden">
-        <div className="p-6 border-b border-[rgba(120,120,255,0.12)]">
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <div className="p-6 border-b border-border">
           <h2 className="text-lg font-semibold">Të gjitha rezervimet</h2>
         </div>
         <div className="overflow-x-auto">
           {bookings.length === 0 ? (
-            <div className="p-12 text-center text-[#8888aa]">
+            <div className="p-12 text-center text-muted-foreground">
               Nuk ka asnjë rezervim.
             </div>
           ) : (
             <table className="w-full text-sm text-left">
               <thead>
-                <tr className="border-b border-[rgba(120,120,255,0.12)] bg-[#1e1e35]/30">
-                  <th className="py-4 px-6 font-medium text-[#8888aa]">Customer</th>
-                  <th className="py-4 px-6 font-medium text-[#8888aa]">Service</th>
-                  <th className="py-4 px-6 font-medium text-[#8888aa]">Date & Time</th>
-                  <th className="py-4 px-6 font-medium text-[#8888aa]">Status</th>
-                  <th className="py-4 px-6 font-medium text-[#8888aa] text-right">Actions</th>
+                <tr className="border-b border-border bg-muted/40">
+                  <th className="py-4 px-6 font-medium text-muted-foreground">Customer</th>
+                  <th className="py-4 px-6 font-medium text-muted-foreground">Service</th>
+                  <th className="py-4 px-6 font-medium text-muted-foreground">Date & Time</th>
+                  <th className="py-4 px-6 font-medium text-muted-foreground">Status</th>
+                  <th className="py-4 px-6 font-medium text-muted-foreground text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[rgba(120,120,255,0.08)]">
+              <tbody className="divide-y divide-border/60">
                 {bookings.map(b => {
                   const dt = new Date(b.appointmentAt);
                   return (
                     <tr 
                       key={b.id} 
-                      className="hover:bg-[rgba(120,120,255,0.02)] transition-colors cursor-pointer"
+                      className="hover:bg-muted/40 transition-colors cursor-pointer"
                       onClick={() => { setSelectedBooking(b); setDrawerOpen(true) }}
                     >
                       <td className="py-4 px-6">
-                        <div className="font-medium text-[#e8e8f0]">{b.customerName}</div>
-                        <div className="text-xs text-[#5a5a7a] mt-0.5">{b.customerPhone}</div>
+                        <div className="font-medium text-foreground">{b.customerName}</div>
+                        <div className="text-xs text-muted-foreground/70 mt-0.5">{b.customerPhone}</div>
                       </td>
-                      <td className="py-4 px-6 text-[#8888aa]">
+                      <td className="py-4 px-6 text-muted-foreground">
                         <div>{getServiceName(b.serviceId)}</div>
                         {b.partySize != null && (
-                          <div className="text-xs text-[#5a5a7a] mt-0.5">
+                          <div className="text-xs text-muted-foreground/70 mt-0.5">
                             Party of {b.partySize === 6 ? '6+' : b.partySize}
                           </div>
                         )}
                       </td>
-                      <td className="py-4 px-6 text-[#8888aa]">
+                      <td className="py-4 px-6 text-muted-foreground">
                         <div>{dt.toLocaleDateString()}</div>
-                        <div className="text-xs text-[#5a5a7a] mt-0.5">
+                        <div className="text-xs text-muted-foreground/70 mt-0.5">
                           {dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </td>
@@ -196,7 +196,7 @@ export default function BookingsPage() {
                             </button>
                           </div>
                         ) : (
-                          <div className="text-right text-[#5a5a7a]">—</div>
+                          <div className="text-right text-muted-foreground/70">—</div>
                         )}
                       </td>
                     </tr>
@@ -217,16 +217,16 @@ export default function BookingsPage() {
       )}
 
       {/* Drawer Panel */}
-      <div className={`fixed top-0 right-0 h-full w-full max-w-md bg-[#0f0f1a] border-l border-[rgba(120,120,255,0.15)] z-50 transform transition-transform duration-300 ease-in-out ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`fixed top-0 right-0 h-full w-full max-w-md bg-card border-l border-border z-50 transform transition-transform duration-300 ease-in-out ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         {selectedBooking && (
           <div className="flex flex-col h-full">
             
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-[rgba(120,120,255,0.12)]">
-              <h2 className="text-lg font-bold text-[#e8e8f0]">Detajet e Rezervimit</h2>
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <h2 className="text-lg font-bold text-foreground">Detajet e Rezervimit</h2>
               <button
                 onClick={closeDrawer}
-                className="p-2 rounded-lg hover:bg-[#1e1e35] text-[#8888aa] hover:text-[#e8e8f0] transition-all duration-150"
+                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-150"
               >
                 <X size={18} />
               </button>
@@ -234,62 +234,62 @@ export default function BookingsPage() {
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              <div className="flex items-center gap-4 text-[#8888aa]">
-                <div className="p-3 rounded-xl bg-[#1e1e35] text-[#4f8ef7]">
+              <div className="flex items-center gap-4 text-muted-foreground">
+                <div className="p-3 rounded-xl bg-muted text-primary">
                   <User size={20} />
                 </div>
                 <div>
-                  <p className="text-xs text-[#5a5a7a] mb-0.5">Klienti</p>
-                  <p className="font-medium text-[#e8e8f0]">{selectedBooking.customerName}</p>
+                  <p className="text-xs text-muted-foreground/70 mb-0.5">Klienti</p>
+                  <p className="font-medium text-foreground">{selectedBooking.customerName}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 text-[#8888aa]">
-                <div className="p-3 rounded-xl bg-[#1e1e35] text-[#4f8ef7]">
+              <div className="flex items-center gap-4 text-muted-foreground">
+                <div className="p-3 rounded-xl bg-muted text-primary">
                   <Phone size={20} />
                 </div>
                 <div>
-                  <p className="text-xs text-[#5a5a7a] mb-0.5">Telefoni</p>
-                  <p className="font-medium text-[#e8e8f0]">{selectedBooking.customerPhone}</p>
+                  <p className="text-xs text-muted-foreground/70 mb-0.5">Telefoni</p>
+                  <p className="font-medium text-foreground">{selectedBooking.customerPhone}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 text-[#8888aa]">
-                <div className="p-3 rounded-xl bg-[#1e1e35] text-[#8b5cf6]">
+              <div className="flex items-center gap-4 text-muted-foreground">
+                <div className="p-3 rounded-xl bg-muted text-accent">
                   <Scissors size={20} />
                 </div>
                 <div>
-                  <p className="text-xs text-[#5a5a7a] mb-0.5">Shërbimi</p>
-                  <p className="font-medium text-[#e8e8f0]">{getServiceName(selectedBooking.serviceId)}</p>
+                  <p className="text-xs text-muted-foreground/70 mb-0.5">Shërbimi</p>
+                  <p className="font-medium text-foreground">{getServiceName(selectedBooking.serviceId)}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-3 text-[#8888aa]">
-                  <div className="p-3 rounded-xl bg-[#1e1e35]">
-                    <Calendar size={18} className="text-[#8888aa]" />
+                <div className="flex items-center gap-3 text-muted-foreground">
+                  <div className="p-3 rounded-xl bg-muted">
+                    <Calendar size={18} className="text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-xs text-[#5a5a7a] mb-0.5">Data</p>
-                    <p className="font-medium text-[#e8e8f0]">{new Date(selectedBooking.appointmentAt).toLocaleDateString()}</p>
+                    <p className="text-xs text-muted-foreground/70 mb-0.5">Data</p>
+                    <p className="font-medium text-foreground">{new Date(selectedBooking.appointmentAt).toLocaleDateString()}</p>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3 text-[#8888aa]">
-                  <div className="p-3 rounded-xl bg-[#1e1e35]">
-                    <Clock size={18} className="text-[#8888aa]" />
+                <div className="flex items-center gap-3 text-muted-foreground">
+                  <div className="p-3 rounded-xl bg-muted">
+                    <Clock size={18} className="text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-xs text-[#5a5a7a] mb-0.5">Ora</p>
-                    <p className="font-medium text-[#e8e8f0]">
+                    <p className="text-xs text-muted-foreground/70 mb-0.5">Ora</p>
+                    <p className="font-medium text-foreground">
                       {new Date(selectedBooking.appointmentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[rgba(120,120,255,0.08)]">
-                <p className="text-xs text-[#5a5a7a] mb-3">Statusi i rezervimit</p>
+              <div className="pt-4 border-t border-border/60">
+                <p className="text-xs text-muted-foreground/70 mb-3">Statusi i rezervimit</p>
                 <div className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium capitalize ${statusColors[selectedBooking.status as BookingStatus] || ''}`}>
                   {selectedBooking.status}
                 </div>
@@ -297,7 +297,7 @@ export default function BookingsPage() {
             </div>
 
             {/* Actions Footer */}
-            <div className="p-6 border-t border-[rgba(120,120,255,0.12)] space-y-3 bg-[#0a0a0f]">
+            <div className="p-6 border-t border-border space-y-3 bg-background">
               {selectedBooking.status === "pending" && (
                 <>
                   <button
@@ -337,7 +337,7 @@ export default function BookingsPage() {
               )}
 
               {(selectedBooking.status === "completed" || selectedBooking.status === "cancelled") && (
-                <p className="text-center text-sm text-[#5a5a7a] py-2 bg-[rgba(120,120,255,0.05)] rounded-lg">
+                <p className="text-center text-sm text-muted-foreground/70 py-2 bg-muted rounded-lg">
                   Ky rezervim është i mbyllur dhe nuk mund të ndryshohet.
                 </p>
               )}

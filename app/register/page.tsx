@@ -268,7 +268,7 @@ export default function RegisterPage() {
                           )}
                         </div>
                       )}
-                      <span className="text-xs text-[#5a5a7a]">Preview: {form.subdomain || "slug-juaj"}.lokalweb.com</span>
+                      <span className="text-xs text-muted-foreground">Preview: {form.subdomain || "slug-juaj"}.lokalweb.com</span>
                     </div>
                   </div>
                 </div>

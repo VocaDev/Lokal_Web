@@ -115,51 +115,72 @@ const BANNED_PHRASES = [
   'where style meets', 'more than just',
 ];
 
-const SECTIONS_BRIEFING = `
+function sectionsBriefing(userPriorityFirst: string): string {
+  return `
 THIS IS HOW SECTIONS WORK:
 
-You output a sections[] array. Each section has a 'kind' and parameters specific to that kind. The renderer interprets each section freely — you are NOT picking from a fixed list of designs. You are DESCRIBING a unique layout.
+You output a sections[] array. Each section has a 'kind' and parameters specific to that kind. The renderer composes the page from these — you are NOT picking from a fixed catalog of designs.
 
-Required: at least one 'hero' and one 'services' section. Footer optional but recommended.
-Order: the order in the array IS the page order from top to bottom.
+REQUIRED SECTIONS (in this exact order, with one variation):
+1. hero
+2. ${userPriorityFirst}            ← driven by user's sectionPriority choice
+3. The remaining of: services, story, gallery (in standard order, skipping the one used in #2)
+4. footer
+
+Total sections: 4 to 6 (depends on whether user has gallery photos).
+
+ABSOLUTELY NO testimonials section. NO FAQ section. Do not output them.
 
 HERO PARAMETERS (kind: 'hero'):
-- layout: 'centered' (everything stacked center) | 'split' (50/50 image+text) | 'fullbleed' (image fills, text overlaid) | 'editorial' (magazine: metadata bar + oversized headline + prose subhead) | 'asymmetric' (off-grid composition with deliberate negative space)
-- imageStyle: 'photo' (use a hero gradient placeholder — the renderer fills with user's gallery later) | 'gradient' (pure color gradient) | 'pattern' (subtle pattern fill) | 'none' (no visual, type-first)
-- metadataBar: true to show a top bar with metadata (issue number, location, etc.) — primarily for 'editorial' layouts
-- headlinePosition: 'top' | 'center' | 'bottom-left' | 'bottom-right' | 'left' | 'right' — where the headline sits within the hero
-- ctaCount: 0, 1, or 2 — how many call-to-action buttons
-- decorativeElement: 'none' | 'rule' (horizontal line) | 'number' (large ghost number like '01') | 'glyph' (single decorative character)
+- layout: 'centered' | 'split' | 'fullbleed' | 'editorial' | 'asymmetric'
+- imageStyle: 'photo' | 'gradient' | 'pattern' | 'none' (PREFER 'photo' unless the brief explicitly demands type-first)
+- metadataBar: true to show top metadata bar (issue number, location) — primarily for 'editorial'
+- headlinePosition: 'top' | 'center' | 'bottom-left' | 'bottom-right' | 'left' | 'right'
+- ctaCount: 0 | 1 | 2
+- decorativeElement: 'none' | 'rule' | 'number' | 'glyph'
+
+HERO LAYOUT DECISION TREE — pick based on the brief's defining traits:
+- "traditional" / "family-owned" / "long history" / "since YYYY"  →  'editorial' (newspaper-feel)
+- "bold" / "modern" / "disruptive" / "no-bullshit"               →  'asymmetric' or 'fullbleed'
+- "minimal" / "precise" / "quiet" / "refined"                    →  'centered'
+- "warm" / "approachable" / "neighborly"                         →  'split'
+- DEFAULT (use sparingly):                                        →  'fullbleed'
+Do NOT default to 'fullbleed' unless the brief actually demands it. Most briefs do not.
 
 SERVICES PARAMETERS (kind: 'services'):
-- layout: 'list' (single column, name + price right-aligned) | 'grid-2' (2-column cards) | 'grid-3' (3-column cards) | 'editorial-rows' (one per row, with description) | 'cards' (heavy card style)
-- showPrices: true if prices are visible to customers
-- showDuration: true if durations are shown
-- divider: 'none' | 'line' | 'number' (numbered like 01, 02, 03)
-- intro: optional intro paragraph above the list
+- showPrices: true if prices visible
+- showDuration: true if durations shown
+- divider: 'none' | 'line' | 'number'
+- intro: optional intro paragraph
+- items: array of services with name, description, price (number), durationMinutes (number)
+
+DO NOT output a 'layout' field for services. The server picks it. Just supply the content.
 
 STORY PARAMETERS (kind: 'story'):
-- layout: 'centered-quote' (one big quote in the middle) | 'two-column' (heading left, body right) | 'long-form' (paragraph block) | 'pull-quote' (callout phrase + supporting paragraph)
-- body: the actual text
-- attribution: optional, for the centered-quote layout
+- layout: 'centered-quote' | 'two-column' | 'long-form' | 'pull-quote'
+- body: text content
+- attribution: optional, for centered-quote
+
+STORY LAYOUT DECISION TREE:
+- Brief emphasizes a single founder / single defining moment       →  'centered-quote'
+- Brief has multiple defining traits / multifaceted positioning    →  'two-column'
+- Brief is rich in narrative, history, specifics                   →  'long-form'
+- Brief has one quotable phrase that captures everything           →  'pull-quote'
 
 GALLERY PARAMETERS (kind: 'gallery'):
-- layout: 'masonry' | 'grid-uniform' | 'showcase' (one large + thumbnails) | 'strip' (horizontal scroll)
-- caption: optional caption above the gallery
+- layout: 'masonry' | 'grid-uniform' | 'showcase' | 'strip'
+- caption: optional caption above gallery
 
-TESTIMONIALS PARAMETERS (kind: 'testimonials'):
-- layout: 'cards' (3 cards in a row) | 'single-quote' (one quote at a time) | 'rotating' (carousel) | 'wall' (4-6 quotes in a masonry)
-- items: 3 testimonials, each with name + role + quote + rating
-
-FAQ PARAMETERS (kind: 'faq'):
-- layout: 'accordion' | 'two-column' (questions left, answers right) | 'inline' (Q+A flowing as paragraphs)
-- items: 5 faq items
+If a gallery section appears in your output, pick the layout based on density:
+- sparse  →  'showcase' (one large + thumbnails) or 'strip'
+- dense   →  'masonry' or 'grid-uniform'
 
 FOOTER PARAMETERS (kind: 'footer'):
 - layout: 'centered' | 'three-column' | 'editorial' | 'minimal'
 - tagline: optional short closing line
 
-THE GAME: pick parameter combinations the user's brief actually NEEDS. Two businesses with the same industry but different briefs should produce different combinations.`;
+THE GAME: pick parameter combinations the brief actually NEEDS. Two businesses with the same industry but different briefs SHOULD produce different combinations. Use the decision trees above; do not default to safe choices.`;
+}
 
 function fewShotsFor(canonicalIndustry: string): string {
   const fewShots: Record<string, string> = {
@@ -328,20 +349,40 @@ type GenerateThemeArgs = {
   tone: string;
   userProvidedServices: string;
   canonicalIndustry: Industry;
+  userHasGalleryPhotos: boolean;
+  userHasServicePhotos: boolean;
   regenSeed?: string;
 };
+
+// Map the wizard's sectionPriority + photo state to the section that comes
+// first after the hero. If the user picked 'gallery' but has no gallery
+// photos, fall back to 'services' so we never demand a photo-less gallery.
+function priorityToFirstSection(
+  priority: string,
+  userHasGalleryPhotos: boolean,
+): 'services' | 'story' | 'gallery' {
+  if (priority === 'story') return 'story';
+  if (priority === 'gallery') return userHasGalleryPhotos ? 'gallery' : 'services';
+  return 'services';
+}
 
 async function generateTheme(args: GenerateThemeArgs) {
   const {
     brief, businessName, industry, city, uniqueness,
     hero, sectionPriority, density, mood, brandPrimary, brandAccent,
     fontPersonality, language, tone, userProvidedServices,
-    canonicalIndustry, regenSeed,
+    canonicalIndustry, userHasGalleryPhotos, userHasServicePhotos, regenSeed,
   } = args;
 
   const definingTraits = Array.isArray(brief.definingTraits)
     ? brief.definingTraits.join(', ')
     : String(brief.definingTraits ?? '');
+
+  const traitsForVoiceCheck = Array.isArray(brief.definingTraits)
+    ? brief.definingTraits.join(' / ')
+    : String(brief.definingTraits ?? '');
+
+  const userPriorityFirst = priorityToFirstSection(sectionPriority, userHasGalleryPhotos);
 
   const systemPrompt = `You are a senior designer translating a brand strategy brief into a unique website. The user has chosen specific structural direction. HONOR IT, but use it as creative input — not a recipe.
 
@@ -372,22 +413,30 @@ Write all customer-facing copy in: ${languageInstruction(language)}
 Tone: ${tone}
 ${toneDirective(tone)}
 
-THE BRIEF IS LAW. Every choice you make — every layout, every parameter, every word — must echo the brief. The user told you what makes their business different. THAT is the website's job to communicate.
+THE BRIEF IS LAW. Every choice — layout, parameter, word — must echo the brief.
 
-USER'S UNIQUENESS STATEMENT (gospel — reference this as you generate):
-"${uniqueness || '(not provided — infer from positioning)'}"
+USER'S UNIQUENESS STATEMENT (gospel — reference this EVERYWHERE):
+"${uniqueness || '(not provided — derive from positioning)'}"
 
-If the user provided a uniqueness statement, EVERY major copy moment must reflect it:
-- The hero headline must echo or extend it
-- At least one testimonial must reference what makes the business different in this specific way
-- The story section's body must reinforce it
-- One value prop (if you write one) must derive from it
+If the user provided a uniqueness statement, it must appear (or be unmistakably echoed) in:
+- The hero headline (or its subhead)
+- The story body
+- At least one decorative element justification
 
-If two competitors in the same industry would get a similar result from your output, you have failed. Pick UNUSUAL parameter combinations when the brief justifies them.
+DEFINING TRAITS (also gospel):
+${traitsForVoiceCheck}
+
+VOICE CONSISTENCY CHECK — before outputting, verify:
+At least TWO of the brief's defining traits appear (as words or close synonyms) in:
+- The hero headline OR subheadline
+- The story body
+- The hero's decorativeElement reasoning (if 'rule' or 'number')
+
+If you cannot honestly say "yes, those traits appear" — REWRITE.
 
 Produce THE WEBSITE THIS BUSINESS WOULD HAVE IF THEY HIRED A DESIGNER WHO READ THE BRIEF — not a generic site for the category.
 
-${SECTIONS_BRIEFING}
+${sectionsBriefing(userPriorityFirst)}
 
 REALISTIC PRICING (Kosovo market, EUR):
 - barbershop: €5-25 (haircut €8-12, fade €10-15, full package €20)
@@ -418,12 +467,7 @@ Also banned in body copy:
 - "We pride ourselves on..."
 - Lorem ipsum
 
-NAMES for testimonials — authentic Kosovar names, mix gender:
-Male: Erblin, Kushtrim, Dukagjin, Arbnor, Valdrin, Labinot, Leotrim, Ilir, Besnik, Ermal
-Female: Fjolla, Njomza, Valdete, Blerta, Elira, Rinë, Donjeta, Fitore, Teuta
-AVOID: Arta, Blerim, Dritë, Agron (overused).
-
-NEIGHBORHOODS for "role" field — Prishtinë: Arbëria, Dardania, Peyton, Qyteti i Ri, Ulpiana, Sunny Hill; Prizren: Shadërvan; Pejë: Haxhi Zeka.
+NEIGHBORHOODS for location references — Prishtinë: Arbëria, Dardania, Peyton, Qyteti i Ri, Ulpiana, Sunny Hill; Prizren: Shadërvan; Pejë: Haxhi Zeka.
 
 ART DIRECTION FOR PHOTOS:
 This site has 2 photo slots: a hero photo and a story/about photo. The user uploads their own photos later — but you MUST suggest what KIND of photo would fit each slot.
@@ -434,15 +478,24 @@ Output an artDirection object with these two strings:
 
 Write captions in: ${languageInstruction(language)}.
 
-BEFORE OUTPUTTING — re-read what you wrote:
+BEFORE OUTPUTTING — run these specific checks:
 
-1. Could this exact output describe a competitor in the same industry? If yes, REWRITE.
-2. Does the headline pass the "would a marketing person write this?" test? If a marketing person would, REWRITE.
-3. Did you actually use the user's uniqueness statement, or did you ignore it? If ignored, ADD IT.
-4. Are the 3 testimonials clearly 3 different real people, or 3 outputs of the same model? If same, REWRITE one of them in a notably different voice.
-5. Did you use any banned phrase? Search your output. If yes, REPLACE.
+1. SAME-INDUSTRY TEST: Could a competitor in the same industry receive this exact output?
+   If yes → REWRITE the headline and at least one structural element.
 
-Only output JSON after this self-check passes.
+2. LAYOUT DECISION TEST: Did you actually use the hero/story decision trees, or did you default?
+   If you defaulted to 'fullbleed' or 'long-form' without justification → PICK SOMETHING ELSE.
+
+3. UNIQUENESS PRESENCE TEST: Search your output for words from the user's uniqueness statement.
+   If you cannot find them in any major section → REWRITE the hero headline to incorporate them.
+
+4. VOICE CONSISTENCY: Search for the defining traits.
+   If at least 2 do not appear → REWRITE the most generic-feeling sentence.
+
+5. BANNED PHRASE SWEEP: Scan your output character by character.
+   If any banned phrase appears → REPLACE.
+
+Output JSON only after these 5 checks pass.
 
 Output valid JSON matching this schema:
 ${JSON.stringify(THEME_SCHEMA.schema)}`;
@@ -459,6 +512,9 @@ BUSINESS:
 - Industry: ${industry}
 - City: ${city}
 ${mood === 'custom' ? `- BRAND COLORS (LOCKED): primary=${brandPrimary}, accent=${brandAccent}` : ''}
+
+USER HAS UPLOADED GALLERY PHOTOS: ${userHasGalleryPhotos ? 'YES — you MUST include a gallery section' : 'No — gallery section is optional'}
+USER HAS UPLOADED SERVICE PHOTOS: ${userHasServicePhotos ? 'YES — services should be designed knowing photos will appear' : 'No — services may be type-only'}
 
 ${regenSeed ? `REGENERATION ATTEMPT — produce a notably DIFFERENT direction than the previous result. Pick different layout combinations. Pick different copy angles. Different decorative elements. The brief is the same — your interpretation must shift. (seed: ${regenSeed})` : ''}
 
@@ -555,6 +611,22 @@ export async function POST(request: NextRequest) {
 
     const canonical = normalizeIndustry(industry);
 
+    // Look up uploaded photo slots so the prompt can be photo-aware and the
+    // post-processor can force a gallery section / pick services layout.
+    // Read-only query; gallery_items has a public-SELECT RLS policy
+    // (migration 011) so user-scoped client is fine.
+    let userHasGalleryPhotos = false;
+    let userHasServicePhotos = false;
+    if (typeof businessId === 'string' && businessId.length > 0) {
+      const { data: galleryRows } = await supabase
+        .from('gallery_items')
+        .select('section_key')
+        .eq('business_id', businessId);
+      const rows = galleryRows ?? [];
+      userHasGalleryPhotos = rows.some(r => r.section_key === 'gallery');
+      userHasServicePhotos = rows.some(r => r.section_key === 'services');
+    }
+
     const args: GenerateThemeArgs = {
       brief,
       businessName,
@@ -572,6 +644,8 @@ export async function POST(request: NextRequest) {
       tone: tone || 'friendly',
       userProvidedServices: userProvidedServices || '',
       canonicalIndustry: canonical,
+      userHasGalleryPhotos,
+      userHasServicePhotos,
       regenSeed,
     };
 

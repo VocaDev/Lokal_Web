@@ -642,16 +642,6 @@ function validateTheme(v: any): { valid: boolean; reasons: string[] } {
     if (allCopy.includes(banned.toLowerCase())) reasons.push(`Contains banned phrase: "${banned}"`);
   }
 
-  // Testimonial-quote-length check on the testimonials section, if present.
-  const testimonialsSection = Array.isArray(v?.sections)
-    ? v.sections.find((s: any) => s?.kind === 'testimonials')
-    : null;
-  if (testimonialsSection && Array.isArray(testimonialsSection.items) && testimonialsSection.items.length > 0) {
-    const avg = testimonialsSection.items
-      .reduce((s: number, t: any) => s + (t?.quote?.length || 0), 0) / testimonialsSection.items.length;
-    if (avg < 40) reasons.push('Testimonials too short');
-  }
-
   return { valid: reasons.length === 0, reasons };
 }
 

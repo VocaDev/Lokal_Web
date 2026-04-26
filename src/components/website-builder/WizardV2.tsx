@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn, publicSiteHref, publicSiteLabel } from '@/lib/utils';
 import type { WizardInput, AiSitePayload } from '@/lib/types/customization';
 import type { Business, Service } from '@/lib/types';
 import { DynamicSiteRenderer } from '@/components/templates/ai/DynamicSiteRenderer';
+import { createClient } from '@/lib/supabase/client';
+import type { ProgressStep, ProgressStatus } from '@/lib/ai-progress';
 
 type Brief = {
   positioning: string;
@@ -96,13 +98,15 @@ const TONE_CHIPS: Array<{ label: string; value: WizardInput['tone'] }> = [
   { label: 'I guximshëm', value: 'bold' },
 ];
 
-const SUBSTEP_LABELS = [
-  'Analizë e biznesit',
-  'Strategji e markës',
-  'Ndërtimi i temës',
-  'Shkrimi i përmbajtjes',
-  'Përpilimi përfundimtar',
+const SUBSTEPS: { step: ProgressStep; labelSq: string; labelEn: string }[] = [
+  { step: 'analyzing_business', labelSq: 'Po analizojmë biznesin tënd', labelEn: 'Analyzing your business' },
+  { step: 'building_brief',     labelSq: 'Po krijojmë strategjinë',     labelEn: 'Building the strategy' },
+  { step: 'designing_theme',    labelSq: 'Po dizajnojmë temën',         labelEn: 'Designing the theme' },
+  { step: 'writing_copy',       labelSq: 'Po shkruajmë përmbajtjen',    labelEn: 'Writing the content' },
+  { step: 'finalizing',         labelSq: 'Po e mbledhim faqen',         labelEn: 'Finalizing the page' },
 ];
+
+const FALLBACK_ADVANCE_MS = 8000;
 
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 const isHex = (v?: string) => !!v && HEX_RE.test(v.trim());
@@ -137,12 +141,79 @@ export default function WizardV2({ businessId, subdomain }: Props) {
   const [brief, setBrief] = useState<Brief | null>(null);
   const [theme, setTheme] = useState<Theme | null>(null);
 
-  const [activeSubstep, setActiveSubstep] = useState(0);
-  const [doneSubsteps, setDoneSubsteps] = useState<number[]>([]);
-  const [genMessage, setGenMessage] = useState('Po analizojmë biznesin tënd...');
+  const [generationId, setGenerationId] = useState<string | null>(null);
+  const [activeStep, setActiveStep] = useState<ProgressStep | null>(null);
+  const [completedSteps, setCompletedSteps] = useState<Set<ProgressStep>>(new Set());
   const [genError, setGenError] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
+
+  // Fallback timer ref — if no event arrives for 8s, advance the active step
+  // manually so a Realtime hiccup doesn't freeze the UI.
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const advanceFallback = (currentStep: ProgressStep | null) => {
+    if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+    if (!currentStep) return;
+    fallbackTimerRef.current = setTimeout(() => {
+      const idx = SUBSTEPS.findIndex(s => s.step === currentStep);
+      if (idx < 0 || idx >= SUBSTEPS.length - 1) return;
+      const next = SUBSTEPS[idx + 1].step;
+      setCompletedSteps(prev => {
+        const out = new Set(prev);
+        out.add(currentStep);
+        return out;
+      });
+      setActiveStep(next);
+      advanceFallback(next);
+    }, FALLBACK_ADVANCE_MS);
+  };
+
+  // Subscribe to Realtime progress events for this generation. Cleans up on
+  // generationId change (regenerate) and on unmount.
+  useEffect(() => {
+    if (!generationId) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`ai-progress-${generationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'ai_generation_events',
+          filter: `generation_id=eq.${generationId}`,
+        },
+        (payload) => {
+          const evt = payload.new as { step: ProgressStep; status: ProgressStatus; message: string | null };
+          if (evt.status === 'completed') {
+            setCompletedSteps(prev => {
+              const out = new Set(prev);
+              out.add(evt.step);
+              return out;
+            });
+            const idx = SUBSTEPS.findIndex(s => s.step === evt.step);
+            if (idx >= 0 && idx < SUBSTEPS.length - 1) {
+              const nextStep = SUBSTEPS[idx + 1].step;
+              setActiveStep(nextStep);
+              advanceFallback(nextStep);
+            } else {
+              if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+            }
+          } else if (evt.status === 'started' || evt.status === 'progress') {
+            setActiveStep(evt.step);
+            advanceFallback(evt.step);
+          } else if (evt.status === 'error') {
+            if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+            setGenError(evt.message ?? 'Generation failed');
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+      channel.unsubscribe();
+    };
+  }, [generationId]);
 
   const update = (patch: Partial<WizardInput>) => setInput(prev => ({ ...prev, ...patch }));
 
@@ -170,9 +241,22 @@ export default function WizardV2({ businessId, subdomain }: Props) {
   const runGeneration = async (opts: { reuseBrief?: Brief } = {}) => {
     setStep(6);
     setGenError(null);
-    setActiveSubstep(opts.reuseBrief ? 1 : 0);
-    setDoneSubsteps(opts.reuseBrief ? [0] : []);
-    setGenMessage(opts.reuseBrief ? 'Po rigjenerojmë temën...' : 'Po analizojmë biznesin tënd...');
+
+    // Reset progress state and assign a fresh generationId. The Realtime
+    // subscription useEffect re-fires when generationId changes.
+    const newGenId = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    if (opts.reuseBrief) {
+      // Skip brand-brief on regenerate — mark it done and start at design.
+      setCompletedSteps(new Set<ProgressStep>(['analyzing_business', 'building_brief']));
+      setActiveStep('designing_theme');
+    } else {
+      setCompletedSteps(new Set());
+      setActiveStep('analyzing_business');
+    }
+    advanceFallback(opts.reuseBrief ? 'designing_theme' : 'analyzing_business');
+    setGenerationId(newGenId);
 
     let currentBrief: Brief | null = opts.reuseBrief ?? null;
 
@@ -198,6 +282,8 @@ export default function WizardV2({ businessId, subdomain }: Props) {
             bookingMethod: input.bookingMethod,
             language: input.language,
             tone: input.tone,
+            generationId: newGenId,
+            businessId,
           }),
         });
         if (!briefRes.ok) {
@@ -207,27 +293,7 @@ export default function WizardV2({ businessId, subdomain }: Props) {
         const briefData = await briefRes.json();
         currentBrief = briefData.brief as Brief;
         setBrief(currentBrief);
-        setDoneSubsteps([0]);
-        setActiveSubstep(1);
-        setGenMessage('Po formojmë strategjinë e markës...');
       }
-
-      // Cosmetic substep advancer — stops if API responds first.
-      const t1 = setTimeout(() => {
-        setActiveSubstep(prev => (prev < 2 ? 2 : prev));
-        setDoneSubsteps(prev => prev.includes(1) ? prev : [...prev, 1]);
-        setGenMessage('Po ndërtojmë temën...');
-      }, 4000);
-      const t2 = setTimeout(() => {
-        setActiveSubstep(prev => (prev < 3 ? 3 : prev));
-        setDoneSubsteps(prev => prev.includes(2) ? prev : [...prev, 2]);
-        setGenMessage('Po shkruajmë përmbajtjen...');
-      }, 8000);
-      const t3 = setTimeout(() => {
-        setActiveSubstep(prev => (prev < 4 ? 4 : prev));
-        setDoneSubsteps(prev => prev.includes(3) ? prev : [...prev, 3]);
-        setGenMessage('Po e përpilojmë...');
-      }, 12000);
 
       const themeRes = await fetch('/api/generate-variants', {
         method: 'POST',
@@ -251,10 +317,10 @@ export default function WizardV2({ businessId, subdomain }: Props) {
             .filter(Boolean)
             .join(', '),
           regenSeed: opts.reuseBrief ? Date.now().toString() : undefined,
+          generationId: newGenId,
+          businessId,
         }),
       });
-
-      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
 
       if (!themeRes.ok) {
         const err = await themeRes.json().catch(() => ({}));
@@ -263,12 +329,17 @@ export default function WizardV2({ businessId, subdomain }: Props) {
       const themeData = await themeRes.json();
       const t = themeData.theme as Theme;
       setTheme(t);
-      setDoneSubsteps([0, 1, 2, 3, 4]);
-      setActiveSubstep(5);
-      setGenMessage('Gati!');
+      // Mark all steps complete; the Realtime stream may have already done
+      // most of this, but the API responses are the source of truth.
+      setCompletedSteps(new Set<ProgressStep>([
+        'analyzing_business', 'building_brief', 'designing_theme', 'writing_copy', 'finalizing',
+      ]));
+      setActiveStep(null);
+      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
       setStep(7);
     } catch (e: any) {
       setGenError(e?.message || 'Gjenerimi dështoi');
+      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
     }
   };
 
@@ -383,9 +454,9 @@ export default function WizardV2({ businessId, subdomain }: Props) {
 
         {step === 6 && (
           <GenerationScreen
-            activeSubstep={activeSubstep}
-            doneSubsteps={doneSubsteps}
-            message={genMessage}
+            activeStep={activeStep}
+            completedSteps={completedSteps}
+            language={input.language}
             error={genError}
             onRetry={() => runGeneration()}
           />
@@ -1032,27 +1103,45 @@ function RecapCard({ input }: { input: WizardInput }) {
 // =================================================================
 
 function GenerationScreen({
-  activeSubstep, doneSubsteps, message, error, onRetry,
+  activeStep, completedSteps, language, error, onRetry,
 }: {
-  activeSubstep: number;
-  doneSubsteps: number[];
-  message: string;
+  activeStep: ProgressStep | null;
+  completedSteps: Set<ProgressStep>;
+  language: WizardInput['language'];
   error: string | null;
   onRetry: () => void;
 }) {
+  const labelOf = (s: { labelSq: string; labelEn: string }) =>
+    language === 'en' ? s.labelEn : s.labelSq;
+
+  // Live "message" line above the substeps — current active step's label
+  // followed by an ellipsis. Falls back to a generic line when nothing is
+  // active yet (very brief — between mount and first event).
+  const activeLabel = activeStep
+    ? labelOf(SUBSTEPS.find(s => s.step === activeStep) ?? SUBSTEPS[0])
+    : labelOf(SUBSTEPS[0]);
+
+  const buildingHeading = language === 'en'
+    ? 'Building your website…'
+    : 'Po e ndërtojmë faqen tënde…';
+  const errorHeading = language === 'en'
+    ? 'Something went wrong'
+    : 'Ndodhi një gabim';
+  const retryLabel = language === 'en' ? 'Try again' : 'Provo përsëri';
+
   return (
     <div className="flex-1 flex items-center justify-center p-8">
       <div className="text-center space-y-8 max-w-md w-full">
         {error ? (
           <>
-            <div className="text-[15px] text-foreground font-semibold">Ndodhi një gabim</div>
+            <div className="text-[15px] text-foreground font-semibold">{errorHeading}</div>
             <div className="text-[13px] text-muted-foreground">{error}</div>
             <button
               type="button"
               onClick={onRetry}
               className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-semibold rounded-lg px-6 py-2.5 text-sm"
             >
-              Provo përsëri
+              {retryLabel}
             </button>
           </>
         ) : (
@@ -1060,17 +1149,17 @@ function GenerationScreen({
             <Spinner />
             <div className="space-y-2">
               <h2 className="text-[22px] font-semibold text-foreground">
-                Po e ndërtojmë faqen tënde...
+                {buildingHeading}
               </h2>
-              <p className="text-[14px] text-muted-foreground">{message}</p>
+              <p className="text-[14px] text-muted-foreground">{activeLabel}…</p>
             </div>
 
             <ul className="text-left space-y-2.5 mx-auto" style={{ maxWidth: 320 }}>
-              {SUBSTEP_LABELS.map((label, idx) => {
-                const isDone = doneSubsteps.includes(idx);
-                const isActive = activeSubstep === idx && !isDone;
+              {SUBSTEPS.map((s) => {
+                const isDone = completedSteps.has(s.step);
+                const isActive = activeStep === s.step && !isDone;
                 return (
-                  <li key={idx} className="flex items-center gap-3">
+                  <li key={s.step} className="flex items-center gap-3">
                     <span
                       className={cn(
                         'h-4 w-4 rounded-full transition-all',
@@ -1091,7 +1180,7 @@ function GenerationScreen({
                             : 'text-muted-foreground',
                       )}
                     >
-                      {label}
+                      {labelOf(s)}
                     </span>
                   </li>
                 );

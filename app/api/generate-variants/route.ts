@@ -558,6 +558,82 @@ function collectSectionCopy(sections: any[]): string {
   return parts.join(' ').toLowerCase();
 }
 
+// ----------------------------------------------------------------
+// Post-processor — runs after Haiku returns. Forces deterministic shape.
+// ----------------------------------------------------------------
+
+interface PostProcessCtx {
+  sectionPriority: 'services' | 'story' | 'gallery';
+  density: 'sparse' | 'dense';
+  userHasServicePhotos: boolean;
+  userHasGalleryPhotos: boolean;
+}
+
+function pickServicesLayout(hasPhotos: boolean, density: 'sparse' | 'dense'): string {
+  if (hasPhotos && density === 'dense') return 'cards';
+  if (hasPhotos && density === 'sparse') return 'grid-3';
+  if (!hasPhotos && density === 'dense') return 'editorial-rows';
+  return 'list';
+}
+
+function reorderSections(sections: any[], priority: 'services' | 'story' | 'gallery'): any[] {
+  // Standard order: hero, [user priority], [the others], footer
+  const hero = sections.find(s => s.kind === 'hero');
+  const footer = sections.find(s => s.kind === 'footer');
+  const services = sections.find(s => s.kind === 'services');
+  const story = sections.find(s => s.kind === 'story');
+  const gallery = sections.find(s => s.kind === 'gallery');
+
+  const result: any[] = [];
+  if (hero) result.push(hero);
+
+  // Priority-driven first content section
+  const priorityOrder: ('services' | 'story' | 'gallery')[] = (() => {
+    if (priority === 'services') return ['services', 'story', 'gallery'];
+    if (priority === 'story') return ['story', 'services', 'gallery'];
+    return ['gallery', 'services', 'story'];
+  })();
+
+  for (const k of priorityOrder) {
+    if (k === 'services' && services) result.push(services);
+    if (k === 'story' && story) result.push(story);
+    if (k === 'gallery' && gallery) result.push(gallery);
+  }
+
+  if (footer) result.push(footer);
+  return result;
+}
+
+function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
+  let sections: any[] = (theme?.sections ?? []).filter(Boolean);
+
+  // 1. Strip any testimonials/faq sections the model accidentally produced.
+  sections = sections.filter(s => s?.kind !== 'testimonials' && s?.kind !== 'faq');
+
+  // 2. Force services layout based on photos + density. OVERRIDES Haiku's pick.
+  sections = sections.map(s => {
+    if (s?.kind !== 'services') return s;
+    return { ...s, layout: pickServicesLayout(ctx.userHasServicePhotos, ctx.density) };
+  });
+
+  // 3. Force gallery section when user has gallery photos.
+  const hasGallery = sections.some(s => s?.kind === 'gallery');
+  if (ctx.userHasGalleryPhotos && !hasGallery) {
+    sections.push({
+      kind: 'gallery',
+      layout: ctx.density === 'sparse' ? 'showcase' : 'masonry',
+      caption: undefined,
+    });
+  }
+
+  // 4. Reorder per the user's sectionPriority + standard order.
+  sections = reorderSections(sections, ctx.sectionPriority);
+
+  return { ...theme, sections };
+}
+
+// ----------------------------------------------------------------
+
 function validateTheme(v: any): { valid: boolean; reasons: string[] } {
   const reasons: string[] = [];
   const allCopy = collectSectionCopy(v?.sections);
@@ -658,7 +734,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    let theme = await generateTheme(args);
+    const postProcessCtx: PostProcessCtx = {
+      sectionPriority: (args.sectionPriority as 'services' | 'story' | 'gallery') || 'services',
+      density: (args.density as 'sparse' | 'dense') || 'dense',
+      userHasServicePhotos,
+      userHasGalleryPhotos,
+    };
+
+    let theme = postProcessTheme(await generateTheme(args), postProcessCtx);
 
     if (canEmit) {
       // Mid-stream marker: Haiku finished generating, validation/finalize next.
@@ -671,7 +754,10 @@ export async function POST(request: NextRequest) {
     const validation = validateTheme(theme);
     if (!validation.valid) {
       console.warn('[generate-variants] Theme failed validation, regenerating once:', validation.reasons);
-      const retry = await generateTheme({ ...args, regenSeed: `retry-${Date.now()}` });
+      const retry = postProcessTheme(
+        await generateTheme({ ...args, regenSeed: `retry-${Date.now()}` }),
+        postProcessCtx,
+      );
       const retryValidation = validateTheme(retry);
       if (retryValidation.valid) {
         theme = retry;

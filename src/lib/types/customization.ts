@@ -167,6 +167,10 @@ export type AiSection =
 
 export interface AiSitePayload {
   sections: AiSection[];
+  // Drives hero CTA behavior — appointments/both → open booking drawer,
+  // walkin/none → open contact (WhatsApp / tel link). Sourced from
+  // website_customization.booking_method (migration 014).
+  bookingMethod?: 'appointments' | 'walkin' | 'both' | 'none';
   primaryColor: string;
   accentColor: string;
   bgColor: string;

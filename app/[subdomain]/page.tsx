@@ -177,6 +177,7 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
   ) {
     const payload: AiSitePayload = {
       sections: aiSections,
+      bookingMethod: (customData as any)?.booking_method ?? 'appointments',
       primaryColor: customData!.primary_color,
       accentColor: customData!.accent_color,
       bgColor: customData!.bg_color,

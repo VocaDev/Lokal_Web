@@ -1,6 +1,7 @@
 import type { Business, Service } from '@/lib/types';
 import type { AiServicesSection, AiSitePayload } from '@/lib/types/customization';
 import { headingFontFamily, SECTION_PADDING_X, SECTION_PADDING_Y } from './_shared';
+import { PhotoPlaceholder } from './PhotoPlaceholder';
 
 interface Props {
   section: AiServicesSection;
@@ -144,11 +145,13 @@ function GridLayout({ items, cols, section, payload, images }: { items: Item[]; 
                 className="rounded-lg flex flex-col overflow-hidden"
                 style={{ background: payload.surfaceColor, border: `1px solid ${payload.borderColor}` }}
               >
-                {img && (
+                {img ? (
                   <div className="aspect-[4/3] w-full overflow-hidden" style={{ background: payload.bgColor }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
                   </div>
+                ) : (
+                  <PhotoPlaceholder payload={payload} shape="service" />
                 )}
                 <div className="p-6 flex flex-col flex-1">
                   {section.divider === 'number' && (
@@ -249,11 +252,13 @@ function CardsLayout({ items, section, payload, images }: { items: Item[]; secti
                   boxShadow: `0 14px 40px -28px ${payload.primaryColor}`,
                 }}
               >
-                {img && (
+                {img ? (
                   <div className="aspect-[16/10] w-full overflow-hidden" style={{ background: payload.bgColor }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
                   </div>
+                ) : (
+                  <PhotoPlaceholder payload={payload} shape="service" />
                 )}
                 <div className="p-7 flex flex-col gap-4 flex-1">
                   <div className="flex items-start justify-between">

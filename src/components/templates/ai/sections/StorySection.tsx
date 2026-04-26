@@ -1,6 +1,7 @@
 import type { Business } from '@/lib/types';
 import type { AiStorySection, AiSitePayload } from '@/lib/types/customization';
 import { headingFontFamily, SECTION_PADDING_X, SECTION_PADDING_Y } from './_shared';
+import { PhotoPlaceholder } from './PhotoPlaceholder';
 
 interface Props {
   section: AiStorySection;
@@ -16,7 +17,7 @@ export function StorySection({ section, payload, business }: Props) {
   switch (section.layout) {
     case 'two-column':      return <TwoColumn section={section} payload={payload} storyImageUrl={storyImageUrl} />;
     case 'long-form':       return <LongForm section={section} payload={payload} storyImageUrl={storyImageUrl} />;
-    case 'pull-quote':      return <PullQuote section={section} payload={payload} />;
+    case 'pull-quote':      return <PullQuote section={section} payload={payload} storyImageUrl={storyImageUrl} />;
     case 'centered-quote':
     default:                return <CenteredQuote section={section} payload={payload} storyImageUrl={storyImageUrl} />;
   }
@@ -72,12 +73,7 @@ function TwoColumn({ section, payload, storyImageUrl }: LayoutProps) {
               <img src={storyImageUrl} alt="" className="w-full h-auto block" />
             </div>
           ) : (
-            <h2
-              className="text-3xl md:text-4xl font-bold leading-tight"
-              style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
-            >
-              Historia
-            </h2>
+            <PhotoPlaceholder payload={payload} shape="story" label="STORY PHOTO" />
           )}
           {section.attribution && (
             <div className="mt-3 text-xs uppercase tracking-[0.3em]" style={{ color: payload.mutedTextColor }}>
@@ -86,14 +82,12 @@ function TwoColumn({ section, payload, storyImageUrl }: LayoutProps) {
           )}
         </div>
         <div className="md:col-span-7">
-          {storyImageUrl && (
-            <h2
-              className="text-3xl md:text-4xl font-bold leading-tight mb-4"
-              style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
-            >
-              Historia
-            </h2>
-          )}
+          <h2
+            className="text-3xl md:text-4xl font-bold leading-tight mb-4"
+            style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
+          >
+            Historia
+          </h2>
           <p className="text-base md:text-lg leading-relaxed whitespace-pre-line" style={{ color: payload.mutedTextColor }}>
             {section.body}
           </p>
@@ -107,12 +101,16 @@ function LongForm({ section, payload, storyImageUrl }: LayoutProps) {
   return (
     <section className={`${SECTION_PADDING_X} ${SECTION_PADDING_Y}`} style={{ background: payload.bgColor }}>
       <div className="max-w-2xl mx-auto">
-        {storyImageUrl && (
+        {storyImageUrl ? (
           <div
             className="rounded-xl overflow-hidden mb-10 border"
             style={{ borderColor: payload.borderColor }}
           >
             <img src={storyImageUrl} alt="" className="w-full h-auto block max-h-[420px] object-cover" />
+          </div>
+        ) : (
+          <div className="mb-10">
+            <PhotoPlaceholder payload={payload} shape="story" label="STORY PHOTO" />
           </div>
         )}
         <h2
@@ -134,8 +132,7 @@ function LongForm({ section, payload, storyImageUrl }: LayoutProps) {
   );
 }
 
-function PullQuote({ section, payload }: { section: AiStorySection; payload: AiSitePayload }) {
-  // Type-only by design — story image is intentionally ignored even if uploaded.
+function PullQuote({ section, payload, storyImageUrl }: LayoutProps) {
   const sentences = section.body.split(/(?<=[.!?])\s+/);
   const callout = sentences[0] ?? section.body;
   const rest = sentences.slice(1).join(' ');
@@ -155,6 +152,18 @@ function PullQuote({ section, payload }: { section: AiStorySection; payload: AiS
           </p>
         </div>
         <div className="md:col-span-7">
+          {storyImageUrl ? (
+            <div
+              className="rounded-xl overflow-hidden mb-5 border"
+              style={{ borderColor: payload.borderColor }}
+            >
+              <img src={storyImageUrl} alt="" className="w-full h-auto block max-h-[300px] object-cover" />
+            </div>
+          ) : (
+            <div className="mb-5 max-w-sm">
+              <PhotoPlaceholder payload={payload} shape="story" label="STORY PHOTO" />
+            </div>
+          )}
           {rest && (
             <p className="text-base leading-relaxed" style={{ color: payload.mutedTextColor }}>
               {rest}

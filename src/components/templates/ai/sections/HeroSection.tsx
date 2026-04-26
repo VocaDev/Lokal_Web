@@ -1,6 +1,7 @@
 import type { Business } from '@/lib/types';
 import type { AiHeroSection, AiSitePayload } from '@/lib/types/customization';
 import { ctaButtonStyle, headingFontFamily, SECTION_PADDING_X } from './_shared';
+import { PhotoPlaceholder } from './PhotoPlaceholder';
 
 interface Props {
   section: AiHeroSection;
@@ -40,7 +41,8 @@ function backgroundStyle(
   switch (imageStyle) {
     case 'photo':
       // Real upload from gallery_items.section_key='hero' if present.
-      // Otherwise fall back to a tinted gradient — never a stock photo URL.
+      // Otherwise return a neutral surface — the layout overlays a dashed
+      // PhotoPlaceholder so the user sees exactly where the photo will go.
       if (heroImageUrl) {
         return {
           backgroundImage: `url(${heroImageUrl})`,
@@ -48,9 +50,7 @@ function backgroundStyle(
           backgroundPosition: 'center',
         };
       }
-      return {
-        background: `linear-gradient(135deg, ${payload.primaryColor}80 0%, ${payload.bgColor} 55%, ${payload.accentColor}40 100%)`,
-      };
+      return { background: payload.surfaceColor };
     case 'gradient':
       return {
         background: `linear-gradient(135deg, ${payload.primaryColor}, ${payload.accentColor})`,
@@ -133,11 +133,16 @@ function HeroCtas({ section, payload, align }: { section: AiHeroSection; payload
   );
 }
 
+function shouldShowHeroPlaceholder(section: AiHeroSection, heroImageUrl?: string): boolean {
+  return section.imageStyle === 'photo' && !heroImageUrl;
+}
+
 // ----------------------------------------------------------------
 // Centered hero
 // ----------------------------------------------------------------
 
 function CenteredHero({ section, business, payload, heroImageUrl }: LayoutProps) {
+  const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
   return (
     <section
       className={`${SECTION_PADDING_X} py-24 md:py-36 text-center relative overflow-hidden`}
@@ -145,6 +150,11 @@ function CenteredHero({ section, business, payload, heroImageUrl }: LayoutProps)
     >
       <Decoration kind={section.decorativeElement} payload={payload} />
       <div className="max-w-3xl mx-auto relative">
+        {showPlaceholder && (
+          <div className="max-w-md mx-auto mb-8">
+            <PhotoPlaceholder payload={payload} shape="hero" label="HERO PHOTO" />
+          </div>
+        )}
         {section.decorativeElement === 'rule' && (
           <div className="flex justify-center"><div className="h-px w-16 mb-6" style={{ background: payload.primaryColor }} /></div>
         )}
@@ -173,12 +183,16 @@ function CenteredHero({ section, business, payload, heroImageUrl }: LayoutProps)
 // ----------------------------------------------------------------
 
 function SplitHero({ section, business, payload, heroImageUrl }: LayoutProps) {
+  const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
   return (
     <section className="grid md:grid-cols-2 min-h-[420px] md:min-h-[560px] relative overflow-hidden">
       <div
         className="min-h-[220px] md:min-h-[560px] relative"
         style={backgroundStyle(payload, section.imageStyle, heroImageUrl)}
       >
+        {showPlaceholder && (
+          <PhotoPlaceholder payload={payload} shape="hero" label="HERO PHOTO" fill />
+        )}
         <Decoration kind={section.decorativeElement} payload={payload} />
       </div>
       <div
@@ -212,6 +226,7 @@ function SplitHero({ section, business, payload, heroImageUrl }: LayoutProps) {
 // ----------------------------------------------------------------
 
 function FullbleedHero({ section, business, payload, heroImageUrl }: LayoutProps) {
+  const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
   const positionClasses = (() => {
     switch (section.headlinePosition) {
       case 'top':           return 'items-start justify-center text-center pt-20';
@@ -229,8 +244,11 @@ function FullbleedHero({ section, business, payload, heroImageUrl }: LayoutProps
       className={`${SECTION_PADDING_X} min-h-[520px] md:min-h-[680px] relative overflow-hidden flex ${positionClasses}`}
       style={backgroundStyle(payload, section.imageStyle, heroImageUrl)}
     >
-      {/* Subtle overlay for text legibility on photo/gradient bg */}
-      {(section.imageStyle === 'photo' || section.imageStyle === 'gradient') && (
+      {showPlaceholder && (
+        <PhotoPlaceholder payload={payload} shape="hero" label="HERO PHOTO" fill />
+      )}
+      {/* Subtle overlay for text legibility — only when there's a real photo or gradient */}
+      {((section.imageStyle === 'photo' && heroImageUrl) || section.imageStyle === 'gradient') && (
         <div
           className="absolute inset-0 pointer-events-none"
           style={{ background: `linear-gradient(180deg, transparent 0%, ${payload.bgColor}66 100%)` }}
@@ -310,6 +328,7 @@ function EditorialHero({ section, business, payload, heroImageUrl }: LayoutProps
 // ----------------------------------------------------------------
 
 function AsymmetricHero({ section, business, payload, heroImageUrl }: LayoutProps) {
+  const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
   return (
     <section
       className="relative min-h-[560px] md:min-h-[720px] overflow-hidden"
@@ -319,7 +338,11 @@ function AsymmetricHero({ section, business, payload, heroImageUrl }: LayoutProp
       <div
         className="absolute right-0 top-0 w-[55%] h-[70%] hidden md:block"
         style={backgroundStyle(payload, section.imageStyle === 'none' ? 'gradient' : section.imageStyle, heroImageUrl)}
-      />
+      >
+        {showPlaceholder && (
+          <PhotoPlaceholder payload={payload} shape="hero" label="HERO PHOTO" fill />
+        )}
+      </div>
       {/* Bottom-left decorative blob */}
       <div
         className="absolute -left-20 -bottom-20 w-80 h-80 rounded-full blur-3xl opacity-40 pointer-events-none"

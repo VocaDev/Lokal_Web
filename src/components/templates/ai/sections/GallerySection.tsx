@@ -1,6 +1,7 @@
 import type { Business } from '@/lib/types';
 import type { AiGallerySection, AiSitePayload } from '@/lib/types/customization';
 import { headingFontFamily, SECTION_PADDING_X, SECTION_PADDING_Y } from './_shared';
+import { PhotoPlaceholder } from './PhotoPlaceholder';
 
 interface Props {
   section: AiGallerySection;
@@ -10,10 +11,6 @@ interface Props {
 
 export function GallerySection({ section, business, payload }: Props) {
   const images = (business.gallerySections?.gallery ?? []).filter(Boolean);
-
-  if (images.length === 0) {
-    return <EmptyGallery section={section} payload={payload} />;
-  }
 
   switch (section.layout) {
     case 'grid-uniform':  return <GridUniform images={images} section={section} payload={payload} />;
@@ -42,42 +39,26 @@ function GalleryHeader({ section, payload }: { section: AiGallerySection; payloa
   );
 }
 
-function EmptyGallery({ section, payload }: { section: AiGallerySection; payload: AiSitePayload }) {
-  return (
-    <section className={`${SECTION_PADDING_X} ${SECTION_PADDING_Y}`} style={{ background: payload.surfaceColor }}>
-      <div className="max-w-4xl mx-auto">
-        <GalleryHeader section={section} payload={payload} />
-        <div
-          className="rounded-2xl h-64 md:h-80 flex items-center justify-center"
-          style={{
-            background: `linear-gradient(135deg, ${payload.primaryColor}25, ${payload.accentColor}20)`,
-            border: `1px dashed ${payload.borderColor}`,
-          }}
-        >
-          <div className="text-center px-6">
-            <div className="text-base font-medium mb-1" style={{ color: payload.textColor }}>
-              Foto të reja së shpejti
-            </div>
-            <div className="text-sm" style={{ color: payload.mutedTextColor }}>
-              More photos coming soon
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+// Render each grid slot as a real <img> when an image is uploaded, otherwise
+// a dashed PhotoPlaceholder so the user sees exactly where photos go.
+//
+// Each layout decides how many slots to fill in the empty case.
 
 function Masonry({ images, section, payload }: { images: string[]; section: AiGallerySection; payload: AiSitePayload }) {
+  const slots = images.length > 0 ? images.slice(0, 9) : new Array(6).fill(null);
   return (
     <section className={`${SECTION_PADDING_X} ${SECTION_PADDING_Y}`} style={{ background: payload.bgColor }}>
       <div className="max-w-6xl mx-auto">
         <GalleryHeader section={section} payload={payload} />
         <div className="columns-1 sm:columns-2 md:columns-3 gap-3 [column-fill:_balance]">
-          {images.slice(0, 9).map((src, i) => (
-            <div key={i} className="mb-3 break-inside-avoid rounded-lg overflow-hidden" style={{ background: payload.surfaceColor }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="w-full h-auto block" loading="lazy" />
+          {slots.map((src, i) => (
+            <div key={i} className="mb-3 break-inside-avoid rounded-lg overflow-hidden">
+              {src ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={src} alt="" className="w-full h-auto block" loading="lazy" />
+              ) : (
+                <PhotoPlaceholder payload={payload} shape="gallery" label="GALLERY PHOTO" />
+              )}
             </div>
           ))}
         </div>
@@ -87,17 +68,22 @@ function Masonry({ images, section, payload }: { images: string[]; section: AiGa
 }
 
 function GridUniform({ images, section, payload }: { images: string[]; section: AiGallerySection; payload: AiSitePayload }) {
+  const slots = images.length > 0 ? images.slice(0, 12) : new Array(6).fill(null);
   return (
     <section className={`${SECTION_PADDING_X} ${SECTION_PADDING_Y}`} style={{ background: payload.bgColor }}>
       <div className="max-w-6xl mx-auto">
         <GalleryHeader section={section} payload={payload} />
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {images.slice(0, 12).map((src, i) => (
-            <div key={i} className="aspect-square rounded-lg overflow-hidden" style={{ background: payload.surfaceColor }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />
-            </div>
-          ))}
+          {slots.map((src, i) =>
+            src ? (
+              <div key={i} className="aspect-square rounded-lg overflow-hidden" style={{ background: payload.surfaceColor }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />
+              </div>
+            ) : (
+              <PhotoPlaceholder key={i} payload={payload} shape="gallery" label="GALLERY PHOTO" />
+            ),
+          )}
         </div>
       </div>
     </section>
@@ -105,23 +91,35 @@ function GridUniform({ images, section, payload }: { images: string[]; section: 
 }
 
 function Showcase({ images, section, payload }: { images: string[]; section: AiGallerySection; payload: AiSitePayload }) {
-  const [hero, ...rest] = images;
+  const empty = images.length === 0;
+  const [hero, ...rest] = empty ? [null, null, null, null, null] : images;
+  const thumbs = (rest as Array<string | null>).slice(0, 4);
   return (
     <section className={`${SECTION_PADDING_X} ${SECTION_PADDING_Y}`} style={{ background: payload.bgColor }}>
       <div className="max-w-6xl mx-auto">
         <GalleryHeader section={section} payload={payload} />
         <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
           <div className="md:col-span-8 rounded-xl overflow-hidden" style={{ background: payload.surfaceColor }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={hero} alt="" className="w-full h-72 md:h-[480px] object-cover" />
+            {hero ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={hero} alt="" className="w-full h-72 md:h-[480px] object-cover" />
+            ) : (
+              <div className="w-full h-72 md:h-[480px]">
+                <PhotoPlaceholder payload={payload} shape="gallery" label="HERO PHOTO" fill />
+              </div>
+            )}
           </div>
           <div className="md:col-span-4 grid grid-cols-2 md:grid-cols-1 gap-3">
-            {rest.slice(0, 4).map((src, i) => (
-              <div key={i} className="aspect-square md:aspect-[4/3] rounded-lg overflow-hidden" style={{ background: payload.surfaceColor }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />
-              </div>
-            ))}
+            {thumbs.map((src, i) =>
+              src ? (
+                <div key={i} className="aspect-square md:aspect-[4/3] rounded-lg overflow-hidden" style={{ background: payload.surfaceColor }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />
+                </div>
+              ) : (
+                <PhotoPlaceholder key={i} payload={payload} shape="gallery" />
+              ),
+            )}
           </div>
         </div>
       </div>
@@ -130,6 +128,7 @@ function Showcase({ images, section, payload }: { images: string[]; section: AiG
 }
 
 function Strip({ images, section, payload }: { images: string[]; section: AiGallerySection; payload: AiSitePayload }) {
+  const slots = images.length > 0 ? images : new Array(5).fill(null);
   return (
     <section className={`${SECTION_PADDING_Y}`} style={{ background: payload.bgColor }}>
       <div className={`${SECTION_PADDING_X} max-w-6xl mx-auto`}>
@@ -137,10 +136,14 @@ function Strip({ images, section, payload }: { images: string[]; section: AiGall
       </div>
       <div className="overflow-x-auto pb-4">
         <div className={`${SECTION_PADDING_X} flex gap-3 min-w-max`}>
-          {images.map((src, i) => (
+          {slots.map((src, i) => (
             <div key={i} className="w-72 h-48 md:w-96 md:h-64 rounded-lg overflow-hidden shrink-0" style={{ background: payload.surfaceColor }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />
+              {src ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />
+              ) : (
+                <PhotoPlaceholder payload={payload} shape="gallery" label="GALLERY PHOTO" fill />
+              )}
             </div>
           ))}
         </div>

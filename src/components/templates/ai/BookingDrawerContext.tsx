@@ -22,6 +22,7 @@ interface ProviderProps {
   business: Business;
   services: Service[];
   hours: BusinessHours[];
+  bookingMethod?: string;
   children: ReactNode;
 }
 
@@ -29,25 +30,33 @@ export function BookingDrawerProvider({
   business,
   services,
   hours,
+  bookingMethod,
   children,
 }: ProviderProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const bookingEnabled = bookingMethod === 'appointments' || bookingMethod === 'both';
+
+  // For walkin/none sites the drawer is not in the DOM at all — open() is a
+  // no-op and the hero's contact-redirect handler takes over (WhatsApp / tel).
+  // We still provide a context value so consumers don't need to null-check.
   return (
     <Ctx.Provider
       value={{
-        open: () => setIsOpen(true),
+        open: bookingEnabled ? () => setIsOpen(true) : () => {},
         close: () => setIsOpen(false),
         isOpen,
       }}
     >
       {children}
-      <BookingDrawer
-        business={business}
-        services={services}
-        hours={hours}
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-      />
+      {bookingEnabled && (
+        <BookingDrawer
+          business={business}
+          services={services}
+          hours={hours}
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+        />
+      )}
     </Ctx.Provider>
   );
 }

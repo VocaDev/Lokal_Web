@@ -32,7 +32,12 @@ export function DynamicSiteRenderer({ business, services, hours, payload }: Prop
 
   return (
     <div style={themeStyle} className="min-h-screen">
-      <BookingDrawerProvider business={business} services={services} hours={hours}>
+      <BookingDrawerProvider
+        business={business}
+        services={services}
+        hours={hours}
+        bookingMethod={payload.bookingMethod}
+      >
         {payload.sections.map((section, i) => (
           <SectionRouter
             key={i}

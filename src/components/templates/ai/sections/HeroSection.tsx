@@ -8,14 +8,23 @@ interface Props {
   payload: AiSitePayload;
 }
 
+interface LayoutProps extends Props {
+  heroImageUrl?: string;
+}
+
 export function HeroSection({ section, business, payload }: Props) {
+  // gallery_items.section_key='hero' → first uploaded photo, if any.
+  const heroImageUrl = business.gallerySections?.hero?.[0];
+
+  const layoutProps: LayoutProps = { section, business, payload, heroImageUrl };
+
   switch (section.layout) {
-    case 'split':       return <SplitHero section={section} business={business} payload={payload} />;
-    case 'fullbleed':   return <FullbleedHero section={section} business={business} payload={payload} />;
-    case 'editorial':   return <EditorialHero section={section} business={business} payload={payload} />;
-    case 'asymmetric':  return <AsymmetricHero section={section} business={business} payload={payload} />;
+    case 'split':       return <SplitHero {...layoutProps} />;
+    case 'fullbleed':   return <FullbleedHero {...layoutProps} />;
+    case 'editorial':   return <EditorialHero {...layoutProps} />;
+    case 'asymmetric':  return <AsymmetricHero {...layoutProps} />;
     case 'centered':
-    default:            return <CenteredHero section={section} business={business} payload={payload} />;
+    default:            return <CenteredHero {...layoutProps} />;
   }
 }
 
@@ -23,10 +32,22 @@ export function HeroSection({ section, business, payload }: Props) {
 // Background style — chosen by section.imageStyle
 // ----------------------------------------------------------------
 
-function backgroundStyle(payload: AiSitePayload, imageStyle: AiHeroSection['imageStyle']): React.CSSProperties {
+function backgroundStyle(
+  payload: AiSitePayload,
+  imageStyle: AiHeroSection['imageStyle'],
+  heroImageUrl?: string,
+): React.CSSProperties {
   switch (imageStyle) {
     case 'photo':
-      // Placeholder: warm gradient — renderer will swap with user gallery once supported.
+      // Real upload from gallery_items.section_key='hero' if present.
+      // Otherwise fall back to a tinted gradient — never a stock photo URL.
+      if (heroImageUrl) {
+        return {
+          backgroundImage: `url(${heroImageUrl})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        };
+      }
       return {
         background: `linear-gradient(135deg, ${payload.primaryColor}80 0%, ${payload.bgColor} 55%, ${payload.accentColor}40 100%)`,
       };
@@ -116,11 +137,11 @@ function HeroCtas({ section, payload, align }: { section: AiHeroSection; payload
 // Centered hero
 // ----------------------------------------------------------------
 
-function CenteredHero({ section, business, payload }: Props) {
+function CenteredHero({ section, business, payload, heroImageUrl }: LayoutProps) {
   return (
     <section
       className={`${SECTION_PADDING_X} py-24 md:py-36 text-center relative overflow-hidden`}
-      style={backgroundStyle(payload, section.imageStyle)}
+      style={backgroundStyle(payload, section.imageStyle, heroImageUrl)}
     >
       <Decoration kind={section.decorativeElement} payload={payload} />
       <div className="max-w-3xl mx-auto relative">
@@ -151,12 +172,12 @@ function CenteredHero({ section, business, payload }: Props) {
 // Split hero
 // ----------------------------------------------------------------
 
-function SplitHero({ section, business, payload }: Props) {
+function SplitHero({ section, business, payload, heroImageUrl }: LayoutProps) {
   return (
     <section className="grid md:grid-cols-2 min-h-[420px] md:min-h-[560px] relative overflow-hidden">
       <div
         className="min-h-[220px] md:min-h-[560px] relative"
-        style={backgroundStyle(payload, section.imageStyle)}
+        style={backgroundStyle(payload, section.imageStyle, heroImageUrl)}
       >
         <Decoration kind={section.decorativeElement} payload={payload} />
       </div>
@@ -190,7 +211,7 @@ function SplitHero({ section, business, payload }: Props) {
 // Fullbleed hero (text overlaid on background, position-aware)
 // ----------------------------------------------------------------
 
-function FullbleedHero({ section, business, payload }: Props) {
+function FullbleedHero({ section, business, payload, heroImageUrl }: LayoutProps) {
   const positionClasses = (() => {
     switch (section.headlinePosition) {
       case 'top':           return 'items-start justify-center text-center pt-20';
@@ -206,7 +227,7 @@ function FullbleedHero({ section, business, payload }: Props) {
   return (
     <section
       className={`${SECTION_PADDING_X} min-h-[520px] md:min-h-[680px] relative overflow-hidden flex ${positionClasses}`}
-      style={backgroundStyle(payload, section.imageStyle)}
+      style={backgroundStyle(payload, section.imageStyle, heroImageUrl)}
     >
       {/* Subtle overlay for text legibility on photo/gradient bg */}
       {(section.imageStyle === 'photo' || section.imageStyle === 'gradient') && (
@@ -245,7 +266,7 @@ function FullbleedHero({ section, business, payload }: Props) {
 // Editorial hero (magazine-style)
 // ----------------------------------------------------------------
 
-function EditorialHero({ section, business, payload }: Props) {
+function EditorialHero({ section, business, payload, heroImageUrl }: LayoutProps) {
   return (
     <section
       className={`${SECTION_PADDING_X} py-12 md:py-20 relative`}
@@ -288,7 +309,7 @@ function EditorialHero({ section, business, payload }: Props) {
 // Asymmetric hero — deliberately off-grid
 // ----------------------------------------------------------------
 
-function AsymmetricHero({ section, business, payload }: Props) {
+function AsymmetricHero({ section, business, payload, heroImageUrl }: LayoutProps) {
   return (
     <section
       className="relative min-h-[560px] md:min-h-[720px] overflow-hidden"
@@ -297,7 +318,7 @@ function AsymmetricHero({ section, business, payload }: Props) {
       {/* Off-grid background block */}
       <div
         className="absolute right-0 top-0 w-[55%] h-[70%] hidden md:block"
-        style={backgroundStyle(payload, section.imageStyle === 'none' ? 'gradient' : section.imageStyle)}
+        style={backgroundStyle(payload, section.imageStyle === 'none' ? 'gradient' : section.imageStyle, heroImageUrl)}
       />
       {/* Bottom-left decorative blob */}
       <div

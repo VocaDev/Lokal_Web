@@ -1,25 +1,45 @@
+import type { Business } from '@/lib/types';
 import type { AiStorySection, AiSitePayload } from '@/lib/types/customization';
 import { headingFontFamily, SECTION_PADDING_X, SECTION_PADDING_Y } from './_shared';
 
 interface Props {
   section: AiStorySection;
   payload: AiSitePayload;
+  // business is optional so the wizard preview (which doesn't pass it) still
+  // renders. Public-site renderer always passes it.
+  business?: Business;
 }
 
-export function StorySection({ section, payload }: Props) {
+export function StorySection({ section, payload, business }: Props) {
+  const storyImageUrl = business?.gallerySections?.story?.[0];
+
   switch (section.layout) {
-    case 'two-column':      return <TwoColumn section={section} payload={payload} />;
-    case 'long-form':       return <LongForm section={section} payload={payload} />;
+    case 'two-column':      return <TwoColumn section={section} payload={payload} storyImageUrl={storyImageUrl} />;
+    case 'long-form':       return <LongForm section={section} payload={payload} storyImageUrl={storyImageUrl} />;
     case 'pull-quote':      return <PullQuote section={section} payload={payload} />;
     case 'centered-quote':
-    default:                return <CenteredQuote section={section} payload={payload} />;
+    default:                return <CenteredQuote section={section} payload={payload} storyImageUrl={storyImageUrl} />;
   }
 }
 
-function CenteredQuote({ section, payload }: Props) {
+interface LayoutProps {
+  section: AiStorySection;
+  payload: AiSitePayload;
+  storyImageUrl?: string;
+}
+
+function CenteredQuote({ section, payload, storyImageUrl }: LayoutProps) {
   return (
     <section className={`${SECTION_PADDING_X} ${SECTION_PADDING_Y} text-center`} style={{ background: payload.surfaceColor }}>
       <div className="max-w-3xl mx-auto">
+        {storyImageUrl && (
+          <div
+            className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-8 border"
+            style={{ borderColor: payload.borderColor }}
+          >
+            <img src={storyImageUrl} alt="" className="w-full h-full object-cover" />
+          </div>
+        )}
         <p
           className="text-2xl md:text-4xl leading-snug font-medium"
           style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
@@ -39,17 +59,26 @@ function CenteredQuote({ section, payload }: Props) {
   );
 }
 
-function TwoColumn({ section, payload }: Props) {
+function TwoColumn({ section, payload, storyImageUrl }: LayoutProps) {
   return (
     <section className={`${SECTION_PADDING_X} ${SECTION_PADDING_Y}`} style={{ background: payload.bgColor }}>
-      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-10">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-10 items-start">
         <div className="md:col-span-5">
-          <h2
-            className="text-3xl md:text-4xl font-bold leading-tight"
-            style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
-          >
-            Historia
-          </h2>
+          {storyImageUrl ? (
+            <div
+              className="rounded-xl overflow-hidden border"
+              style={{ borderColor: payload.borderColor }}
+            >
+              <img src={storyImageUrl} alt="" className="w-full h-auto block" />
+            </div>
+          ) : (
+            <h2
+              className="text-3xl md:text-4xl font-bold leading-tight"
+              style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
+            >
+              Historia
+            </h2>
+          )}
           {section.attribution && (
             <div className="mt-3 text-xs uppercase tracking-[0.3em]" style={{ color: payload.mutedTextColor }}>
               {section.attribution}
@@ -57,6 +86,14 @@ function TwoColumn({ section, payload }: Props) {
           )}
         </div>
         <div className="md:col-span-7">
+          {storyImageUrl && (
+            <h2
+              className="text-3xl md:text-4xl font-bold leading-tight mb-4"
+              style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
+            >
+              Historia
+            </h2>
+          )}
           <p className="text-base md:text-lg leading-relaxed whitespace-pre-line" style={{ color: payload.mutedTextColor }}>
             {section.body}
           </p>
@@ -66,10 +103,18 @@ function TwoColumn({ section, payload }: Props) {
   );
 }
 
-function LongForm({ section, payload }: Props) {
+function LongForm({ section, payload, storyImageUrl }: LayoutProps) {
   return (
     <section className={`${SECTION_PADDING_X} ${SECTION_PADDING_Y}`} style={{ background: payload.bgColor }}>
       <div className="max-w-2xl mx-auto">
+        {storyImageUrl && (
+          <div
+            className="rounded-xl overflow-hidden mb-10 border"
+            style={{ borderColor: payload.borderColor }}
+          >
+            <img src={storyImageUrl} alt="" className="w-full h-auto block max-h-[420px] object-cover" />
+          </div>
+        )}
         <h2
           className="text-2xl md:text-3xl font-bold mb-6"
           style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
@@ -89,8 +134,8 @@ function LongForm({ section, payload }: Props) {
   );
 }
 
-function PullQuote({ section, payload }: Props) {
-  // First sentence becomes the pull-quote callout, the rest becomes supporting paragraph.
+function PullQuote({ section, payload }: { section: AiStorySection; payload: AiSitePayload }) {
+  // Type-only by design — story image is intentionally ignored even if uploaded.
   const sentences = section.body.split(/(?<=[.!?])\s+/);
   const callout = sentences[0] ?? section.body;
   const rest = sentences.slice(1).join(' ');

@@ -62,7 +62,7 @@ function SectionRouter({
     case 'services':
       return <ServicesSection section={section} business={business} services={services} payload={payload} />;
     case 'story':
-      return <StorySection section={section} payload={payload} />;
+      return <StorySection section={section} payload={payload} business={business} />;
     case 'gallery':
       return <GallerySection section={section} business={business} payload={payload} />;
     case 'testimonials':

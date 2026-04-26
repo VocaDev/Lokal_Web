@@ -32,11 +32,15 @@ export function ServicesSection({ section, business, services, payload }: Props)
   const items = resolveItems(section, services);
   if (items.length === 0) return null;
 
+  // Service photos are cycled in array order across rendered cards. Layouts
+  // that don't take images by design (list, editorial-rows) ignore this.
+  const serviceImages = business.gallerySections?.services ?? [];
+
   switch (section.layout) {
-    case 'grid-2':          return <GridLayout items={items} cols={2} section={section} payload={payload} />;
-    case 'grid-3':          return <GridLayout items={items} cols={3} section={section} payload={payload} />;
+    case 'grid-2':          return <GridLayout items={items} cols={2} section={section} payload={payload} images={serviceImages} />;
+    case 'grid-3':          return <GridLayout items={items} cols={3} section={section} payload={payload} images={serviceImages} />;
     case 'editorial-rows':  return <EditorialRowsLayout items={items} section={section} payload={payload} />;
-    case 'cards':           return <CardsLayout items={items} section={section} payload={payload} />;
+    case 'cards':           return <CardsLayout items={items} section={section} payload={payload} images={serviceImages} />;
     case 'list':
     default:                return <ListLayout items={items} section={section} payload={payload} />;
   }
@@ -125,41 +129,52 @@ function ListLayout({ items, section, payload }: { items: Item[]; section: AiSer
 
 // ----------------------------------------------------------------
 
-function GridLayout({ items, cols, section, payload }: { items: Item[]; cols: 2 | 3; section: AiServicesSection; payload: AiSitePayload }) {
+function GridLayout({ items, cols, section, payload, images }: { items: Item[]; cols: 2 | 3; section: AiServicesSection; payload: AiSitePayload; images: string[] }) {
   const colsClass = cols === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2';
   return (
     <section className={`${SECTION_PADDING_X} ${SECTION_PADDING_Y}`} style={{ background: payload.bgColor }}>
       <div className="max-w-6xl mx-auto">
         <SectionHeader section={section} payload={payload} />
         <div className={`grid grid-cols-1 ${colsClass} gap-5`}>
-          {items.map((item, i) => (
-            <div
-              key={i}
-              className="p-6 rounded-lg flex flex-col"
-              style={{ background: payload.surfaceColor, border: `1px solid ${payload.borderColor}` }}
-            >
-              {section.divider === 'number' && (
-                <div className="text-xs font-mono mb-3" style={{ color: payload.primaryColor }}>
-                  {String(i + 1).padStart(2, '0')}
-                </div>
-              )}
-              <h3
-                className="text-lg font-semibold mb-2"
-                style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
+          {items.map((item, i) => {
+            const img = images[i];
+            return (
+              <div
+                key={i}
+                className="rounded-lg flex flex-col overflow-hidden"
+                style={{ background: payload.surfaceColor, border: `1px solid ${payload.borderColor}` }}
               >
-                {item.name}
-              </h3>
-              {item.description && (
-                <p className="text-sm mb-4 flex-1" style={{ color: payload.mutedTextColor }}>
-                  {item.description}
-                </p>
-              )}
-              <div className="flex items-center justify-between mt-auto">
-                <PriceTag item={item} section={section} payload={payload} />
-                <DurationTag item={item} section={section} payload={payload} />
+                {img && (
+                  <div className="aspect-[4/3] w-full overflow-hidden" style={{ background: payload.bgColor }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                )}
+                <div className="p-6 flex flex-col flex-1">
+                  {section.divider === 'number' && (
+                    <div className="text-xs font-mono mb-3" style={{ color: payload.primaryColor }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </div>
+                  )}
+                  <h3
+                    className="text-lg font-semibold mb-2"
+                    style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
+                  >
+                    {item.name}
+                  </h3>
+                  {item.description && (
+                    <p className="text-sm mb-4 flex-1" style={{ color: payload.mutedTextColor }}>
+                      {item.description}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between mt-auto">
+                    <PriceTag item={item} section={section} payload={payload} />
+                    <DurationTag item={item} section={section} payload={payload} />
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
@@ -216,41 +231,52 @@ function EditorialRowsLayout({ items, section, payload }: { items: Item[]; secti
 
 // ----------------------------------------------------------------
 
-function CardsLayout({ items, section, payload }: { items: Item[]; section: AiServicesSection; payload: AiSitePayload }) {
+function CardsLayout({ items, section, payload, images }: { items: Item[]; section: AiServicesSection; payload: AiSitePayload; images: string[] }) {
   return (
     <section className={`${SECTION_PADDING_X} ${SECTION_PADDING_Y}`} style={{ background: payload.bgColor }}>
       <div className="max-w-6xl mx-auto">
         <SectionHeader section={section} payload={payload} />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {items.map((item, i) => (
-            <div
-              key={i}
-              className="p-7 rounded-xl flex flex-col gap-4 transition-transform hover:-translate-y-1"
-              style={{
-                background: payload.surfaceColor,
-                border: `1px solid ${payload.borderColor}`,
-                boxShadow: `0 14px 40px -28px ${payload.primaryColor}`,
-              }}
-            >
-              <div className="flex items-start justify-between">
-                <h3
-                  className="text-xl font-semibold leading-tight"
-                  style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
-                >
-                  {item.name}
-                </h3>
-                <PriceTag item={item} section={section} payload={payload} />
+          {items.map((item, i) => {
+            const img = images[i];
+            return (
+              <div
+                key={i}
+                className="rounded-xl flex flex-col overflow-hidden transition-transform hover:-translate-y-1"
+                style={{
+                  background: payload.surfaceColor,
+                  border: `1px solid ${payload.borderColor}`,
+                  boxShadow: `0 14px 40px -28px ${payload.primaryColor}`,
+                }}
+              >
+                {img && (
+                  <div className="aspect-[16/10] w-full overflow-hidden" style={{ background: payload.bgColor }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                )}
+                <div className="p-7 flex flex-col gap-4 flex-1">
+                  <div className="flex items-start justify-between">
+                    <h3
+                      className="text-xl font-semibold leading-tight"
+                      style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
+                    >
+                      {item.name}
+                    </h3>
+                    <PriceTag item={item} section={section} payload={payload} />
+                  </div>
+                  {item.description && (
+                    <p className="text-sm" style={{ color: payload.mutedTextColor }}>
+                      {item.description}
+                    </p>
+                  )}
+                  <div className="mt-auto">
+                    <DurationTag item={item} section={section} payload={payload} />
+                  </div>
+                </div>
               </div>
-              {item.description && (
-                <p className="text-sm" style={{ color: payload.mutedTextColor }}>
-                  {item.description}
-                </p>
-              )}
-              <div className="mt-auto">
-                <DurationTag item={item} section={section} payload={payload} />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

@@ -9,7 +9,7 @@ interface Props {
 }
 
 export function GallerySection({ section, business, payload }: Props) {
-  const images = (business.galleryImages || []).filter(Boolean);
+  const images = (business.gallerySections?.gallery ?? []).filter(Boolean);
 
   if (images.length === 0) {
     return <EmptyGallery section={section} payload={payload} />;
@@ -54,12 +54,12 @@ function EmptyGallery({ section, payload }: { section: AiGallerySection; payload
             border: `1px dashed ${payload.borderColor}`,
           }}
         >
-          <div className="text-center">
+          <div className="text-center px-6">
             <div className="text-base font-medium mb-1" style={{ color: payload.textColor }}>
-              Photos coming soon
+              Foto të reja së shpejti
             </div>
             <div className="text-sm" style={{ color: payload.mutedTextColor }}>
-              Shtoji nga paneli i kontrollit
+              More photos coming soon
             </div>
           </div>
         </div>

@@ -20,8 +20,7 @@ export async function middleware(request: NextRequest) {
       path === '/login' ||
       path === '/forgot-password' ||
       path === '/reset-password' ||
-      path === '/register' ||
-      path.startsWith('/register/')
+      path === '/register'
 
     if (isDashboard && !user) {
       return NextResponse.redirect(new URL('/login', request.url))

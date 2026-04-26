@@ -35,6 +35,15 @@ export interface WebsiteCustomization {
   show_team: boolean;
   show_contact: boolean;
 
+  // Wizard v2 inputs (migration 014)
+  site_language?: 'sq' | 'en' | 'both';
+  site_tone?: 'friendly' | 'professional' | 'bold';
+  hero_style?: 'cinematic' | 'split' | 'centered' | 'editorial';
+  section_priority?: 'services' | 'story' | 'gallery';
+  density?: 'sparse' | 'dense';
+  uniqueness_statement?: string;
+  booking_method?: 'appointments' | 'walkin' | 'both' | 'none';
+
   created_at: string;
   updated_at: string;
 }
@@ -69,4 +78,23 @@ export interface ThemeVariables {
   '--font-sans': string;
   '--hero-height': string;
   '--card-style': string;
+}
+
+export interface WizardInput {
+  businessName: string;
+  industry: string;
+  industryChip?: string;
+  city: string;
+  uniqueness?: string;
+  services: Array<{ name: string; price?: string; durationMinutes?: number }>;
+  bookingMethod: 'appointments' | 'walkin' | 'both' | 'none';
+  hero: 'cinematic' | 'split' | 'centered' | 'editorial';
+  sectionPriority: 'services' | 'story' | 'gallery';
+  density: 'sparse' | 'dense';
+  mood: 'warm' | 'cool' | 'bold' | 'elegant' | 'custom';
+  brandPrimary?: string;
+  brandAccent?: string;
+  fontPersonality: 'editorial' | 'modern' | 'friendly' | 'bold' | 'elegant';
+  language: 'sq' | 'en' | 'both';
+  tone: 'friendly' | 'professional' | 'bold';
 }

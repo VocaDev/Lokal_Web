@@ -1,7 +1,11 @@
 /**
- * Stage 2: Theme Variant Generator
- * Takes a brand brief + business info. Generates 2 contrasting variants in parallel.
- * Each variant gets full rich content: copy, testimonials, FAQ, value props.
+ * Stage 2: Theme Generator (wizard v2)
+ * Single Haiku call. Returns one theme that honors the user's structural
+ * choices (hero, density, mood, fonts, language, tone). Validates against
+ * BANNED_PHRASES; regenerates once if invalid.
+ *
+ * Route URL preserved (`/api/generate-variants`) but the response shape
+ * changed from `{ variants: [A, B] }` to `{ theme: <object> }`.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -22,7 +26,7 @@ const THEME_SCHEMA = {
     properties: {
       variantName: { type: 'string' },
       directionRationale: { type: 'string' },
-      templateId: { type: 'string', enum: ['modern', 'minimal', 'bold', 'elegant'] },
+      templateId: { type: 'string' },
       primaryColor: { type: 'string' },
       accentColor: { type: 'string' },
       bgColor: { type: 'string' },
@@ -104,94 +108,184 @@ const BANNED_PHRASES = [
   'where style meets', 'more than just',
 ];
 
-const VARIANT_DIRECTIONS = [
-  {
-    name: 'A — Refined Category Leader',
-    temperature: 0.85,
-    directive: `Execute the industry's best aesthetic playbook with craft and restraint. Colors are rich but traditional. Typography is confident but not attention-seeking. Copy is specific but doesn't subvert. Think: the highest-end version of what established competitors already do — this variant wins by being the most polished version of what customers expect.`,
-  },
-  {
-    name: 'B — Contrarian Distinctive',
-    temperature: 1.0,
-    directive: `Break the category's visual conventions deliberately — but serve the brand brief. Pick colors the category doesn't usually use. Pick typography that creates friction with expectations. Copy has more voice, more edge, more specificity. This variant wins by being unforgettable. It's the choice someone makes when they're confident enough to stand out.`,
-  },
+// Mirrors the keys actually present in src/components/templates/index.tsx
+// TEMPLATE_MAP. The router falls back to 'modern' for any unknown id.
+const VALID_TEMPLATE_IDS = [
+  'modern', 'minimal', 'bold', 'elegant',
+  'casual', 'bistro', 'clean', 'premium', 'luxury',
 ];
 
-async function generateVariant(
-  brief: any,
-  businessName: string,
-  industry: string,
-  canonicalIndustry: Industry,
-  userProvidedServices: string,
-  direction: typeof VARIANT_DIRECTIONS[0],
-) {
-  const systemPrompt = `You are a senior designer translating a brand strategy brief into a complete website theme.
+function heroDirective(hero: string): string {
+  switch (hero) {
+    case 'cinematic': return 'Full-bleed hero — dramatic background image or gradient, large headline, single primary CTA. Cinematic and immersive.';
+    case 'split': return '50/50 split hero — image on one side, headline + subheadline + CTA on the other. Balanced.';
+    case 'centered': return 'Minimal centered hero — small label, big headline, brief subheadline, one CTA. All centered. Lots of whitespace.';
+    case 'editorial': return 'Magazine-style hero — small metadata bar at top (issue number, location), oversized serif headline, prose-style subheadline. No image.';
+    default: return '';
+  }
+}
 
-CRITICAL: The price field in every service MUST be a number (integer), never a string. Use the midpoint if a range is intended. Example: 25 not "20-30 Eur".
-The icon field in valueProps MUST always be a non-empty emoji string. Never leave it empty.
+function sectionPriorityDirective(priority: string): string {
+  return `After the hero, the FIRST major section should be: ${priority}. Other sections follow in natural order.`;
+}
 
-YOUR DIRECTION — ${direction.name}:
-${direction.directive}
+function densityDirective(density: string): string {
+  return density === 'sparse'
+    ? 'Sparse and airy: shorter copy, fewer items per row, generous whitespace. cardStyle should be "minimal".'
+    : 'Rich and dense: longer copy, more items per row, tighter spacing, more sections. cardStyle should be "raised" or "bordered".';
+}
 
-REALISTIC PRICING (Kosovo market, EUR — use these anchors when generating the services array):
-- barbershop: €5-25 (haircut €8-12, fade €10-15, straight razor €15-25, full package €20-30)
-- restaurant: menu items €4-15 (appetizer €4-7, main €8-15, dessert €4-7)
-- clinic: consultations €25-80 (general consult €25-40, specialist €50-80, procedure €40-150)
-- beauty_salon: services €15-50 (manicure €15-20, pedicure €20-30, haircut+style €25-40, bridal €50-150)
-- gym: services €10-40 (day pass €5-10, monthly membership €25-40, personal training €15-25/session)
-- other: infer reasonable prices from the user's description
+function moodDirective(mood: string, primary?: string, accent?: string): string {
+  switch (mood) {
+    case 'warm': return 'Earthy warm palette — browns, golds, cream, dark surfaces. Traditional, rooted feel. Generate hex values that feel timeless and tactile.';
+    case 'cool': return 'Cool modern palette — blues, teals, dark or light. Clean, professional. Generate hex values that feel digital but warm.';
+    case 'bold': return 'High-contrast bold palette — strong reds, oranges, near-black backgrounds. Striking. Generate hex values that demand attention without being garish.';
+    case 'elegant': return 'Refined elegant palette — golds, ivories, deep neutrals. Premium feel. Generate hex values that signal quality and restraint.';
+    case 'custom':
+      return `LOCKED BRAND COLORS — primary=${primary}, accent=${accent}. Use these EXACTLY. Generate background, surface, text, mutedTextColor, and border hex values that harmonize with these two.`;
+    default: return '';
+  }
+}
 
-THIS BUSINESS'S INDUSTRY: ${canonicalIndustry} (use the matching price range above)
-Each service MUST have a realistic duration in minutes (15, 30, 45, 60, 90, 120).
+function fontDirective(personality: string): string {
+  switch (personality) {
+    case 'editorial': return 'headingFont MUST be "playfair". bodyFont MUST be "inter" or "dm-sans".';
+    case 'modern': return 'headingFont MUST be "space-grotesk". bodyFont MUST be "dm-sans" or "inter".';
+    case 'friendly': return 'headingFont and bodyFont MUST both be "poppins".';
+    case 'bold': return 'headingFont MUST be "space-grotesk" or "poppins". bodyFont MUST be "dm-sans" or "inter".';
+    case 'elegant': return 'headingFont MUST be "playfair". bodyFont MUST be "inter".';
+    default: return '';
+  }
+}
 
-USER-PROVIDED SERVICES (gospel — build the services array around these exact offerings):
+function languageInstruction(lang: string): string {
+  switch (lang) {
+    case 'sq': return 'Albanian only. Authentic Kosovar Albanian, not stiff translations.';
+    case 'en': return 'English only.';
+    case 'both': return 'Bilingual — primary copy in Albanian, with key CTAs and metaDescription also in English where it reads naturally.';
+    default: return 'Albanian only.';
+  }
+}
+
+function toneDirective(tone: string): string {
+  switch (tone) {
+    case 'friendly': return 'Tone is warm and approachable. Direct, but not cold. Speaks to the customer like a neighbor.';
+    case 'professional': return 'Tone is precise and competent. Confident without being formal. No casual asides.';
+    case 'bold': return 'Tone is direct and provocative. Strong opinions. Short sentences. Owns the room.';
+    default: return '';
+  }
+}
+
+type GenerateThemeArgs = {
+  brief: any;
+  businessName: string;
+  industry: string;
+  city: string;
+  hero: string;
+  sectionPriority: string;
+  density: string;
+  mood: string;
+  brandPrimary?: string;
+  brandAccent?: string;
+  fontPersonality: string;
+  language: string;
+  tone: string;
+  userProvidedServices: string;
+  canonicalIndustry: Industry;
+  regenSeed?: string;
+};
+
+async function generateTheme(args: GenerateThemeArgs) {
+  const {
+    brief, businessName, industry, city,
+    hero, sectionPriority, density, mood, brandPrimary, brandAccent,
+    fontPersonality, language, tone, userProvidedServices,
+    canonicalIndustry, regenSeed,
+  } = args;
+
+  const systemPrompt = `You are a senior designer translating a brand strategy brief into a complete website theme. The user has chosen specific structural direction. HONOR IT.
+
+CRITICAL RULES:
+- The price field in every service MUST be a number (integer). Use the midpoint if a range is intended. Example: 25 not "20-30 Eur".
+- The icon field in valueProps MUST always be a non-empty emoji string.
+- Output ONLY raw JSON — no markdown code fences, no explanation, no backticks.
+
+USER'S STRUCTURAL CHOICES:
+
+Hero style: ${hero}
+${heroDirective(hero)}
+
+Section priority: ${sectionPriority}
+${sectionPriorityDirective(sectionPriority)}
+
+Density: ${density}
+${densityDirective(density)}
+
+Mood: ${mood}
+${moodDirective(mood, brandPrimary, brandAccent)}
+
+Font personality: ${fontPersonality}
+${fontDirective(fontPersonality)}
+
+Language: ${language}
+Write all customer-facing copy (heroHeadline, heroSubheadline, aboutCopy, ctaPrimary, ctaSecondary, footerTagline, metaDescription, valueProps title+description, testimonials role+quote, faq, services.description) in: ${languageInstruction(language)}
+
+Tone: ${tone}
+${toneDirective(tone)}
+
+TEMPLATE ID — PICK ONE FROM THIS LIST:
+${VALID_TEMPLATE_IDS.join(', ')}
+Pick the templateId that best matches the user's hero style and industry.
+
+REALISTIC PRICING (Kosovo market, EUR):
+- barbershop: €5-25
+- restaurant: €4-15 menu items
+- clinic: €25-80 consultations
+- beauty_salon: €15-50
+- gym: €10-40
+- other: infer from the user's services
+
+THIS BUSINESS'S CANONICAL INDUSTRY: ${canonicalIndustry}
+Each service MUST have a realistic duration (15, 30, 45, 60, 90, 120 minutes).
+
+USER-PROVIDED SERVICES (gospel — build the services array around these):
 ${userProvidedServices || '(none provided — infer 4-5 typical services for this industry)'}
 
-If the user listed services, each entry in your services array MUST correspond to one of them (keep their names, translate only if the site copy language differs). Do not invent unrelated offerings when the user has been specific.
+If the user listed services, each entry in your services array MUST correspond to one of them. Do not invent unrelated services when the user has been specific.
 
 FEW-SHOT — HERO HEADLINES
 
-BAD (generic): "Welcome to our barbershop"
-BAD (AI-tell): "Experience the art of grooming"
-GOOD: "Qethje që flet për ty." (Albanian — "A cut that speaks for you")
-GOOD: "Three chairs. Forty years. Still no appointment needed."
-GOOD: "The last proper barbershop in Peyton."
+BAD: "Welcome to our barbershop" / "Experience the art of grooming"
+GOOD: "Qethje që flet për ty." / "Three chairs. Forty years. Still no appointment needed." / "The last proper barbershop in Peyton."
 
 FEW-SHOT — TESTIMONIALS
 
-BAD (stock): "Great service! Highly recommend!"
-BAD (fake-American name): "John Smith from New York"
-GOOD: "Shkoj tek Arti që prej 3 vitesh. I vetmi vend ku nuk më lyp foto kur i shpjegoj si e dua." (authentic Albanian, specific duration, specific pain point)
+BAD: "Great service! Highly recommend!" / "John Smith from New York"
+GOOD: "Shkoj tek Arti që prej 3 vitesh. I vetmi vend ku nuk më lyp foto kur i shpjegoj si e dua."
 GOOD: "My father brought me here when I was 8. Now I bring my son. Same chair."
-GOOD: "Pa takim. Pa muzikë kot. Vetëm gërshërët dhe tregimi i fundjavës."
 
 FEW-SHOT — VALUE PROPS
 
 BAD title: "Quality Service" / BAD description: "We provide top-notch service"
 GOOD title: "One chair, one cut" / GOOD description: "No rotating through three barbers. The one who starts your cut finishes it."
 
-BANNED PHRASES — if you use any of these, you have failed:
+BANNED PHRASES — if you use any, you have failed:
 ${BANNED_PHRASES.map(p => `- "${p}"`).join('\n')}
 
 Also banned:
-- Emoji in body copy (use emoji ONLY in valueProps.icon)
+- Emoji in body copy (only in valueProps.icon)
 - "Whether you're X or Y, we've got you covered"
 - "We pride ourselves on..."
-- Lorem ipsum or placeholder text
+- Lorem ipsum
 
-NAMES for testimonials — use authentic Kosovar names, mix gender:
+NAMES for testimonials — authentic Kosovar names, mix gender:
 Male: Erblin, Kushtrim, Dukagjin, Arbnor, Valdrin, Labinot, Leotrim, Ilir, Besnik, Ermal
 Female: Fjolla, Njomza, Valdete, Blerta, Elira, Rinë, Donjeta, Fitore, Teuta
-AVOID: Arta, Blerim, Dritë, Agron (overused in AI outputs)
+AVOID: Arta, Blerim, Dritë, Agron (overused).
 
 NEIGHBORHOODS for "role" field — Prishtinë: Arbëria, Dardania, Peyton, Qyteti i Ri, Ulpiana, Sunny Hill; Prizren: Shadërvan; Pejë: Haxhi Zeka.
 
-Before outputting, verify:
-- Does the headline pass the competitor test? (Would a competitor write this too? If yes, rewrite.)
-- Do the 3 testimonials feel like 3 different real people, not 3 outputs of the same model?
-- Would the brief's target customer nod at every line, or roll their eyes?
-
-Output ONLY raw JSON — no markdown code fences, no explanation, no backticks. Just the JSON object matching this schema:
+Output valid JSON matching this schema:
 ${JSON.stringify(THEME_SCHEMA.schema)}`;
 
   const userPrompt = `BRAND BRIEF (gospel — every design choice must serve it):
@@ -204,13 +298,15 @@ ${JSON.stringify(THEME_SCHEMA.schema)}`;
 BUSINESS:
 - Name: ${businessName}
 - Industry: ${industry}
+- City: ${city}
+${mood === 'custom' ? `- BRAND COLORS (LOCKED): primary=${brandPrimary}, accent=${brandAccent}` : ''}
 
-Generate the theme as ${direction.name}.`;
+Generate the theme.${regenSeed ? ` (regen: ${regenSeed})` : ''}`;
 
   const response = await anthropic.messages.create({
     model: 'claude-haiku-4-5',
     max_tokens: 4096,
-    temperature: direction.temperature,
+    temperature: 0.85,
     system: systemPrompt,
     messages: [
       { role: 'user', content: userPrompt },
@@ -221,7 +317,7 @@ Generate the theme as ${direction.name}.`;
   return parseModelJson(text || '{}');
 }
 
-function validateVariant(v: any): { valid: boolean; reasons: string[] } {
+function validateTheme(v: any): { valid: boolean; reasons: string[] } {
   const reasons: string[] = [];
   const allCopy = [
     v.heroHeadline, v.heroSubheadline, v.aboutCopy, v.footerTagline,
@@ -246,42 +342,62 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'AI not configured' }, { status: 503 });
     }
 
-    // Auth + per-user daily rate limit. Each call here is two parallel
-    // Claude requests, so it counts toward the same ai_usage budget as
-    // brand-brief.
     const supabase = await createClient();
     const userOrResponse = await requireUser(supabase);
     if (userOrResponse instanceof NextResponse) return userOrResponse;
     const limited = await bumpAiUsage(supabase, userOrResponse.id);
     if (limited) return limited;
 
-    const { brief, businessName, industry, userProvidedServices } = await request.json();
+    const body = await request.json();
+    const {
+      brief, businessName, industry, city,
+      hero, sectionPriority, density, mood,
+      brandPrimary, brandAccent, fontPersonality,
+      language, tone, userProvidedServices, regenSeed,
+    } = body;
+
     if (!brief || !businessName || !industry) {
       return NextResponse.json({ error: 'brief, businessName, industry required' }, { status: 400 });
     }
 
     const canonical = normalizeIndustry(industry);
-    const services = userProvidedServices || '';
 
-    console.log('[generate-variants] Generating 2 variants in parallel', { canonical, hasUserServices: !!services });
-    let [variantA, variantB] = await Promise.all([
-      generateVariant(brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[0]),
-      generateVariant(brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[1]),
-    ]);
+    const args: GenerateThemeArgs = {
+      brief,
+      businessName,
+      industry,
+      city: city || '',
+      hero: hero || 'cinematic',
+      sectionPriority: sectionPriority || 'services',
+      density: density || 'dense',
+      mood: mood || 'warm',
+      brandPrimary,
+      brandAccent,
+      fontPersonality: fontPersonality || 'editorial',
+      language: language || 'sq',
+      tone: tone || 'friendly',
+      userProvidedServices: userProvidedServices || '',
+      canonicalIndustry: canonical,
+      regenSeed,
+    };
 
-    const valA = validateVariant(variantA);
-    const valB = validateVariant(variantB);
+    console.log('[generate-variants] Generating single theme', { canonical, hero: args.hero, mood: args.mood });
+    let theme = await generateTheme(args);
 
-    if (!valA.valid) {
-      console.warn('[generate-variants] Variant A failed, regenerating:', valA.reasons);
-      variantA = await generateVariant(brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[0]);
+    const validation = validateTheme(theme);
+    if (!validation.valid) {
+      console.warn('[generate-variants] Theme failed validation, regenerating once:', validation.reasons);
+      const retry = await generateTheme({ ...args, regenSeed: `retry-${Date.now()}` });
+      const retryValidation = validateTheme(retry);
+      if (retryValidation.valid) {
+        theme = retry;
+      } else {
+        console.warn('[generate-variants] Retry also invalid, returning best-effort:', retryValidation.reasons);
+        theme = retry;
+      }
     }
-    if (!valB.valid) {
-      console.warn('[generate-variants] Variant B failed, regenerating:', valB.reasons);
-      variantB = await generateVariant(brief, businessName, industry, canonical, services, VARIANT_DIRECTIONS[1]);
-    }
 
-    return NextResponse.json({ success: true, variants: [variantA, variantB] });
+    return NextResponse.json({ success: true, theme });
   } catch (error: any) {
     console.error('[generate-variants] Error:', error?.message || error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });

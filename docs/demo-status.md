@@ -29,6 +29,7 @@ Plan file: `C:\Users\genti\.claude\plans\lokalweb-polish-glowing-waffle.md`
 | `011_rls_tightening.sql` | 📄 written, ⏳ apply manually | Phase 4.3 | Lock `bookings.SELECT` to owner; create `get_booked_slots(business_id, day)` RPC; verify policies on `website_customization` & `gallery_items` |
 | ~~`012_customization_hsl_migration.sql`~~ | ❌ skipped | — | Not needed (hex storage retained) |
 | `013_drop_custom_website_html.sql` | 📄 written, ⏳ apply manually | Phase 4.6 | Drop dead `custom_website_html` column. **Apply LAST**, after demo verification. |
+| `014_wizard_v2_columns.sql` | 📄 written, ⏳ apply manually | Wizard v2 | **Required before testing the new AI wizard flow.** Adds `site_language`, `site_tone`, `hero_style`, `section_priority`, `density`, `uniqueness_statement`, `booking_method` to `website_customization`. |
 
 **IMPORTANT — apply order matters.** Run 007 → 008 → 009 → 010 → 011, then verify demo end-to-end, then 013. The booking drawer's slot-conflict check now calls the `get_booked_slots` RPC defined in 011 — until 011 is applied, slot lookups fall back to throwing (drawer surfaces a "could not load" message but reservations still go through, since the partial unique index in 008 catches races at insert).
 

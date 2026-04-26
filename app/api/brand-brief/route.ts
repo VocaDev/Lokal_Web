@@ -1,12 +1,11 @@
 /**
- * Stage 1: Brand Brief Generator
- * Model: claude-haiku-4-5 (Anthropic) with JSON-only system instruction
- * Returns a 5-field strategic brief in ~2 seconds
+ * Stage 1: Brand Brief Generator (wizard v2)
+ * Model: claude-haiku-4-5 with JSON-only system instruction.
+ * Returns a 5-field strategic brief from the wizard's lenient inputs.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { anthropic } from '@/lib/anthropic';
-import { normalizeIndustry } from '@/lib/industries';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, bumpAiUsage } from '@/lib/api-auth';
 import { parseModelJson } from '@/lib/json-extract';
@@ -50,26 +49,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'AI not configured' }, { status: 503 });
     }
 
-    // Require auth + per-user daily rate limit. AI calls cost money — never
-    // expose them to anonymous traffic.
     const supabase = await createClient();
     const userOrResponse = await requireUser(supabase);
     if (userOrResponse instanceof NextResponse) return userOrResponse;
     const limited = await bumpAiUsage(supabase, userOrResponse.id);
     if (limited) return limited;
 
-    const { businessName, industry, industryLabel, tagline, moodKeywords, userProvidedServices } = await request.json();
-    if (!businessName || !industry) {
-      return NextResponse.json({ error: 'businessName and industry required' }, { status: 400 });
+    const {
+      businessName,
+      industry,
+      industryChip,
+      city,
+      uniqueness,
+      services,
+      bookingMethod,
+      language,
+      tone,
+    } = await request.json();
+
+    if (!businessName || !industry || !city) {
+      return NextResponse.json(
+        { error: 'businessName, industry, and city are required' },
+        { status: 400 },
+      );
     }
 
-    const canonical = normalizeIndustry(industry);
-    const context = INDUSTRY_CONTEXT[canonical] || INDUSTRY_CONTEXT.other;
-    const displayIndustry = industryLabel || industry;
+    const knownChip = industryChip && INDUSTRY_CONTEXT[industryChip];
+    const context = knownChip
+      ? INDUSTRY_CONTEXT[industryChip]
+      : `The user describes their business as: ${industry}. Infer the cultural and competitive context for this kind of business in Kosovo. Do not assume it's one of the standard categories.`;
+
+    const serviceNames = Array.isArray(services)
+      ? services.map((s: any) => s?.name).filter(Boolean).join(', ')
+      : '';
 
     const systemPrompt = `You are a senior brand strategist who has positioned 200+ small businesses across Southeast Europe. You do NOT design yet — you THINK.
 
 Your job: write a brand brief so specific that a stranger reading only your brief could correctly predict what the website should feel like. If your brief could equally apply to any business in the same category, you have failed.
+
+The user has told you what makes their business different. Use that as the highest-priority signal. The location matters too — Prishtinë vs Pejë vs Prizren feel different.
 
 QUALITY EXAMPLES:
 
@@ -82,15 +100,21 @@ GOOD definingTraits: ["unapologetically traditional", "silent-while-working prec
 BAD culturalAnchor: "Kosovar hospitality"
 GOOD culturalAnchor: "The fifteen minutes of silence after the warm towel — the only moment of the week men don't have to talk."
 
-Every field must be surprising and specific. Output ONLY raw JSON — no markdown code fences, no explanation, no backticks. Just the JSON object matching this schema:
+Write the brief itself in English. The brief is internal — only the final website copy needs to be in the user's chosen language.
+
+Output ONLY raw JSON — no markdown code fences, no explanation, no backticks. Just the JSON object matching this schema:
 ${JSON.stringify(BRAND_BRIEF_SCHEMA.schema)}`;
 
     const userPrompt = `BUSINESS:
 - Name: ${businessName}
-- Industry: ${displayIndustry}
-- Owner's description: ${tagline || '(none provided)'}
-- Services the owner provides: ${userProvidedServices || '(none specified)'}
-- Mood keywords: ${(moodKeywords || []).join(', ') || '(none)'}
+- Industry (user's words): ${industry}
+- Standard category: ${industryChip || 'none — treat as a custom industry'}
+- Location: ${city}
+- What makes it different (highest signal): ${uniqueness || '(not provided)'}
+- Services offered: ${serviceNames || '(not specified)'}
+- Booking model: ${bookingMethod || 'unspecified'}
+- Site language: ${language || 'sq'}
+- Tone: ${tone || 'friendly'}
 
 INDUSTRY CONTEXT:
 ${context}

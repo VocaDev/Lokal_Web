@@ -4,7 +4,17 @@ import { requireBusinessOwner } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { businessId, theme } = await request.json();
+    const {
+      businessId,
+      theme,
+      siteLanguage,
+      siteTone,
+      heroStyle,
+      sectionPriority,
+      density,
+      uniquenessStatement,
+      bookingMethod,
+    } = await request.json();
     if (!businessId || !theme) {
       return NextResponse.json({ error: 'businessId and theme required' }, { status: 400 });
     }
@@ -56,13 +66,43 @@ export async function POST(request: NextRequest) {
       faq: theme.faq,
     };
 
+    // Wizard v2 inputs (migration 014). Only included if provided.
+    if (siteLanguage !== undefined) payload.site_language = siteLanguage;
+    if (siteTone !== undefined) payload.site_tone = siteTone;
+    if (heroStyle !== undefined) payload.hero_style = heroStyle;
+    if (sectionPriority !== undefined) payload.section_priority = sectionPriority;
+    if (density !== undefined) payload.density = density;
+    if (uniquenessStatement !== undefined) payload.uniqueness_statement = uniquenessStatement;
+    if (bookingMethod !== undefined) payload.booking_method = bookingMethod;
+
     let { error } = await supabase
       .from('website_customization')
       .upsert(payload, { onConflict: 'business_id' });
 
+    // Fallback for migration 014 — strip the new wizard v2 columns if the
+    // DB hasn't been migrated yet, then retry.
+    if (error && /site_language|site_tone|hero_style|section_priority|density|uniqueness_statement|booking_method/i.test(error.message || '')) {
+      console.warn('[apply-theme] Wizard v2 columns missing, retrying without them. Run docs/migrations/014_wizard_v2_columns.sql.');
+      const {
+        site_language, site_tone, hero_style, section_priority,
+        density: _d, uniqueness_statement, booking_method,
+        ...withoutWizardV2
+      } = payload;
+      const retry = await supabase
+        .from('website_customization')
+        .upsert(withoutWizardV2, { onConflict: 'business_id' });
+      error = retry.error;
+    }
+
+    // Fallback for migration 005 — strip rich content columns if missing.
     if (error && /column .* does not exist|Could not find|schema cache|footer_tagline|meta_description|value_props|testimonials|faq/i.test(error.message || '')) {
       console.warn('[apply-theme] Rich content columns missing, falling back to core. Run docs/migrations/005_ai_rich_content_columns.sql.');
-      const { footer_tagline, meta_description, value_props, testimonials, faq, ...core } = payload;
+      const {
+        footer_tagline, meta_description, value_props, testimonials, faq,
+        site_language, site_tone, hero_style, section_priority,
+        density: _d, uniqueness_statement, booking_method,
+        ...core
+      } = payload;
       const retry = await supabase
         .from('website_customization')
         .upsert(core, { onConflict: 'business_id' });

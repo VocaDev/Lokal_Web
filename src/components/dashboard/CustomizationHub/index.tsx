@@ -6,7 +6,6 @@ import { useCustomization, useGalleryItems } from '@/lib/customization/hooks';
 import { GalleryItem, GallerySectionKey, WebsiteCustomization } from '@/lib/types';
 import ColorSection from './ColorSection';
 import TypographySection from './TypographySection';
-import LayoutSection from './LayoutSection';
 import GallerySection from './GallerySection';
 import PreviewPane from './PreviewPane';
 import { Button } from '@/components/ui/button';
@@ -145,11 +144,6 @@ export default function CustomizationHub({ businessId }: CustomizationHubProps) 
                 <TypographySection formData={formData} onChange={handleChange} />
               </div>
 
-              {/* Layout */}
-              <div className="bg-card border border-border rounded-xl p-6">
-                <h2 className="text-xl font-bold text-foreground mb-6">Layout & Visibility</h2>
-                <LayoutSection formData={formData} onChange={handleChange} />
-              </div>
             </div>
 
             {/* Right Column: Gallery summary on Desktop, Hidden on Mobile */}

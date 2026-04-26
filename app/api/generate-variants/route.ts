@@ -37,6 +37,15 @@ const THEME_SCHEMA = {
       headingFont: { type: 'string', enum: ['dm-sans', 'playfair', 'inter', 'poppins', 'space-grotesk'] },
       bodyFont: { type: 'string', enum: ['dm-sans', 'inter', 'poppins'] },
       metaDescription: { type: 'string' },
+      artDirection: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          heroPhotoCaption: { type: 'string' },
+          storyPhotoCaption: { type: 'string' },
+        },
+        required: ['heroPhotoCaption', 'storyPhotoCaption'],
+      },
 
       // The new core: parametric sections.
       // Schema is intentionally LOOSE on per-section fields — Haiku struggles
@@ -92,6 +101,7 @@ const THEME_SCHEMA = {
       'primaryColor', 'accentColor', 'bgColor', 'surfaceColor',
       'textColor', 'mutedTextColor', 'borderColor',
       'headingFont', 'bodyFont', 'metaDescription', 'sections',
+      'artDirection',
     ],
   },
 };
@@ -414,6 +424,15 @@ Female: Fjolla, Njomza, Valdete, Blerta, Elira, Rinë, Donjeta, Fitore, Teuta
 AVOID: Arta, Blerim, Dritë, Agron (overused).
 
 NEIGHBORHOODS for "role" field — Prishtinë: Arbëria, Dardania, Peyton, Qyteti i Ri, Ulpiana, Sunny Hill; Prizren: Shadërvan; Pejë: Haxhi Zeka.
+
+ART DIRECTION FOR PHOTOS:
+This site has 2 photo slots: a hero photo and a story/about photo. The user uploads their own photos later — but you MUST suggest what KIND of photo would fit each slot.
+
+Output an artDirection object with these two strings:
+- heroPhotoCaption: a single sentence describing the ideal hero photo. NOT generic ("a barber's chair") — specific and atmospheric ("the empty barber chair facing the morning light from the front window, before the first customer arrives").
+- storyPhotoCaption: same but for the story/about section. Pick a different angle ("the owner's hands sharpening a straight razor", or "the back of the shop where the regulars sit and wait").
+
+Write captions in: ${languageInstruction(language)}.
 
 BEFORE OUTPUTTING — re-read what you wrote:
 

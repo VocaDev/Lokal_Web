@@ -61,6 +61,13 @@ export async function POST(request: NextRequest) {
       ai_layout_seed: typeof crypto !== 'undefined' && 'randomUUID' in crypto
         ? crypto.randomUUID()
         : Date.now().toString(),
+      // Art-direction captions for the hero/story photo slots (migration 018).
+      hero_photo_caption: typeof theme.artDirection?.heroPhotoCaption === 'string'
+        ? theme.artDirection.heroPhotoCaption
+        : null,
+      story_photo_caption: typeof theme.artDirection?.storyPhotoCaption === 'string'
+        ? theme.artDirection.storyPhotoCaption
+        : null,
     };
 
     // Wizard v2 inputs (migration 014). Only included if provided.
@@ -76,11 +83,25 @@ export async function POST(request: NextRequest) {
       .from('website_customization')
       .upsert(payload, { onConflict: 'business_id' });
 
+    // Fallback for migration 018 — strip photo caption columns if missing.
+    if (error && /hero_photo_caption|story_photo_caption/i.test(error.message || '')) {
+      console.warn('[apply-theme] Photo caption columns missing, retrying without them. Run docs/migrations/018_photo_captions.sql.');
+      const { hero_photo_caption, story_photo_caption, ...withoutCaptions } = payload;
+      const retry = await supabase
+        .from('website_customization')
+        .upsert(withoutCaptions, { onConflict: 'business_id' });
+      error = retry.error;
+    }
+
     // Fallback for migration 015 — strip ai_sections / ai_layout_seed if the
     // DB hasn't been migrated yet, then retry.
     if (error && /ai_sections|ai_layout_seed/i.test(error.message || '')) {
       console.warn('[apply-theme] AI section columns missing, retrying without them. Run docs/migrations/015_ai_sections_payload.sql.');
-      const { ai_sections, ai_layout_seed, ...withoutAiSections } = payload;
+      const {
+        ai_sections, ai_layout_seed,
+        hero_photo_caption, story_photo_caption,
+        ...withoutAiSections
+      } = payload;
       const retry = await supabase
         .from('website_customization')
         .upsert(withoutAiSections, { onConflict: 'business_id' });
@@ -94,6 +115,7 @@ export async function POST(request: NextRequest) {
         site_language, site_tone, hero_style, section_priority,
         density: _d, uniqueness_statement, booking_method,
         ai_sections, ai_layout_seed,
+        hero_photo_caption, story_photo_caption,
         ...withoutWizardV2
       } = payload;
       const retry = await supabase
@@ -108,6 +130,7 @@ export async function POST(request: NextRequest) {
       const {
         meta_description,
         ai_sections, ai_layout_seed,
+        hero_photo_caption, story_photo_caption,
         site_language, site_tone, hero_style, section_priority,
         density: _d, uniqueness_statement, booking_method,
         ...core

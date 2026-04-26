@@ -1,6 +1,6 @@
 'use client';
 
-import { useGalleryItems } from '@/lib/customization/hooks';
+import { useCustomization, useGalleryItems } from '@/lib/customization/hooks';
 import {
   Accordion,
   AccordionContent,
@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/accordion';
 import GallerySectionItem from './GallerySectionItem';
 import { GallerySectionKey } from '@/lib/types';
+import { Sparkles } from 'lucide-react';
 
 interface GallerySectionProps {
   businessId: string;
@@ -57,12 +58,25 @@ const SECTIONS: {
 
 export default function GallerySection({ businessId }: GallerySectionProps) {
   const { galleryItems, refetch } = useGalleryItems(businessId);
+  const { customization } = useCustomization(businessId);
+
+  // AI captions are only emitted for hero + story (the single-image slots).
+  // Albanian is the default UX language; switch the prefix to English when
+  // the site_language is set to 'en'.
+  const language = customization?.site_language ?? 'sq';
+  const aiPrefix = language === 'en' ? 'AI suggested' : 'AI sugjeroi';
+  const captionFor = (key: GallerySectionKey): string | null => {
+    if (key === 'hero') return customization?.hero_photo_caption ?? null;
+    if (key === 'story') return customization?.story_photo_caption ?? null;
+    return null;
+  };
 
   return (
     <div className="space-y-4">
       <Accordion type="single" collapsible className="w-full space-y-2">
         {SECTIONS.map(({ key, label, description, recommendation, multiple }) => {
           const items = (galleryItems || []).filter((i) => i.section_key === key);
+          const aiCaption = captionFor(key);
 
           return (
             <AccordionItem
@@ -87,6 +101,17 @@ export default function GallerySection({ businessId }: GallerySectionProps) {
                 <p className="text-xs text-muted-foreground/90 leading-relaxed">
                   {recommendation}
                 </p>
+                {aiCaption && (
+                  <p className="flex items-start gap-1.5 text-xs italic text-muted-foreground leading-relaxed">
+                    <Sparkles className="h-3 w-3 mt-0.5 shrink-0 text-primary" />
+                    <span>
+                      <span className="font-semibold not-italic text-primary/90 mr-1">
+                        {aiPrefix}:
+                      </span>
+                      {aiCaption}
+                    </span>
+                  </p>
+                )}
                 <GallerySectionItem
                   businessId={businessId}
                   sectionKey={key}

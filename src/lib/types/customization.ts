@@ -48,6 +48,10 @@ export interface WebsiteCustomization {
   ai_sections?: AiSection[];
   ai_layout_seed?: string;
 
+  // AI art-direction captions for the hero/story photo slots (migration 018)
+  hero_photo_caption?: string;
+  story_photo_caption?: string;
+
   created_at: string;
   updated_at: string;
 }

@@ -35,6 +35,16 @@ const BRAND_BRIEF_SCHEMA = {
   },
 };
 
+function briefLanguageInstruction(language: string): string {
+  if (language === 'sq') {
+    return `Write the brief in AUTHENTIC ALBANIAN (Kosovar). Internal use, but write it as a senior Albanian-speaking strategist would. Do not translate from English in your head — think in Albanian.`;
+  }
+  if (language === 'en') {
+    return `Write the brief in English.`;
+  }
+  return `Write the brief in English. The final website copy will be bilingual.`;
+}
+
 const INDUSTRY_CONTEXT: Record<string, string> = {
   barbershop: `Barbershops in Kosovo are masculine social spaces. Pre-wedding prep (dhëndërri), Saturday family grooming rituals, male bonding over straight-razor shaves. Services: cut, fade, beard, shave, child's cut. Price range 5-25 EUR.`,
   restaurant: `Kosovar restaurants center on shared meals. Traditional: flija, pite, tavë kosi, qebapa. Coffee culture (macchiato, Turkish). Sunday family gatherings. Outdoor terraces (bahçe). Price: 8-30 EUR.`,
@@ -114,7 +124,7 @@ GOOD definingTraits: ["unapologetically traditional", "silent-while-working prec
 BAD culturalAnchor: "Kosovar hospitality"
 GOOD culturalAnchor: "The fifteen minutes of silence after the warm towel — the only moment of the week men don't have to talk."
 
-Write the brief itself in English. The brief is internal — only the final website copy needs to be in the user's chosen language.
+${briefLanguageInstruction(language || 'sq')}
 
 Output ONLY raw JSON — no markdown code fences, no explanation, no backticks. Just the JSON object matching this schema:
 ${JSON.stringify(BRAND_BRIEF_SCHEMA.schema)}`;

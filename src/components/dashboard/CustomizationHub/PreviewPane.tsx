@@ -121,15 +121,6 @@ export default function PreviewPane({
             <main>
               <PreviewHero customization={customization} />
               <PreviewServices customization={customization} />
-
-              {customization.show_testimonials && (
-                <section className="px-6 py-16 bg-card/50 text-center">
-                  <h2 className="text-2xl font-bold text-foreground mb-4">Reviews</h2>
-                  <p className="text-muted-foreground italic max-w-lg mx-auto">
-                    "Amazing service, highly recommend to everyone in the area!"
-                  </p>
-                </section>
-              )}
             </main>
 
             <footer className="bg-card border-t border-border px-6 py-12 mt-auto text-center">

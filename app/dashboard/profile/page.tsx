@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Phone, Globe, Building, MapPin, Instagram, Facebook, MessageCircle, Palette } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { publicSiteLabel } from "@/lib/utils";
 
 const templates = [
   { id: "classic", name: "Classic Barbershop", industry: "barbershop" },
@@ -82,7 +83,7 @@ export default function ProfilePage() {
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
               <Globe className="h-4 w-4 text-muted-foreground" />
-              <span className="text-primary">{business.subdomain}.lokalweb.com</span>
+              <span className="text-primary">{publicSiteLabel(business.subdomain)}</span>
             </div>
             <div className="pt-2 space-y-4 border-t">
               <div className="space-y-2">

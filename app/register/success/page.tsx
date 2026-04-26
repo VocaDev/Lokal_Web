@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ExternalLink, LayoutDashboard } from "lucide-react";
+import { publicSiteLabel } from "@/lib/utils";
 
 function SuccessContent() {
     const searchParams = useSearchParams();
@@ -39,7 +40,7 @@ function SuccessContent() {
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 p-4 bg-muted rounded-lg text-primary hover:underline font-medium break-all"
                     >
-                        lokalweb.com/{subdomain}
+                        {publicSiteLabel(subdomain)}
                         <ExternalLink className="h-4 w-4 shrink-0" />
                     </a>
                 </div>

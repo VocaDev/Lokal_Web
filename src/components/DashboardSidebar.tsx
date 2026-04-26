@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Business } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 import { clearCurrentBusiness, getUserBusinesses, setCurrentBusiness } from "@/lib/store";
+import { publicSiteLabel } from "@/lib/utils";
 import {
   Sidebar,
   SidebarContent,
@@ -86,7 +87,7 @@ export function DashboardSidebar({ business }: { business: Business }) {
                   <>
                     <div className="flex flex-col items-start text-left text-xs">
                       <span className="font-semibold truncate w-[140px]">{business.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{business.subdomain}.lokalweb.com</span>
+                      <span className="text-[10px] text-muted-foreground">{publicSiteLabel(business.subdomain)}</span>
                     </div>
                     <ChevronDown className="ml-auto h-3 w-3 text-muted-foreground" />
                   </>

@@ -24,6 +24,7 @@ import {
   Building2,
 } from "lucide-react";
 import { validateKosovoPhone, generateSubdomain } from "@/lib/validators";
+import { publicSiteLabel } from "@/lib/utils";
 
 const templates = [
   // Barbershop
@@ -215,7 +216,7 @@ export default function NewBusinessPage() {
                       )}
                     </div>
                   )}
-                  <span className="text-xs text-muted-foreground">Preview: {form.subdomain || "your-slug"}.lokalweb.com</span>
+                  <span className="text-xs text-muted-foreground">Preview: {publicSiteLabel(form.subdomain || "your-slug")}</span>
                 </div>
               </div>
             </div>
@@ -346,7 +347,7 @@ export default function NewBusinessPage() {
             <div className="space-y-3 text-sm">
               {[
                 { label: "Business Name", value: form.name },
-                { label: "Subdomain", value: `${form.subdomain}.lokalweb.com`, color: "text-primary font-medium" },
+                { label: "Subdomain", value: publicSiteLabel(form.subdomain), color: "text-primary font-medium" },
                 { label: "Industry", value: form.industry.replace("-", " "), className: "capitalize" },
                 { label: "Selected Template", value: templates.find(t => t.id === form.template)?.name || form.template, className: "font-bold text-primary" },
                 { label: "Phone", value: form.phone || "—" },
@@ -380,7 +381,7 @@ export default function NewBusinessPage() {
               <h2 className="text-2xl font-bold">Business Created!</h2>
               <p className="text-muted-foreground">
                 <span className="font-semibold text-foreground">{form.name}</span> is now live at{" "}
-                <span className="font-semibold text-primary">{form.subdomain}.lokalweb.com</span>
+                <span className="font-semibold text-primary">{publicSiteLabel(form.subdomain)}</span>
               </p>
             </div>
             <div className="pt-4 border-t space-y-3">

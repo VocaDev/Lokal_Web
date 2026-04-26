@@ -32,6 +32,7 @@ import {
   generateSubdomain,
   PasswordStrength
 } from "@/lib/validators";
+import { publicSiteLabel } from "@/lib/utils";
 
 const templates = [
   // Barbershop
@@ -268,7 +269,7 @@ export default function RegisterPage() {
                           )}
                         </div>
                       )}
-                      <span className="text-xs text-muted-foreground">Preview: {form.subdomain || "slug-juaj"}.lokalweb.com</span>
+                      <span className="text-xs text-muted-foreground">Preview: {publicSiteLabel(form.subdomain || "slug-juaj")}</span>
                     </div>
                   </div>
                 </div>

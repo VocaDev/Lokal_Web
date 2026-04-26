@@ -7,6 +7,7 @@ import { ServicesSection } from './sections/ServicesSection';
 import { StorySection } from './sections/StorySection';
 import { GallerySection } from './sections/GallerySection';
 import { FooterSection } from './sections/FooterSection';
+import { BookingDrawerProvider } from './BookingDrawerContext';
 
 interface Props {
   business: Business;
@@ -31,16 +32,18 @@ export function DynamicSiteRenderer({ business, services, hours, payload }: Prop
 
   return (
     <div style={themeStyle} className="min-h-screen">
-      {payload.sections.map((section, i) => (
-        <SectionRouter
-          key={i}
-          section={section}
-          business={business}
-          services={services}
-          hours={hours}
-          payload={payload}
-        />
-      ))}
+      <BookingDrawerProvider business={business} services={services} hours={hours}>
+        {payload.sections.map((section, i) => (
+          <SectionRouter
+            key={i}
+            section={section}
+            business={business}
+            services={services}
+            hours={hours}
+            payload={payload}
+          />
+        ))}
+      </BookingDrawerProvider>
     </div>
   );
 }
@@ -56,7 +59,7 @@ function SectionRouter({
 }) {
   switch (section.kind) {
     case 'hero':
-      return <HeroSection section={section} business={business} payload={payload} />;
+      return <HeroSection section={section} business={business} payload={payload} bookingMethod={payload.bookingMethod} />;
     case 'services':
       return <ServicesSection section={section} business={business} services={services} payload={payload} />;
     case 'story':

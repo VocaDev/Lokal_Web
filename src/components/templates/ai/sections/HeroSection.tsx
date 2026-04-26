@@ -1,23 +1,57 @@
+'use client';
+
 import type { Business } from '@/lib/types';
 import type { AiHeroSection, AiSitePayload } from '@/lib/types/customization';
 import { ctaButtonStyle, headingFontFamily, SECTION_PADDING_X } from './_shared';
 import { PhotoPlaceholder } from './PhotoPlaceholder';
+import { useBookingDrawer } from '../BookingDrawerContext';
 
 interface Props {
   section: AiHeroSection;
   business: Business;
   payload: AiSitePayload;
+  bookingMethod?: string;
 }
 
 interface LayoutProps extends Props {
   heroImageUrl?: string;
+  onPrimaryCta: () => void;
+  onSecondaryCta: () => void;
 }
 
-export function HeroSection({ section, business, payload }: Props) {
+// Build the click handlers for primary + secondary CTAs based on
+// bookingMethod. Primary opens the booking drawer for 'appointments'/'both',
+// or the contact path for 'walkin'/'none'. Secondary always opens contact —
+// it's a "Call us / WhatsApp" companion to the primary regardless of method.
+function buildContactHandler(business: Business): () => void {
+  return () => {
+    const phoneDigits = (business.phone ?? '').replace(/\D/g, '');
+    const wa = business.socialLinks?.whatsapp || phoneDigits;
+    const waDigits = (wa ?? '').replace(/\D/g, '');
+    if (waDigits) {
+      const msg = encodeURIComponent(`Hi! I'd like more info about ${business.name}.`);
+      window.open(`https://wa.me/${waDigits}?text=${msg}`, '_blank');
+    } else if (business.phone) {
+      window.location.href = `tel:${business.phone}`;
+    }
+  };
+}
+
+export function HeroSection({ section, business, payload, bookingMethod }: Props) {
   // gallery_items.section_key='hero' → first uploaded photo, if any.
   const heroImageUrl = business.gallerySections?.hero?.[0];
+  const { open: openBooking } = useBookingDrawer();
 
-  const layoutProps: LayoutProps = { section, business, payload, heroImageUrl };
+  const contactClick = buildContactHandler(business);
+  const method = bookingMethod ?? 'appointments';
+  const onPrimaryCta =
+    method === 'appointments' || method === 'both' ? openBooking : contactClick;
+  const onSecondaryCta = contactClick;
+
+  const layoutProps: LayoutProps = {
+    section, business, payload, heroImageUrl, bookingMethod,
+    onPrimaryCta, onSecondaryCta,
+  };
 
   switch (section.layout) {
     case 'split':       return <SplitHero {...layoutProps} />;
@@ -108,13 +142,23 @@ function Decoration({ kind, payload }: { kind: AiHeroSection['decorativeElement'
 // CTA buttons
 // ----------------------------------------------------------------
 
-function HeroCtas({ section, payload, align }: { section: AiHeroSection; payload: AiSitePayload; align?: 'left' | 'center' | 'right' }) {
+function HeroCtas({
+  section, payload, align, onPrimary, onSecondary,
+}: {
+  section: AiHeroSection;
+  payload: AiSitePayload;
+  align?: 'left' | 'center' | 'right';
+  onPrimary: () => void;
+  onSecondary: () => void;
+}) {
   if (!section.ctaCount) return null;
   const justify = align === 'center' ? 'justify-center' : align === 'right' ? 'justify-end' : 'justify-start';
   return (
     <div className={`flex flex-wrap gap-3 mt-6 ${justify}`}>
       {section.ctaPrimary && (
         <button
+          type="button"
+          onClick={onPrimary}
           className="px-6 py-3 rounded-md text-sm font-semibold tracking-wide transition-opacity hover:opacity-90"
           style={ctaButtonStyle(payload, 'primary')}
         >
@@ -123,6 +167,8 @@ function HeroCtas({ section, payload, align }: { section: AiHeroSection; payload
       )}
       {section.ctaCount === 2 && section.ctaSecondary && (
         <button
+          type="button"
+          onClick={onSecondary}
           className="px-6 py-3 rounded-md text-sm font-semibold tracking-wide transition-opacity hover:opacity-90"
           style={ctaButtonStyle(payload, 'secondary')}
         >
@@ -141,7 +187,7 @@ function shouldShowHeroPlaceholder(section: AiHeroSection, heroImageUrl?: string
 // Centered hero
 // ----------------------------------------------------------------
 
-function CenteredHero({ section, business, payload, heroImageUrl }: LayoutProps) {
+function CenteredHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
   return (
     <section
@@ -172,7 +218,7 @@ function CenteredHero({ section, business, payload, heroImageUrl }: LayoutProps)
             {section.subheadline}
           </p>
         )}
-        <HeroCtas section={section} payload={payload} align="center" />
+        <HeroCtas section={section} payload={payload} align="center" onPrimary={onPrimaryCta} onSecondary={onSecondaryCta} />
       </div>
     </section>
   );
@@ -182,7 +228,7 @@ function CenteredHero({ section, business, payload, heroImageUrl }: LayoutProps)
 // Split hero
 // ----------------------------------------------------------------
 
-function SplitHero({ section, business, payload, heroImageUrl }: LayoutProps) {
+function SplitHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
   return (
     <section className="grid md:grid-cols-2 min-h-[420px] md:min-h-[560px] relative overflow-hidden">
@@ -214,7 +260,7 @@ function SplitHero({ section, business, payload, heroImageUrl }: LayoutProps) {
               {section.subheadline}
             </p>
           )}
-          <HeroCtas section={section} payload={payload} align="left" />
+          <HeroCtas section={section} payload={payload} align="left" onPrimary={onPrimaryCta} onSecondary={onSecondaryCta} />
         </div>
       </div>
     </section>
@@ -225,7 +271,7 @@ function SplitHero({ section, business, payload, heroImageUrl }: LayoutProps) {
 // Fullbleed hero (text overlaid on background, position-aware)
 // ----------------------------------------------------------------
 
-function FullbleedHero({ section, business, payload, heroImageUrl }: LayoutProps) {
+function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
   const positionClasses = (() => {
     switch (section.headlinePosition) {
@@ -274,6 +320,8 @@ function FullbleedHero({ section, business, payload, heroImageUrl }: LayoutProps
           section={section}
           payload={payload}
           align={section.headlinePosition === 'bottom-right' || section.headlinePosition === 'right' ? 'right' : section.headlinePosition === 'top' || section.headlinePosition === 'center' ? 'center' : 'left'}
+          onPrimary={onPrimaryCta}
+          onSecondary={onSecondaryCta}
         />
       </div>
     </section>
@@ -284,7 +332,7 @@ function FullbleedHero({ section, business, payload, heroImageUrl }: LayoutProps
 // Editorial hero (magazine-style)
 // ----------------------------------------------------------------
 
-function EditorialHero({ section, business, payload, heroImageUrl }: LayoutProps) {
+function EditorialHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   return (
     <section
       className={`${SECTION_PADDING_X} py-12 md:py-20 relative`}
@@ -317,7 +365,7 @@ function EditorialHero({ section, business, payload, heroImageUrl }: LayoutProps
             {section.subheadline}
           </p>
         )}
-        <HeroCtas section={section} payload={payload} align="left" />
+        <HeroCtas section={section} payload={payload} align="left" onPrimary={onPrimaryCta} onSecondary={onSecondaryCta} />
       </div>
     </section>
   );
@@ -327,7 +375,7 @@ function EditorialHero({ section, business, payload, heroImageUrl }: LayoutProps
 // Asymmetric hero — deliberately off-grid
 // ----------------------------------------------------------------
 
-function AsymmetricHero({ section, business, payload, heroImageUrl }: LayoutProps) {
+function AsymmetricHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
   return (
     <section
@@ -369,7 +417,7 @@ function AsymmetricHero({ section, business, payload, heroImageUrl }: LayoutProp
           </p>
         )}
         <div className="ml-0 md:ml-24">
-          <HeroCtas section={section} payload={payload} align="left" />
+          <HeroCtas section={section} payload={payload} align="left" onPrimary={onPrimaryCta} onSecondary={onSecondaryCta} />
         </div>
       </div>
     </section>

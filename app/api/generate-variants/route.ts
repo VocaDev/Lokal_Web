@@ -266,11 +266,47 @@ function toneDirective(tone: string): string {
   }
 }
 
+function industryVoiceFor(canonicalIndustry: string): string {
+  const voices: Record<string, string> = {
+    barbershop: `BARBERSHOP VOICE PATTERNS:
+- Speak like a regular, not a marketer. "I've been coming here for years" beats "high-quality service".
+- Specifics over superlatives: "the warm towel before the shave" not "premium grooming experience".
+- Permission to be terse. Sentence fragments are fine. Periods are friends.
+- Avoid: "barber pole tradition", "old-school", "barber craft" — overused.`,
+    restaurant: `RESTAURANT VOICE PATTERNS:
+- Talk about food the way a regular orders it, not the way a menu describes it. "Get the lamb. Always the lamb." beats "Tender braised lamb shoulder".
+- Family is a verb here. So is welcome. So is wait — ten years, three years, last Sunday.
+- Specifics: dishes by name, days of the week, names of people.
+- Avoid: "culinary journey", "farm to table", "passion for cooking" — overused.`,
+    clinic: `CLINIC VOICE PATTERNS:
+- Trust comes from precision, not warmth. Wait times. Years of practice. Equipment models. Foreign degrees.
+- Avoid medical drama. No "miracle". No "transformative". No "your health journey".
+- Calm authority. The kind of doctor who doesn't oversell.
+- Avoid: "compassionate care", "your health is our priority", "advanced technology" — generic.`,
+    beauty_salon: `BEAUTY SALON VOICE PATTERNS:
+- Talk like a stylist, not a beauty magazine. "She listens before she cuts" beats "personalized consultation".
+- Specifics: who comes, when (bridal in May, prom in March, the regular Tuesday client).
+- Sensory details: the smell, the music, what you walk out feeling.
+- Avoid: "self-care", "pamper yourself", "luxurious experience" — overused.`,
+    gym: `GYM VOICE PATTERNS:
+- Direct. Short. No motivational poster language.
+- Specifics: equipment, hours, who actually trains here. Not "elevate your fitness".
+- Honesty: "this isn't an Instagram gym" beats "premium training experience".
+- Avoid: "transform your body", "fitness journey", "sweat is the new sexy" — embarrassing.`,
+    other: `GENERAL VOICE PATTERNS:
+- Specific over general. Years over "experienced". A name over "our team". A neighborhood over "the city".
+- The owner's voice, not a brochure's voice.
+- If you wouldn't say it to someone in person, don't write it.`,
+  };
+  return voices[canonicalIndustry] || voices.other;
+}
+
 type GenerateThemeArgs = {
   brief: any;
   businessName: string;
   industry: string;
   city: string;
+  uniqueness: string;
   hero: string;
   sectionPriority: string;
   density: string;
@@ -287,7 +323,7 @@ type GenerateThemeArgs = {
 
 async function generateTheme(args: GenerateThemeArgs) {
   const {
-    brief, businessName, industry, city,
+    brief, businessName, industry, city, uniqueness,
     hero, sectionPriority, density, mood, brandPrimary, brandAccent,
     fontPersonality, language, tone, userProvidedServices,
     canonicalIndustry, regenSeed,
@@ -326,12 +362,20 @@ Write all customer-facing copy in: ${languageInstruction(language)}
 Tone: ${tone}
 ${toneDirective(tone)}
 
-THE BRAND BRIEF IS GOSPEL. The brief tells you what makes this business different. Every section choice — every layout, every parameter, every word — must REINFORCE the brief. Generic outputs are failures. If two competitors in the same industry would get the same site from your output, you have failed.
+THE BRIEF IS LAW. Every choice you make — every layout, every parameter, every word — must echo the brief. The user told you what makes their business different. THAT is the website's job to communicate.
 
-UNIQUENESS DIRECTIVE:
-You are designing for ONE specific business with ONE specific brief. Do not produce "a generic gym website" or "a generic clinic website." Produce THE WEBSITE THIS BUSINESS WOULD HAVE IF THEY HIRED A DESIGNER WHO READ THE BRIEF.
+USER'S UNIQUENESS STATEMENT (gospel — reference this as you generate):
+"${uniqueness || '(not provided — infer from positioning)'}"
 
-Two businesses with the same industry but different briefs SHOULD produce visibly different layouts. Use the section parameter freedom to make them different. Pick unusual combinations when the brief justifies them.
+If the user provided a uniqueness statement, EVERY major copy moment must reflect it:
+- The hero headline must echo or extend it
+- At least one testimonial must reference what makes the business different in this specific way
+- The story section's body must reinforce it
+- One value prop (if you write one) must derive from it
+
+If two competitors in the same industry would get a similar result from your output, you have failed. Pick UNUSUAL parameter combinations when the brief justifies them.
+
+Produce THE WEBSITE THIS BUSINESS WOULD HAVE IF THEY HIRED A DESIGNER WHO READ THE BRIEF — not a generic site for the category.
 
 ${SECTIONS_BRIEFING}
 
@@ -351,6 +395,8 @@ ${userProvidedServices || '(none provided — infer 3-5 typical services for thi
 
 If the user listed services, every entry in the services section's items array MUST correspond to one of them. Do not invent unrelated services when the user has been specific.
 
+${industryVoiceFor(canonicalIndustry)}
+
 ${fewShotsFor(canonicalIndustry)}
 
 BANNED PHRASES — if you use any in the customer-facing copy, you have failed:
@@ -368,6 +414,16 @@ Female: Fjolla, Njomza, Valdete, Blerta, Elira, Rinë, Donjeta, Fitore, Teuta
 AVOID: Arta, Blerim, Dritë, Agron (overused).
 
 NEIGHBORHOODS for "role" field — Prishtinë: Arbëria, Dardania, Peyton, Qyteti i Ri, Ulpiana, Sunny Hill; Prizren: Shadërvan; Pejë: Haxhi Zeka.
+
+BEFORE OUTPUTTING — re-read what you wrote:
+
+1. Could this exact output describe a competitor in the same industry? If yes, REWRITE.
+2. Does the headline pass the "would a marketing person write this?" test? If a marketing person would, REWRITE.
+3. Did you actually use the user's uniqueness statement, or did you ignore it? If ignored, ADD IT.
+4. Are the 3 testimonials clearly 3 different real people, or 3 outputs of the same model? If same, REWRITE one of them in a notably different voice.
+5. Did you use any banned phrase? Search your output. If yes, REPLACE.
+
+Only output JSON after this self-check passes.
 
 Output valid JSON matching this schema:
 ${JSON.stringify(THEME_SCHEMA.schema)}`;
@@ -462,7 +518,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
-      brief, businessName, industry, city,
+      brief, businessName, industry, city, uniqueness,
       hero, sectionPriority, density, mood,
       brandPrimary, brandAccent, fontPersonality,
       language, tone, userProvidedServices, regenSeed,
@@ -485,6 +541,7 @@ export async function POST(request: NextRequest) {
       businessName,
       industry,
       city: city || '',
+      uniqueness: typeof uniqueness === 'string' ? uniqueness : '',
       hero: hero || 'cinematic',
       sectionPriority: sectionPriority || 'services',
       density: density || 'dense',

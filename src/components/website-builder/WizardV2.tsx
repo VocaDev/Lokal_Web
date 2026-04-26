@@ -303,6 +303,7 @@ export default function WizardV2({ businessId, subdomain }: Props) {
           businessName: input.businessName,
           industry: input.industry,
           city: input.city,
+          uniqueness: input.uniqueness,
           hero: input.hero,
           sectionPriority: input.sectionPriority,
           density: input.density,

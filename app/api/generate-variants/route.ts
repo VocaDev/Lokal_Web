@@ -9,6 +9,7 @@ import { anthropic } from '@/lib/anthropic';
 import { normalizeIndustry, type Industry } from '@/lib/industries';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, bumpAiUsage } from '@/lib/api-auth';
+import { parseModelJson } from '@/lib/json-extract';
 
 export const maxDuration = 60;
 
@@ -190,7 +191,7 @@ Before outputting, verify:
 - Do the 3 testimonials feel like 3 different real people, not 3 outputs of the same model?
 - Would the brief's target customer nod at every line, or roll their eyes?
 
-Output valid JSON matching this schema:
+Output ONLY raw JSON — no markdown code fences, no explanation, no backticks. Just the JSON object matching this schema:
 ${JSON.stringify(THEME_SCHEMA.schema)}`;
 
   const userPrompt = `BRAND BRIEF (gospel — every design choice must serve it):
@@ -217,7 +218,7 @@ Generate the theme as ${direction.name}.`;
   });
 
   const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  return JSON.parse(text.trim() || '{}');
+  return parseModelJson(text || '{}');
 }
 
 function validateVariant(v: any): { valid: boolean; reasons: string[] } {

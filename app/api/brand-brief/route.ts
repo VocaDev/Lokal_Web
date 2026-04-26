@@ -9,6 +9,7 @@ import { anthropic } from '@/lib/anthropic';
 import { normalizeIndustry } from '@/lib/industries';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, bumpAiUsage } from '@/lib/api-auth';
+import { parseModelJson } from '@/lib/json-extract';
 
 export const maxDuration = 30;
 
@@ -81,7 +82,7 @@ GOOD definingTraits: ["unapologetically traditional", "silent-while-working prec
 BAD culturalAnchor: "Kosovar hospitality"
 GOOD culturalAnchor: "The fifteen minutes of silence after the warm towel — the only moment of the week men don't have to talk."
 
-Every field must be surprising and specific. Output valid JSON matching the following schema:
+Every field must be surprising and specific. Output ONLY raw JSON — no markdown code fences, no explanation, no backticks. Just the JSON object matching this schema:
 ${JSON.stringify(BRAND_BRIEF_SCHEMA.schema)}`;
 
     const userPrompt = `BUSINESS:
@@ -107,7 +108,7 @@ Write the brief. Every field must be specific enough that it couldn't describe a
     });
 
     const text = response.content[0].type === 'text' ? response.content[0].text : '';
-    const brief = JSON.parse(text.trim());
+    const brief = parseModelJson(text);
     console.log('[brand-brief]', JSON.stringify(brief, null, 2));
 
     return NextResponse.json({ success: true, brief });

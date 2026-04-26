@@ -111,7 +111,7 @@ export interface WizardInput {
 // AI parametric renderer (migration 015)
 // ----------------------------------------------------------------
 
-export type AiSectionKind = 'hero' | 'services' | 'story' | 'gallery' | 'testimonials' | 'faq' | 'footer';
+export type AiSectionKind = 'hero' | 'services' | 'story' | 'gallery' | 'footer';
 
 export interface AiHeroSection {
   kind: 'hero';
@@ -152,18 +152,6 @@ export interface AiGallerySection {
   caption?: string;
 }
 
-export interface AiTestimonialsSection {
-  kind: 'testimonials';
-  layout: 'cards' | 'single-quote' | 'rotating' | 'wall';
-  items: Array<{ name: string; role: string; quote: string; rating?: number }>;
-}
-
-export interface AiFaqSection {
-  kind: 'faq';
-  layout: 'accordion' | 'two-column' | 'inline';
-  items: Array<{ question: string; answer: string }>;
-}
-
 export interface AiFooterSection {
   kind: 'footer';
   layout: 'centered' | 'three-column' | 'editorial' | 'minimal';
@@ -175,8 +163,6 @@ export type AiSection =
   | AiServicesSection
   | AiStorySection
   | AiGallerySection
-  | AiTestimonialsSection
-  | AiFaqSection
   | AiFooterSection;
 
 export interface AiSitePayload {

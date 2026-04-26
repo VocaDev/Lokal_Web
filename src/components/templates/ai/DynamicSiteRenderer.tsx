@@ -6,8 +6,6 @@ import { HeroSection } from './sections/HeroSection';
 import { ServicesSection } from './sections/ServicesSection';
 import { StorySection } from './sections/StorySection';
 import { GallerySection } from './sections/GallerySection';
-import { TestimonialsSection } from './sections/TestimonialsSection';
-import { FaqSection } from './sections/FaqSection';
 import { FooterSection } from './sections/FooterSection';
 
 interface Props {
@@ -65,10 +63,6 @@ function SectionRouter({
       return <StorySection section={section} payload={payload} business={business} />;
     case 'gallery':
       return <GallerySection section={section} business={business} payload={payload} />;
-    case 'testimonials':
-      return <TestimonialsSection section={section} payload={payload} />;
-    case 'faq':
-      return <FaqSection section={section} payload={payload} />;
     case 'footer':
       return <FooterSection section={section} business={business} hours={hours} payload={payload} />;
     default:

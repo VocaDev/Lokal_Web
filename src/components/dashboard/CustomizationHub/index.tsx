@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCustomization, useGalleryItems } from '@/lib/customization/hooks';
-import { WebsiteCustomization } from '@/lib/types';
+import { GalleryItem, GallerySectionKey, WebsiteCustomization } from '@/lib/types';
 import ColorSection from './ColorSection';
 import TypographySection from './TypographySection';
 import LayoutSection from './LayoutSection';
@@ -152,38 +152,14 @@ export default function CustomizationHub({ businessId }: CustomizationHubProps) 
               </div>
             </div>
 
-            {/* Right Column: Gallery on Desktop, Hidden on Mobile */}
+            {/* Right Column: Gallery summary on Desktop, Hidden on Mobile */}
             <div className="hidden lg:block">
               <div className="bg-card border border-border rounded-xl p-6 sticky top-20">
-                <h2 className="text-xl font-bold text-foreground mb-6">Gallery Preview</h2>
-                <p className="text-muted-foreground text-sm">
-                  Photos will appear here after upload
+                <h2 className="text-xl font-bold text-foreground mb-2">Gallery Summary</h2>
+                <p className="text-muted-foreground text-sm mb-4">
+                  Quick view of what is uploaded.
                 </p>
-                <div className="mt-4 space-y-3">
-                  {galleryItems?.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3">
-                      <div className="h-12 w-12 bg-background rounded-lg border border-border flex items-center justify-center">
-                        {item.image_url ? (
-                          <img
-                            src={item.image_url}
-                            alt={item.alt_text}
-                            className="h-full w-full object-cover rounded-lg"
-                          />
-                        ) : (
-                          <span className="text-muted-foreground/80 text-xs">Empty</span>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground capitalize">
-                          {item.section_key}
-                        </p>
-                        <p className="text-xs text-muted-foreground/80">
-                          {item.image_url ? 'Uploaded' : 'No image'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <GallerySummary items={galleryItems ?? []} />
               </div>
             </div>
           </div>
@@ -225,12 +201,60 @@ export default function CustomizationHub({ businessId }: CustomizationHubProps) 
 
         {/* PREVIEW TAB */}
         <TabsContent value="preview" className="mt-6">
-          <PreviewPane 
-            customization={formData as WebsiteCustomization} 
+          <PreviewPane
+            customization={formData as WebsiteCustomization}
             businessId={businessId}
           />
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------
+// Right-column at-a-glance summary of what is uploaded per slot.
+// Mirrors the four slots in GallerySection.
+// ----------------------------------------------------------------
+
+const SUMMARY_SLOTS: { key: GallerySectionKey; label: string }[] = [
+  { key: 'hero',     label: 'Hero Photo' },
+  { key: 'story',    label: 'Story Photo' },
+  { key: 'services', label: 'Service Photos' },
+  { key: 'gallery',  label: 'Gallery' },
+];
+
+function GallerySummary({ items }: { items: GalleryItem[] }) {
+  return (
+    <div className="space-y-3">
+      {SUMMARY_SLOTS.map(({ key, label }) => {
+        const slotItems = items.filter((i) => i.section_key === key && i.image_url);
+        const first = slotItems[0];
+        return (
+          <div key={key} className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-background rounded-lg border border-border overflow-hidden flex items-center justify-center shrink-0">
+              {first?.image_url ? (
+                <img
+                  src={first.image_url}
+                  alt={first.alt_text}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-muted-foreground/60 text-[10px]">Empty</span>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">{label}</p>
+              <p className="text-xs text-muted-foreground/80">
+                {slotItems.length === 0
+                  ? 'No image'
+                  : slotItems.length === 1
+                    ? 'Uploaded'
+                    : `${slotItems.length} photos`}
+              </p>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

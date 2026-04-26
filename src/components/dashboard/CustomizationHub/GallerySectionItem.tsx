@@ -5,23 +5,26 @@ import { GalleryItem, GallerySectionKey } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { uploadGalleryImage } from '@/lib/customization/hooks';
 import { Button } from '@/components/ui/button';
-import { Upload, Trash2 } from 'lucide-react';
+import { Upload, Trash2, Loader2, Plus } from 'lucide-react';
 
 interface GallerySectionItemProps {
   businessId: string;
   sectionKey: GallerySectionKey;
-  currentItem?: GalleryItem;
-  onUploadComplete: () => void;
+  items: GalleryItem[];
+  mode: 'single' | 'multiple';
+  onChange: () => void;
 }
 
 export default function GallerySectionItem({
   businessId,
   sectionKey,
-  currentItem,
-  onUploadComplete,
+  items,
+  mode,
+  onChange,
 }: GallerySectionItemProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleFileSelect = async (file: File) => {
@@ -37,14 +40,13 @@ export default function GallerySectionItem({
     try {
       setIsUploading(true);
       await uploadGalleryImage(businessId, sectionKey, file);
-      
+
       toast({
-        title: 'Success',
-        description: `${sectionKey} photo uploaded!`,
-        variant: 'default',
+        title: 'Uploaded',
+        description: `${sectionKey} photo added.`,
       });
-      
-      onUploadComplete();
+
+      onChange();
     } catch (err) {
       toast({
         title: 'Upload failed',
@@ -59,6 +61,8 @@ export default function GallerySectionItem({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) handleFileSelect(file);
+    // Reset so the same file can be re-selected after a failure.
+    e.target.value = '';
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -77,97 +81,217 @@ export default function GallerySectionItem({
     if (file) handleFileSelect(file);
   };
 
-  const handleDelete = async () => {
-    if (!currentItem) return;
+  const handleDelete = async (item: GalleryItem) => {
+    setDeletingId(item.id);
     try {
-      const response = await fetch(
-        `/api/gallery/${businessId}/${currentItem.id}`,
-        { method: 'DELETE' }
-      );
-      if (!response.ok) throw new Error('Failed to delete');
-      toast({
-        title: 'Deleted',
-        description: 'Photo removed',
+      const response = await fetch(`/api/gallery/${businessId}/${item.id}`, {
+        method: 'DELETE',
       });
-      onUploadComplete();
+      if (!response.ok) throw new Error('Failed to delete');
+      toast({ title: 'Deleted', description: 'Photo removed.' });
+      onChange();
     } catch (err) {
       toast({
         title: 'Error',
-        description: 'Failed to delete photo',
+        description: err instanceof Error ? err.message : 'Failed to delete photo',
         variant: 'destructive',
       });
+    } finally {
+      setDeletingId(null);
     }
   };
 
-  return (
-    <div className="space-y-4">
-      {/* Current Image Preview */}
-      {currentItem?.image_url && (
-        <div className="relative group overflow-hidden rounded-lg">
-          <img
-            src={currentItem.image_url}
-            alt={currentItem.alt_text || sectionKey}
-            className="w-full h-48 object-cover rounded-lg border border-border transition-transform duration-300 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 rounded-lg transition-opacity flex items-center justify-center gap-2">
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={handleDelete}
-              className="bg-red-500/80 hover:bg-red-500"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete Photo
-            </Button>
+  // ----------------------------------------------------------------
+  // SINGLE mode — replace-on-upload, one image per slot
+  // ----------------------------------------------------------------
+  if (mode === 'single') {
+    const current = items[0];
+    return (
+      <div className="space-y-4">
+        {current?.image_url && (
+          <div className="relative group overflow-hidden rounded-lg">
+            <img
+              src={current.image_url}
+              alt={current.alt_text || sectionKey}
+              className="w-full h-48 object-cover rounded-lg border border-border transition-transform duration-300 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 rounded-lg transition-opacity flex items-center justify-center gap-2">
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => handleDelete(current)}
+                disabled={deletingId === current.id}
+              >
+                {deletingId === current.id ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Photo
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Upload Area */}
-      <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer ${
-          isDragging
-            ? 'border-primary bg-primary/10'
-            : 'border-border bg-background hover:border-primary/50'
-        }`}
-      >
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleInputChange}
-          disabled={isUploading}
-          className="absolute inset-0 opacity-0 cursor-pointer z-10"
+        <UploadDropzone
+          isUploading={isUploading}
+          isDragging={isDragging}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onInputChange={handleInputChange}
+          replace={!!current?.image_url}
         />
 
-        <div className="flex flex-col items-center gap-3">
+        <p className="text-xs text-muted-foreground text-center">
+          Recommended: JPG or PNG, high resolution (at least 1200×800px).
+        </p>
+      </div>
+    );
+  }
+
+  // ----------------------------------------------------------------
+  // MULTIPLE mode — grid of existing images + add-tile
+  // ----------------------------------------------------------------
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className="relative group aspect-square rounded-lg overflow-hidden border border-border bg-background"
+          >
+            {item.image_url && (
+              <img
+                src={item.image_url}
+                alt={item.alt_text || sectionKey}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            )}
+            <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => handleDelete(item)}
+                disabled={deletingId === item.id}
+              >
+                {deletingId === item.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+        ))}
+
+        {/* Add-tile — same drop zone, compact */}
+        <label
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`relative aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+            isDragging
+              ? 'border-primary bg-primary/10'
+              : 'border-border bg-background hover:border-primary/50'
+          }`}
+        >
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleInputChange}
+            disabled={isUploading}
+            className="absolute inset-0 opacity-0 cursor-pointer"
+          />
           {isUploading ? (
-            <>
-              <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary"></div>
-              <p className="text-sm text-muted-foreground">Uploading...</p>
-            </>
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
           ) : (
             <>
-              <div className="p-3 bg-primary/10 rounded-full">
-                <Upload className="w-6 h-6 text-primary" />
+              <div className="p-2 bg-primary/10 rounded-full mb-1">
+                <Plus className="w-4 h-4 text-primary" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  {isDragging ? 'Drop to upload' : 'Drag and drop your image'}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">or click to browse</p>
-              </div>
+              <span className="text-xs text-muted-foreground">
+                {items.length === 0 ? 'Add photo' : 'Add another'}
+              </span>
             </>
           )}
-        </div>
+        </label>
       </div>
 
-      {/* Format Guide */}
       <p className="text-xs text-muted-foreground text-center">
-        Recommended: JPG or PNG, high resolution (at least 1200x800px)
+        Recommended: JPG or PNG, high resolution. Drag and drop or click an empty tile to upload.
       </p>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------
+
+function UploadDropzone({
+  isUploading,
+  isDragging,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onInputChange,
+  replace,
+}: {
+  isUploading: boolean;
+  isDragging: boolean;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragLeave: () => void;
+  onDrop: (e: React.DragEvent) => void;
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  replace: boolean;
+}) {
+  return (
+    <div
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer ${
+        isDragging
+          ? 'border-primary bg-primary/10'
+          : 'border-border bg-background hover:border-primary/50'
+      }`}
+    >
+      <input
+        type="file"
+        accept="image/*"
+        onChange={onInputChange}
+        disabled={isUploading}
+        className="absolute inset-0 opacity-0 cursor-pointer z-10"
+      />
+
+      <div className="flex flex-col items-center gap-3">
+        {isUploading ? (
+          <>
+            <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary"></div>
+            <p className="text-sm text-muted-foreground">Uploading...</p>
+          </>
+        ) : (
+          <>
+            <div className="p-3 bg-primary/10 rounded-full">
+              <Upload className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                {isDragging
+                  ? 'Drop to upload'
+                  : replace
+                    ? 'Drop a new image to replace'
+                    : 'Drag and drop your image'}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">or click to browse</p>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -62,12 +62,21 @@ export async function requireBusinessOwner(
 /**
  * Daily AI rate limiter — bumps `ai_usage(user_id, date, count)` and rejects
  * with 429 once the daily threshold is exceeded. Backed by migration 010.
+ *
+ * Cap is read from `AI_DAILY_LIMIT` env var (default 10). Set to the literal
+ * string `unlimited` to bypass the check entirely — testing/dev only.
  */
 export async function bumpAiUsage(
   supabase: SupabaseClient,
-  userId: string,
-  dailyLimit = 10
+  userId: string
 ): Promise<NextResponse | null> {
+  const limitRaw = process.env.AI_DAILY_LIMIT?.toLowerCase().trim();
+  if (limitRaw === "unlimited") {
+    return null; // bypass entirely — no DB write, no 429
+  }
+  const limit = Number.parseInt(limitRaw ?? "10", 10);
+  const effectiveLimit = Number.isFinite(limit) && limit > 0 ? limit : 10;
+
   // UPSERT with increment: insert with count=1, on conflict bump the existing.
   // Postgres UPDATE clause references the existing row via EXCLUDED + table
   // alias, but Supabase JS doesn't expose that syntax — we read-then-write.
@@ -85,9 +94,9 @@ export async function bumpAiUsage(
     return null;
   }
   const next = (existing?.count ?? 0) + 1;
-  if (next > dailyLimit) {
+  if (next > effectiveLimit) {
     return NextResponse.json(
-      { error: `Daily AI limit (${dailyLimit}) reached. Try again tomorrow.` },
+      { error: `Daily AI limit (${effectiveLimit}) reached. Try again tomorrow.` },
       { status: 429 }
     );
   }

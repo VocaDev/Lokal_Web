@@ -15,6 +15,7 @@ import { normalizeIndustry, type Industry } from '@/lib/industries';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, bumpAiUsage } from '@/lib/api-auth';
 import { parseModelJson } from '@/lib/json-extract';
+import { emitProgress } from '@/lib/ai-progress';
 
 export const maxDuration = 90;
 
@@ -465,11 +466,17 @@ export async function POST(request: NextRequest) {
       hero, sectionPriority, density, mood,
       brandPrimary, brandAccent, fontPersonality,
       language, tone, userProvidedServices, regenSeed,
+      generationId, businessId,
     } = body;
 
     if (!brief || !businessName || !industry) {
       return NextResponse.json({ error: 'brief, businessName, industry required' }, { status: 400 });
     }
+
+    // Optional progress streaming. The wizard passes generationId+businessId
+    // and subscribes via Realtime; older callers that omit them still work.
+    const canEmit = typeof generationId === 'string' && typeof businessId === 'string';
+    const userId = userOrResponse.id;
 
     const canonical = normalizeIndustry(industry);
 
@@ -493,7 +500,23 @@ export async function POST(request: NextRequest) {
     };
 
     console.log('[generate-variants] Generating parametric theme', { canonical, hero: args.hero, mood: args.mood });
+
+    if (canEmit) {
+      await emitProgress({
+        supabase, userId, businessId, generationId,
+        step: 'designing_theme', status: 'started',
+      });
+    }
+
     let theme = await generateTheme(args);
+
+    if (canEmit) {
+      // Mid-stream marker: Haiku finished generating, validation/finalize next.
+      await emitProgress({
+        supabase, userId, businessId, generationId,
+        step: 'writing_copy', status: 'progress',
+      });
+    }
 
     const validation = validateTheme(theme);
     if (!validation.valid) {
@@ -508,9 +531,33 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    if (canEmit) {
+      await emitProgress({
+        supabase, userId, businessId, generationId,
+        step: 'finalizing', status: 'completed',
+      });
+    }
+
     return NextResponse.json({ success: true, theme });
   } catch (error: any) {
     console.error('[generate-variants] Error:', error?.message || error);
+    // Best-effort: surface the failure on the wizard's progress stream.
+    try {
+      const body = await request.clone().json().catch(() => ({} as any));
+      if (typeof body.generationId === 'string' && typeof body.businessId === 'string') {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await emitProgress({
+            supabase, userId: user.id,
+            businessId: body.businessId,
+            generationId: body.generationId,
+            step: 'finalizing', status: 'error',
+            message: error?.message || 'Theme generation failed',
+          });
+        }
+      }
+    } catch { /* swallowed */ }
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }

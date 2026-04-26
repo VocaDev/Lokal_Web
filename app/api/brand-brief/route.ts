@@ -9,6 +9,7 @@ import { anthropic } from '@/lib/anthropic';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, bumpAiUsage } from '@/lib/api-auth';
 import { parseModelJson } from '@/lib/json-extract';
+import { emitProgress } from '@/lib/ai-progress';
 
 export const maxDuration = 30;
 
@@ -65,7 +66,20 @@ export async function POST(request: NextRequest) {
       bookingMethod,
       language,
       tone,
+      generationId,
+      businessId,
     } = await request.json();
+
+    // Optional progress streaming. The wizard passes generationId+businessId
+    // and subscribes via Realtime; older callers that omit them still work.
+    const canEmit = typeof generationId === 'string' && typeof businessId === 'string';
+    const userId = userOrResponse.id;
+    if (canEmit) {
+      await emitProgress({
+        supabase, userId, businessId, generationId,
+        step: 'analyzing_business', status: 'started',
+      });
+    }
 
     if (!businessName || !industry || !city) {
       return NextResponse.json(
@@ -135,9 +149,33 @@ Write the brief. Every field must be specific enough that it couldn't describe a
     const brief = parseModelJson(text);
     console.log('[brand-brief]', JSON.stringify(brief, null, 2));
 
+    if (canEmit) {
+      await emitProgress({
+        supabase, userId, businessId, generationId,
+        step: 'building_brief', status: 'completed',
+      });
+    }
+
     return NextResponse.json({ success: true, brief });
   } catch (error: any) {
     console.error('[brand-brief] Error:', error?.message || error);
+    // Best-effort: surface the failure on the wizard's progress stream.
+    try {
+      const body = await request.clone().json().catch(() => ({} as any));
+      if (typeof body.generationId === 'string' && typeof body.businessId === 'string') {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await emitProgress({
+            supabase, userId: user.id,
+            businessId: body.businessId,
+            generationId: body.generationId,
+            step: 'building_brief', status: 'error',
+            message: error?.message || 'Brief generation failed',
+          });
+        }
+      }
+    } catch { /* swallowed */ }
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }

@@ -179,10 +179,7 @@ export default function WizardV2({ businessId, subdomain }: Props) {
              input.industry.trim().length >= 2 &&
              input.city.trim().length >= 2;
     }
-    if (s === 2) {
-      const named = input.services.filter(x => x.name.trim().length > 0);
-      return named.length >= 2;
-    }
+    if (s === 2) return true;
     if (s === 3) return !!input.hero && !!input.sectionPriority && !!input.density;
     if (s === 4) {
       if (!input.mood) return false;
@@ -638,7 +635,9 @@ function Step2({
   return (
     <div className="space-y-6">
       <div className="space-y-3">
-        <FieldLabel hint="çmimi dhe kohëzgjatja janë opsionale">Shërbimet kryesore</FieldLabel>
+        <FieldLabel hint="Të gjitha fushat janë opsionale — mund t'i shtosh edhe më vonë në panelin e kontrollit.">
+          Shërbimet kryesore <span className="text-muted-foreground font-normal">(opsionale)</span>
+        </FieldLabel>
 
         <div className="space-y-2">
           {input.services.map((s, idx) => (
@@ -697,7 +696,7 @@ function Step2({
         </button>
 
         <p className="text-[12px] text-muted-foreground">
-          {input.services.length} shërbime · minimumi 2, maksimumi 6
+          {input.services.length} {input.services.length === 1 ? 'shërbim' : 'shërbime'} · maksimumi 6
         </p>
       </div>
 

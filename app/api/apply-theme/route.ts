@@ -24,10 +24,12 @@ export async function POST(request: NextRequest) {
     const auth = await requireBusinessOwner(supabase, businessId);
     if (auth instanceof NextResponse) return auth;
 
+    // AI-path sites get the literal '__ai__' template marker so existing
+    // rendering code can detect them cleanly. Templates path is unchanged.
     const { data: bizUpdated, error: bizErr } = await supabase
       .from('businesses')
       .update({
-        template_id: theme.templateId,
+        template_id: '__ai__',
         website_creation_method: 'ai_generated',
         website_builder_completed: true,
       })
@@ -38,6 +40,9 @@ export async function POST(request: NextRequest) {
     if (bizErr) throw new Error(`Business update: ${bizErr.message}`);
     const subdomain = bizUpdated?.subdomain ?? null;
 
+    // Theme tokens still write to website_customization so the SSR theme
+    // builder in app/[subdomain]/page.tsx can convert hex→HSL for any shared
+    // chrome (buttons, badges) outside the AI section sandbox.
     const payload: Record<string, any> = {
       business_id: businessId,
       primary_color: theme.primaryColor,
@@ -49,21 +54,13 @@ export async function POST(request: NextRequest) {
       border_color: theme.borderColor,
       heading_font: theme.headingFont,
       body_font: theme.bodyFont,
-      hero_height: theme.heroHeight,
-      card_style: theme.cardStyle,
-      show_testimonials: theme.showTestimonials,
-      show_team: theme.showTeam,
-      show_contact: theme.showContact,
-      hero_headline: theme.heroHeadline,
-      hero_subheadline: theme.heroSubheadline,
-      about_copy: theme.aboutCopy,
-      cta_primary: theme.ctaPrimary,
-      cta_secondary: theme.ctaSecondary,
-      footer_tagline: theme.footerTagline,
       meta_description: theme.metaDescription,
-      value_props: theme.valueProps,
-      testimonials: theme.testimonials,
-      faq: theme.faq,
+      // The full sections payload — this is what DynamicSiteRenderer reads.
+      ai_sections: Array.isArray(theme.sections) ? theme.sections : null,
+      // Debug breadcrumb: which generation produced this site.
+      ai_layout_seed: typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : Date.now().toString(),
     };
 
     // Wizard v2 inputs (migration 014). Only included if provided.
@@ -79,13 +76,24 @@ export async function POST(request: NextRequest) {
       .from('website_customization')
       .upsert(payload, { onConflict: 'business_id' });
 
-    // Fallback for migration 014 — strip the new wizard v2 columns if the
+    // Fallback for migration 015 — strip ai_sections / ai_layout_seed if the
     // DB hasn't been migrated yet, then retry.
+    if (error && /ai_sections|ai_layout_seed/i.test(error.message || '')) {
+      console.warn('[apply-theme] AI section columns missing, retrying without them. Run docs/migrations/015_ai_sections_payload.sql.');
+      const { ai_sections, ai_layout_seed, ...withoutAiSections } = payload;
+      const retry = await supabase
+        .from('website_customization')
+        .upsert(withoutAiSections, { onConflict: 'business_id' });
+      error = retry.error;
+    }
+
+    // Fallback for migration 014 — strip wizard v2 columns if missing.
     if (error && /site_language|site_tone|hero_style|section_priority|density|uniqueness_statement|booking_method/i.test(error.message || '')) {
       console.warn('[apply-theme] Wizard v2 columns missing, retrying without them. Run docs/migrations/014_wizard_v2_columns.sql.');
       const {
         site_language, site_tone, hero_style, section_priority,
         density: _d, uniqueness_statement, booking_method,
+        ai_sections, ai_layout_seed,
         ...withoutWizardV2
       } = payload;
       const retry = await supabase
@@ -94,11 +102,12 @@ export async function POST(request: NextRequest) {
       error = retry.error;
     }
 
-    // Fallback for migration 005 — strip rich content columns if missing.
-    if (error && /column .* does not exist|Could not find|schema cache|footer_tagline|meta_description|value_props|testimonials|faq/i.test(error.message || '')) {
+    // Fallback for migration 005 — strip rich content / new columns if missing.
+    if (error && /column .* does not exist|Could not find|schema cache|meta_description/i.test(error.message || '')) {
       console.warn('[apply-theme] Rich content columns missing, falling back to core. Run docs/migrations/005_ai_rich_content_columns.sql.');
       const {
-        footer_tagline, meta_description, value_props, testimonials, faq,
+        meta_description,
+        ai_sections, ai_layout_seed,
         site_language, site_tone, hero_style, section_priority,
         density: _d, uniqueness_statement, booking_method,
         ...core
@@ -111,11 +120,18 @@ export async function POST(request: NextRequest) {
 
     if (error) throw new Error(`Customization: ${error.message}`);
 
-    // 3. Write AI-generated services to the services table.
-    // Clear existing services for this business (in case of regeneration),
-    // then insert the new AI-generated rows. Non-fatal if it fails — owner
-    // can still add services manually via /dashboard/services.
-    if (Array.isArray(theme.services) && theme.services.length > 0) {
+    // Write AI-generated services to the services table.
+    // Sources items from the first 'services' section in theme.sections.
+    // Clears existing services first (in case of regeneration). Non-fatal if
+    // it fails — owner can still add services manually via /dashboard/services.
+    const servicesSection = Array.isArray(theme.sections)
+      ? theme.sections.find((s: any) => s?.kind === 'services')
+      : null;
+    const sectionItems: any[] = Array.isArray(servicesSection?.items)
+      ? servicesSection.items
+      : [];
+
+    if (sectionItems.length > 0) {
       const { error: delErr } = await supabase
         .from('services')
         .delete()
@@ -124,7 +140,7 @@ export async function POST(request: NextRequest) {
         console.error('[apply-theme] Failed to clear existing services:', delErr);
       }
 
-      const serviceRows = theme.services
+      const serviceRows = sectionItems
         .filter((s: any) => s && typeof s.name === 'string' && s.name.trim().length > 0)
         .map((s: any) => ({
           business_id: businessId,

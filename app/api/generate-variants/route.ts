@@ -1,11 +1,12 @@
 /**
- * Stage 2: Theme Generator (wizard v2)
- * Single Haiku call. Returns one theme that honors the user's structural
- * choices (hero, density, mood, fonts, language, tone). Validates against
- * BANNED_PHRASES; regenerates once if invalid.
+ * Stage 2: Theme Generator (parametric AI renderer)
+ * Single Haiku call. Returns one theme whose core is a sections[] array of
+ * parametric section descriptors (hero, services, story, gallery,
+ * testimonials, faq, footer). DynamicSiteRenderer interprets those
+ * parameters into a unique layout — no template picking.
  *
- * Route URL preserved (`/api/generate-variants`) but the response shape
- * changed from `{ variants: [A, B] }` to `{ theme: <object> }`.
+ * Route URL preserved (`/api/generate-variants`); response shape:
+ *   { success: true, theme: { ...themeTokens, sections: AiSection[] } }
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -15,7 +16,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser, bumpAiUsage } from '@/lib/api-auth';
 import { parseModelJson } from '@/lib/json-extract';
 
-export const maxDuration = 60;
+export const maxDuration = 90;
 
 const THEME_SCHEMA = {
   name: 'website_theme',
@@ -24,9 +25,7 @@ const THEME_SCHEMA = {
     type: 'object',
     additionalProperties: false,
     properties: {
-      variantName: { type: 'string' },
-      directionRationale: { type: 'string' },
-      templateId: { type: 'string' },
+      // Theme tokens
       primaryColor: { type: 'string' },
       accentColor: { type: 'string' },
       bgColor: { type: 'string' },
@@ -36,65 +35,62 @@ const THEME_SCHEMA = {
       borderColor: { type: 'string' },
       headingFont: { type: 'string', enum: ['dm-sans', 'playfair', 'inter', 'poppins', 'space-grotesk'] },
       bodyFont: { type: 'string', enum: ['dm-sans', 'inter', 'poppins'] },
-      heroHeight: { type: 'string', enum: ['small', 'medium', 'large'] },
-      cardStyle: { type: 'string', enum: ['minimal', 'raised', 'bordered', 'glass'] },
-      heroHeadline: { type: 'string' },
-      heroSubheadline: { type: 'string' },
-      aboutCopy: { type: 'string' },
-      ctaPrimary: { type: 'string' },
-      ctaSecondary: { type: 'string' },
-      footerTagline: { type: 'string' },
       metaDescription: { type: 'string' },
-      valueProps: {
-        type: 'array', minItems: 3, maxItems: 3,
+
+      // The new core: parametric sections.
+      // Schema is intentionally LOOSE on per-section fields — Haiku struggles
+      // with deeply nested discriminated unions in strict mode. The TS types
+      // in src/lib/types/customization.ts are the authoritative shape.
+      sections: {
+        type: 'array',
+        minItems: 4,
+        maxItems: 7,
         items: {
-          type: 'object', additionalProperties: false,
-          properties: { icon: { type: 'string' }, title: { type: 'string' }, description: { type: 'string' } },
-          required: ['icon', 'title', 'description'],
-        },
-      },
-      testimonials: {
-        type: 'array', minItems: 3, maxItems: 3,
-        items: {
-          type: 'object', additionalProperties: false,
-          properties: { name: { type: 'string' }, role: { type: 'string' }, quote: { type: 'string' }, rating: { type: 'number' } },
-          required: ['name', 'role', 'quote', 'rating'],
-        },
-      },
-      faq: {
-        type: 'array', minItems: 5, maxItems: 5,
-        items: {
-          type: 'object', additionalProperties: false,
-          properties: { question: { type: 'string' }, answer: { type: 'string' } },
-          required: ['question', 'answer'],
-        },
-      },
-      services: {
-        type: 'array', minItems: 4, maxItems: 6,
-        items: {
-          type: 'object', additionalProperties: false,
+          type: 'object',
+          additionalProperties: false,
           properties: {
-            name: { type: 'string' },
-            description: { type: 'string' },
-            price: { type: 'number' },
-            durationMinutes: { type: 'number' },
+            kind: { type: 'string', enum: ['hero', 'services', 'story', 'gallery', 'testimonials', 'faq', 'footer'] },
+            // Hero parameters
+            layout: { type: 'string' },
+            imageStyle: { type: 'string' },
+            metadataBar: { type: 'boolean' },
+            headlinePosition: { type: 'string' },
+            ctaCount: { type: 'number' },
+            headline: { type: 'string' },
+            subheadline: { type: 'string' },
+            ctaPrimary: { type: 'string' },
+            ctaSecondary: { type: 'string' },
+            metadataLeft: { type: 'string' },
+            metadataRight: { type: 'string' },
+            decorativeElement: { type: 'string' },
+            // Services parameters
+            showPrices: { type: 'boolean' },
+            showDuration: { type: 'boolean' },
+            divider: { type: 'string' },
+            intro: { type: 'string' },
+            items: {
+              type: 'array',
+              items: {
+                type: 'object',
+                additionalProperties: true,
+              },
+            },
+            // Story parameters
+            body: { type: 'string' },
+            attribution: { type: 'string' },
+            // Gallery parameters
+            caption: { type: 'string' },
+            // Footer parameters
+            tagline: { type: 'string' },
           },
-          required: ['name', 'description', 'price', 'durationMinutes'],
+          required: ['kind'],
         },
       },
-      showTestimonials: { type: 'boolean' },
-      showTeam: { type: 'boolean' },
-      showContact: { type: 'boolean' },
     },
     required: [
-      'variantName', 'directionRationale', 'templateId',
       'primaryColor', 'accentColor', 'bgColor', 'surfaceColor',
       'textColor', 'mutedTextColor', 'borderColor',
-      'headingFont', 'bodyFont', 'heroHeight', 'cardStyle',
-      'heroHeadline', 'heroSubheadline', 'aboutCopy',
-      'ctaPrimary', 'ctaSecondary', 'footerTagline', 'metaDescription',
-      'valueProps', 'testimonials', 'faq', 'services',
-      'showTestimonials', 'showTeam', 'showContact',
+      'headingFont', 'bodyFont', 'metaDescription', 'sections',
     ],
   },
 };
@@ -108,19 +104,112 @@ const BANNED_PHRASES = [
   'where style meets', 'more than just',
 ];
 
-// Mirrors the keys actually present in src/components/templates/index.tsx
-// TEMPLATE_MAP. The router falls back to 'modern' for any unknown id.
-const VALID_TEMPLATE_IDS = [
-  'modern', 'minimal', 'bold', 'elegant',
-  'casual', 'bistro', 'clean', 'premium', 'luxury',
-];
+const SECTIONS_BRIEFING = `
+THIS IS HOW SECTIONS WORK:
+
+You output a sections[] array. Each section has a 'kind' and parameters specific to that kind. The renderer interprets each section freely — you are NOT picking from a fixed list of designs. You are DESCRIBING a unique layout.
+
+Required: at least one 'hero' and one 'services' section. Footer optional but recommended.
+Order: the order in the array IS the page order from top to bottom.
+
+HERO PARAMETERS (kind: 'hero'):
+- layout: 'centered' (everything stacked center) | 'split' (50/50 image+text) | 'fullbleed' (image fills, text overlaid) | 'editorial' (magazine: metadata bar + oversized headline + prose subhead) | 'asymmetric' (off-grid composition with deliberate negative space)
+- imageStyle: 'photo' (use a hero gradient placeholder — the renderer fills with user's gallery later) | 'gradient' (pure color gradient) | 'pattern' (subtle pattern fill) | 'none' (no visual, type-first)
+- metadataBar: true to show a top bar with metadata (issue number, location, etc.) — primarily for 'editorial' layouts
+- headlinePosition: 'top' | 'center' | 'bottom-left' | 'bottom-right' | 'left' | 'right' — where the headline sits within the hero
+- ctaCount: 0, 1, or 2 — how many call-to-action buttons
+- decorativeElement: 'none' | 'rule' (horizontal line) | 'number' (large ghost number like '01') | 'glyph' (single decorative character)
+
+SERVICES PARAMETERS (kind: 'services'):
+- layout: 'list' (single column, name + price right-aligned) | 'grid-2' (2-column cards) | 'grid-3' (3-column cards) | 'editorial-rows' (one per row, with description) | 'cards' (heavy card style)
+- showPrices: true if prices are visible to customers
+- showDuration: true if durations are shown
+- divider: 'none' | 'line' | 'number' (numbered like 01, 02, 03)
+- intro: optional intro paragraph above the list
+
+STORY PARAMETERS (kind: 'story'):
+- layout: 'centered-quote' (one big quote in the middle) | 'two-column' (heading left, body right) | 'long-form' (paragraph block) | 'pull-quote' (callout phrase + supporting paragraph)
+- body: the actual text
+- attribution: optional, for the centered-quote layout
+
+GALLERY PARAMETERS (kind: 'gallery'):
+- layout: 'masonry' | 'grid-uniform' | 'showcase' (one large + thumbnails) | 'strip' (horizontal scroll)
+- caption: optional caption above the gallery
+
+TESTIMONIALS PARAMETERS (kind: 'testimonials'):
+- layout: 'cards' (3 cards in a row) | 'single-quote' (one quote at a time) | 'rotating' (carousel) | 'wall' (4-6 quotes in a masonry)
+- items: 3 testimonials, each with name + role + quote + rating
+
+FAQ PARAMETERS (kind: 'faq'):
+- layout: 'accordion' | 'two-column' (questions left, answers right) | 'inline' (Q+A flowing as paragraphs)
+- items: 5 faq items
+
+FOOTER PARAMETERS (kind: 'footer'):
+- layout: 'centered' | 'three-column' | 'editorial' | 'minimal'
+- tagline: optional short closing line
+
+THE GAME: pick parameter combinations the user's brief actually NEEDS. Two businesses with the same industry but different briefs should produce different combinations.`;
+
+function fewShotsFor(canonicalIndustry: string): string {
+  const fewShots: Record<string, string> = {
+    barbershop: `
+HERO HEADLINE EXAMPLES — what GOOD looks like:
+GOOD: "Qethje që flet për ty." / "Three chairs. Forty years." / "The last proper barbershop in Peyton."
+TESTIMONIAL EXAMPLES:
+GOOD: "Shkoj tek Arti që prej 3 vitesh. I vetmi vend ku nuk më lyp foto kur i shpjegoj si e dua."
+GOOD: "My father brought me here when I was 8. Now I bring my son. Same chair."`,
+
+    restaurant: `
+HERO HEADLINE EXAMPLES — what GOOD looks like:
+GOOD: "Tavolina jote të pret." / "Sunday lunch starts at 1. Stays until people leave."
+GOOD: "Recetat e gjyshes. Furra që nga viti 1987."
+TESTIMONIAL EXAMPLES:
+GOOD: "Vij këtu për tavë kosi që nga koha e studimeve. Shija nuk ka ndryshuar."
+GOOD: "We held our engagement dinner here. They remembered everyone's order the next time we came."`,
+
+    clinic: `
+HERO HEADLINE EXAMPLES:
+GOOD: "Kujdes që e meriton, pa pritje." / "The clinic your family doctor sends their family to."
+GOOD: "Konsultë sot. Përgjigje nesër."
+TESTIMONIAL EXAMPLES:
+GOOD: "Dr. Krasniqi më shpjegoi rezultatet pa frikësim. Hera e parë që dikush e bën."
+GOOD: "The wait was 8 minutes. Came back the next month for my mother. Same."`,
+
+    beauty_salon: `
+HERO HEADLINE EXAMPLES:
+GOOD: "Bukuria që ndien, jo që sheh." / "Forty minutes that change your week."
+GOOD: "Stilistët që dëgjojnë para se të punojnë."
+TESTIMONIAL EXAMPLES:
+GOOD: "Hapur prej 2014. Klientet tona vijnë para dasmës — dhe pas saj."
+GOOD: "She asked what kind of week I'd had before she touched my hair. That's the difference."`,
+
+    gym: `
+HERO HEADLINE EXAMPLES:
+GOOD: "Pa filtra. Vetëm punë." / "No mirrors at the squat rack. There's a reason."
+GOOD: "Hekuri është i njëjtë kudo. Njerëzit nuk janë."
+TESTIMONIAL EXAMPLES:
+GOOD: "Pa muzikë komerciale. Pa pasqyra dramatike. Vetëm hekur dhe njerëz që dinë çfarë po bëjnë."
+GOOD: "I trained at three gyms before this one. The trainers here actually watch your form."`,
+
+    other: `
+HERO HEADLINE EXAMPLES — what GOOD looks like (across industries):
+GOOD: "Diçka e bërë me dorë. Gjithçka tjetër është reklamë." (handcraft business)
+GOOD: "The mechanic your father trusted. Same shop. Same name."
+GOOD: "Eight years. One specialty. We don't do anything else."
+TESTIMONIAL EXAMPLES:
+GOOD: "Më ka rekomanduar kushëriri. Tani po e rekomandoj unë."
+GOOD: "Three friends sent me here. They all said the same thing: you'll know it when you see it."`,
+  };
+
+  return fewShots[canonicalIndustry] || fewShots.other;
+}
 
 function heroDirective(hero: string): string {
   switch (hero) {
-    case 'cinematic': return 'Full-bleed hero — dramatic background image or gradient, large headline, single primary CTA. Cinematic and immersive.';
-    case 'split': return '50/50 split hero — image on one side, headline + subheadline + CTA on the other. Balanced.';
-    case 'centered': return 'Minimal centered hero — small label, big headline, brief subheadline, one CTA. All centered. Lots of whitespace.';
-    case 'editorial': return 'Magazine-style hero — small metadata bar at top (issue number, location), oversized serif headline, prose-style subheadline. No image.';
+    case 'cinematic': return 'Full-bleed feel — dramatic background image or gradient, large headline. Cinematic and immersive.';
+    case 'split': return '50/50 split — image on one side, text on the other. Balanced.';
+    case 'centered': return 'Minimal centered — small label, big headline, brief subheadline. All centered. Lots of whitespace.';
+    case 'editorial': return 'Magazine-style — metadata bar at top, oversized headline, prose-style subheadline. No image.';
     default: return '';
   }
 }
@@ -131,8 +220,8 @@ function sectionPriorityDirective(priority: string): string {
 
 function densityDirective(density: string): string {
   return density === 'sparse'
-    ? 'Sparse and airy: shorter copy, fewer items per row, generous whitespace. cardStyle should be "minimal".'
-    : 'Rich and dense: longer copy, more items per row, tighter spacing, more sections. cardStyle should be "raised" or "bordered".';
+    ? 'Sparse and airy: shorter copy, fewer items per row, generous whitespace. Prefer "list" or "grid-2" for services.'
+    : 'Rich and dense: longer copy, more items per row, tighter spacing, more sections. Prefer "cards" or "editorial-rows" for services.';
 }
 
 function moodDirective(mood: string, primary?: string, accent?: string): string {
@@ -203,16 +292,19 @@ async function generateTheme(args: GenerateThemeArgs) {
     canonicalIndustry, regenSeed,
   } = args;
 
-  const systemPrompt = `You are a senior designer translating a brand strategy brief into a complete website theme. The user has chosen specific structural direction. HONOR IT.
+  const definingTraits = Array.isArray(brief.definingTraits)
+    ? brief.definingTraits.join(', ')
+    : String(brief.definingTraits ?? '');
 
-CRITICAL RULES:
-- The price field in every service MUST be a number (integer). Use the midpoint if a range is intended. Example: 25 not "20-30 Eur".
-- The icon field in valueProps MUST always be a non-empty emoji string.
+  const systemPrompt = `You are a senior designer translating a brand strategy brief into a unique website. The user has chosen specific structural direction. HONOR IT, but use it as creative input — not a recipe.
+
+CRITICAL OUTPUT RULES:
+- Service prices MUST be integers (number type). Use the midpoint if a range is intended. Example: 25 not "20-30 Eur".
 - Output ONLY raw JSON — no markdown code fences, no explanation, no backticks.
 
-USER'S STRUCTURAL CHOICES:
+USER'S STRUCTURAL CHOICES (creative input, not literal recipe):
 
-Hero style: ${hero}
+Hero feel: ${hero}
 ${heroDirective(hero)}
 
 Section priority: ${sectionPriority}
@@ -228,17 +320,22 @@ Font personality: ${fontPersonality}
 ${fontDirective(fontPersonality)}
 
 Language: ${language}
-Write all customer-facing copy (heroHeadline, heroSubheadline, aboutCopy, ctaPrimary, ctaSecondary, footerTagline, metaDescription, valueProps title+description, testimonials role+quote, faq, services.description) in: ${languageInstruction(language)}
+Write all customer-facing copy in: ${languageInstruction(language)}
 
 Tone: ${tone}
 ${toneDirective(tone)}
 
-TEMPLATE ID — PICK ONE FROM THIS LIST:
-${VALID_TEMPLATE_IDS.join(', ')}
-Pick the templateId that best matches the user's hero style and industry.
+THE BRAND BRIEF IS GOSPEL. The brief tells you what makes this business different. Every section choice — every layout, every parameter, every word — must REINFORCE the brief. Generic outputs are failures. If two competitors in the same industry would get the same site from your output, you have failed.
+
+UNIQUENESS DIRECTIVE:
+You are designing for ONE specific business with ONE specific brief. Do not produce "a generic gym website" or "a generic clinic website." Produce THE WEBSITE THIS BUSINESS WOULD HAVE IF THEY HIRED A DESIGNER WHO READ THE BRIEF.
+
+Two businesses with the same industry but different briefs SHOULD produce visibly different layouts. Use the section parameter freedom to make them different. Pick unusual combinations when the brief justifies them.
+
+${SECTIONS_BRIEFING}
 
 REALISTIC PRICING (Kosovo market, EUR):
-- barbershop: €5-25
+- barbershop: €5-25 (haircut €8-12, fade €10-15, full package €20)
 - restaurant: €4-15 menu items
 - clinic: €25-80 consultations
 - beauty_salon: €15-50
@@ -249,31 +346,17 @@ THIS BUSINESS'S CANONICAL INDUSTRY: ${canonicalIndustry}
 Each service MUST have a realistic duration (15, 30, 45, 60, 90, 120 minutes).
 
 USER-PROVIDED SERVICES (gospel — build the services array around these):
-${userProvidedServices || '(none provided — infer 4-5 typical services for this industry)'}
+${userProvidedServices || '(none provided — infer 3-5 typical services for this industry)'}
 
-If the user listed services, each entry in your services array MUST correspond to one of them. Do not invent unrelated services when the user has been specific.
+If the user listed services, every entry in the services section's items array MUST correspond to one of them. Do not invent unrelated services when the user has been specific.
 
-FEW-SHOT — HERO HEADLINES
+${fewShotsFor(canonicalIndustry)}
 
-BAD: "Welcome to our barbershop" / "Experience the art of grooming"
-GOOD: "Qethje që flet për ty." / "Three chairs. Forty years. Still no appointment needed." / "The last proper barbershop in Peyton."
-
-FEW-SHOT — TESTIMONIALS
-
-BAD: "Great service! Highly recommend!" / "John Smith from New York"
-GOOD: "Shkoj tek Arti që prej 3 vitesh. I vetmi vend ku nuk më lyp foto kur i shpjegoj si e dua."
-GOOD: "My father brought me here when I was 8. Now I bring my son. Same chair."
-
-FEW-SHOT — VALUE PROPS
-
-BAD title: "Quality Service" / BAD description: "We provide top-notch service"
-GOOD title: "One chair, one cut" / GOOD description: "No rotating through three barbers. The one who starts your cut finishes it."
-
-BANNED PHRASES — if you use any, you have failed:
+BANNED PHRASES — if you use any in the customer-facing copy, you have failed:
 ${BANNED_PHRASES.map(p => `- "${p}"`).join('\n')}
 
-Also banned:
-- Emoji in body copy (only in valueProps.icon)
+Also banned in body copy:
+- Emoji in body text (don't use any)
 - "Whether you're X or Y, we've got you covered"
 - "We pride ourselves on..."
 - Lorem ipsum
@@ -290,7 +373,7 @@ ${JSON.stringify(THEME_SCHEMA.schema)}`;
 
   const userPrompt = `BRAND BRIEF (gospel — every design choice must serve it):
 - Positioning: ${brief.positioning}
-- Defining traits: ${brief.definingTraits.join(', ')}
+- Defining traits: ${definingTraits}
 - Target customer: ${brief.targetCustomer}
 - Voice: ${brief.voice}
 - Cultural anchor: ${brief.culturalAnchor}
@@ -301,11 +384,13 @@ BUSINESS:
 - City: ${city}
 ${mood === 'custom' ? `- BRAND COLORS (LOCKED): primary=${brandPrimary}, accent=${brandAccent}` : ''}
 
-Generate the theme.${regenSeed ? ` (regen: ${regenSeed})` : ''}`;
+${regenSeed ? `REGENERATION ATTEMPT — produce a notably DIFFERENT direction than the previous result. Pick different layout combinations. Pick different copy angles. Different decorative elements. The brief is the same — your interpretation must shift. (seed: ${regenSeed})` : ''}
+
+Generate the theme.`;
 
   const response = await anthropic.messages.create({
     model: 'claude-haiku-4-5',
-    max_tokens: 4096,
+    max_tokens: 6000,
     temperature: 0.85,
     system: systemPrompt,
     messages: [
@@ -317,21 +402,47 @@ Generate the theme.${regenSeed ? ` (regen: ${regenSeed})` : ''}`;
   return parseModelJson(text || '{}');
 }
 
+// Recursively scan section text fields for banned phrases.
+function collectSectionCopy(sections: any[]): string {
+  if (!Array.isArray(sections)) return '';
+  const TEXT_FIELDS = ['headline', 'subheadline', 'body', 'intro', 'attribution', 'caption', 'tagline', 'metadataLeft', 'metadataRight', 'ctaPrimary', 'ctaSecondary'];
+  const ITEM_TEXT_FIELDS = ['name', 'description', 'quote', 'role', 'question', 'answer'];
+
+  const parts: string[] = [];
+  for (const section of sections) {
+    if (!section || typeof section !== 'object') continue;
+    for (const field of TEXT_FIELDS) {
+      if (typeof section[field] === 'string') parts.push(section[field]);
+    }
+    if (Array.isArray(section.items)) {
+      for (const item of section.items) {
+        if (!item || typeof item !== 'object') continue;
+        for (const field of ITEM_TEXT_FIELDS) {
+          if (typeof item[field] === 'string') parts.push(item[field]);
+        }
+      }
+    }
+  }
+  return parts.join(' ').toLowerCase();
+}
+
 function validateTheme(v: any): { valid: boolean; reasons: string[] } {
   const reasons: string[] = [];
-  const allCopy = [
-    v.heroHeadline, v.heroSubheadline, v.aboutCopy, v.footerTagline,
-    ...(v.valueProps || []).map((p: any) => `${p.title} ${p.description}`),
-    ...(v.testimonials || []).map((t: any) => t.quote),
-  ].join(' ').toLowerCase();
+  const allCopy = collectSectionCopy(v?.sections);
 
   for (const banned of BANNED_PHRASES) {
     if (allCopy.includes(banned.toLowerCase())) reasons.push(`Contains banned phrase: "${banned}"`);
   }
 
-  const avgTestimonial = (v.testimonials || [])
-    .reduce((s: number, t: any) => s + (t.quote?.length || 0), 0) / (v.testimonials?.length || 1);
-  if (avgTestimonial < 40) reasons.push('Testimonials too short');
+  // Testimonial-quote-length check on the testimonials section, if present.
+  const testimonialsSection = Array.isArray(v?.sections)
+    ? v.sections.find((s: any) => s?.kind === 'testimonials')
+    : null;
+  if (testimonialsSection && Array.isArray(testimonialsSection.items) && testimonialsSection.items.length > 0) {
+    const avg = testimonialsSection.items
+      .reduce((s: number, t: any) => s + (t?.quote?.length || 0), 0) / testimonialsSection.items.length;
+    if (avg < 40) reasons.push('Testimonials too short');
+  }
 
   return { valid: reasons.length === 0, reasons };
 }
@@ -381,7 +492,7 @@ export async function POST(request: NextRequest) {
       regenSeed,
     };
 
-    console.log('[generate-variants] Generating single theme', { canonical, hero: args.hero, mood: args.mood });
+    console.log('[generate-variants] Generating parametric theme', { canonical, hero: args.hero, mood: args.mood });
     let theme = await generateTheme(args);
 
     const validation = validateTheme(theme);

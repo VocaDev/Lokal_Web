@@ -44,6 +44,10 @@ export interface WebsiteCustomization {
   uniqueness_statement?: string;
   booking_method?: 'appointments' | 'walkin' | 'both' | 'none';
 
+  // AI parametric renderer payload (migration 015)
+  ai_sections?: AiSection[];
+  ai_layout_seed?: string;
+
   created_at: string;
   updated_at: string;
 }
@@ -97,4 +101,90 @@ export interface WizardInput {
   fontPersonality: 'editorial' | 'modern' | 'friendly' | 'bold' | 'elegant';
   language: 'sq' | 'en' | 'both';
   tone: 'friendly' | 'professional' | 'bold';
+}
+
+// ----------------------------------------------------------------
+// AI parametric renderer (migration 015)
+// ----------------------------------------------------------------
+
+export type AiSectionKind = 'hero' | 'services' | 'story' | 'gallery' | 'testimonials' | 'faq' | 'footer';
+
+export interface AiHeroSection {
+  kind: 'hero';
+  layout: 'centered' | 'split' | 'fullbleed' | 'editorial' | 'asymmetric';
+  imageStyle: 'photo' | 'gradient' | 'pattern' | 'none';
+  metadataBar: boolean;
+  headlinePosition: 'top' | 'center' | 'bottom-left' | 'bottom-right' | 'left' | 'right';
+  ctaCount: 0 | 1 | 2;
+  headline: string;
+  subheadline?: string;
+  ctaPrimary?: string;
+  ctaSecondary?: string;
+  metadataLeft?: string;   // only when metadataBar=true
+  metadataRight?: string;
+  decorativeElement?: 'none' | 'rule' | 'number' | 'glyph';
+}
+
+export interface AiServicesSection {
+  kind: 'services';
+  layout: 'list' | 'grid-2' | 'grid-3' | 'editorial-rows' | 'cards';
+  showPrices: boolean;
+  showDuration: boolean;
+  divider: 'none' | 'line' | 'number';
+  intro?: string;
+  items: Array<{ name: string; description?: string; price?: number; durationMinutes?: number }>;
+}
+
+export interface AiStorySection {
+  kind: 'story';
+  layout: 'centered-quote' | 'two-column' | 'long-form' | 'pull-quote';
+  body: string;
+  attribution?: string;
+}
+
+export interface AiGallerySection {
+  kind: 'gallery';
+  layout: 'masonry' | 'grid-uniform' | 'showcase' | 'strip';
+  caption?: string;
+}
+
+export interface AiTestimonialsSection {
+  kind: 'testimonials';
+  layout: 'cards' | 'single-quote' | 'rotating' | 'wall';
+  items: Array<{ name: string; role: string; quote: string; rating?: number }>;
+}
+
+export interface AiFaqSection {
+  kind: 'faq';
+  layout: 'accordion' | 'two-column' | 'inline';
+  items: Array<{ question: string; answer: string }>;
+}
+
+export interface AiFooterSection {
+  kind: 'footer';
+  layout: 'centered' | 'three-column' | 'editorial' | 'minimal';
+  tagline?: string;
+}
+
+export type AiSection =
+  | AiHeroSection
+  | AiServicesSection
+  | AiStorySection
+  | AiGallerySection
+  | AiTestimonialsSection
+  | AiFaqSection
+  | AiFooterSection;
+
+export interface AiSitePayload {
+  sections: AiSection[];
+  primaryColor: string;
+  accentColor: string;
+  bgColor: string;
+  surfaceColor: string;
+  textColor: string;
+  mutedTextColor: string;
+  borderColor: string;
+  headingFont: 'dm-sans' | 'playfair' | 'inter' | 'poppins' | 'space-grotesk';
+  bodyFont: 'dm-sans' | 'inter' | 'poppins';
+  metaDescription: string;
 }

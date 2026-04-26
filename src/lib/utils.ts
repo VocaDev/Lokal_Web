@@ -90,6 +90,25 @@ export function isMainDomain(host: string): boolean {
 }
 
 /**
+ * Display label for a tenant site, shown in UI labels.
+ * Always returns the production-aspirational form: "subdomain.lokalweb.com".
+ * For DEMO/staging on vercel.app, the displayed text and the actual link
+ * target are intentionally different.
+ */
+export function publicSiteLabel(subdomain: string): string {
+  return `${subdomain}.lokalweb.com`;
+}
+
+/**
+ * Functional href for a tenant site. Always path-based on the current origin
+ * so it works on *.vercel.app (no wildcard subdomains) AND on a future
+ * custom domain (where middleware rewrites paths anyway).
+ */
+export function publicSiteHref(subdomain: string): string {
+  return `/${subdomain}`;
+}
+
+/**
  * Map a customization heading_font / body_font enum value to a CSS font-family
  * string suitable for assigning to --font-heading / --font-sans.
  */

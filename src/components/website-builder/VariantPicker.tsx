@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { publicSiteHref, publicSiteLabel } from '@/lib/utils';
 
 export type Variant = {
   variantName: string;
@@ -34,8 +35,6 @@ type Props = {
   businessId: string;
   onRegenerate: () => void;
 };
-
-const PUBLIC_HOST = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lokal-web-one.vercel.app';
 
 export default function VariantPicker({ variants, businessId, onRegenerate }: Props) {
   const router = useRouter();
@@ -69,8 +68,8 @@ export default function VariantPicker({ variants, businessId, onRegenerate }: Pr
   };
 
   if (published) {
-    const siteUrl = publishedSubdomain ? `https://${publishedSubdomain}.${PUBLIC_HOST}` : null;
-    const siteLabel = publishedSubdomain ? `${publishedSubdomain}.${PUBLIC_HOST}` : 'Your website is live';
+    const siteUrl = publishedSubdomain ? publicSiteHref(publishedSubdomain) : null;
+    const siteLabel = publishedSubdomain ? publicSiteLabel(publishedSubdomain) : 'Your website is live';
     return (
       <div className="fixed inset-0 z-50 bg-[#0a0a0f] flex items-center justify-center p-6 animate-in fade-in duration-500">
         <div className="text-center space-y-6 max-w-md">

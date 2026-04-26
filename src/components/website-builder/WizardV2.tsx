@@ -336,21 +336,6 @@ export default function WizardV2({ businessId, subdomain }: Props) {
   // -------- chrome --------
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Topbar */}
-      <header className="sticky top-0 z-30 bg-background/80 backdrop-blur border-b border-border">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="font-semibold tracking-tight">
-            <span className="bg-gradient-to-br from-primary to-accent bg-clip-text text-transparent">LokalWeb</span>
-          </div>
-          <a
-            href="/dashboard"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Dil
-          </a>
-        </div>
-      </header>
-
       {/* Progress bar (hidden on generation/preview screens) */}
       {step >= 1 && step <= 5 && (
         <div className="border-b border-border">

@@ -45,46 +45,42 @@ export async function POST(
       data: { publicUrl },
     } = supabase.storage.from('business-gallery').getPublicUrl(path);
 
-    // Update or insert gallery item
-    // Note: We use upsert with a fallback in case unique constraint is missing
-    const { data, error: dbError } = await supabase
+    // Mode-aware write — migration 016 dropped the unique
+    // (business_id, section_key) constraint so upsert is no longer valid.
+    // hero and story replace; services and gallery append.
+    const SINGLE_IMAGE_SLOTS = new Set(['hero', 'story']);
+    const isSingle = SINGLE_IMAGE_SLOTS.has(sectionKey);
+
+    if (isSingle) {
+      const { error: deleteErr } = await supabase
+        .from('gallery_items')
+        .delete()
+        .eq('business_id', businessId)
+        .eq('section_key', sectionKey);
+
+      if (deleteErr) {
+        console.error('[gallery upload] delete-before-replace failed:', deleteErr);
+        return NextResponse.json({ error: deleteErr.message }, { status: 500 });
+      }
+    }
+
+    const { data, error: insertErr } = await supabase
       .from('gallery_items')
-      .upsert(
-        {
-          business_id: businessId,
-          section_key: sectionKey,
-          image_url: publicUrl,
-          alt_text: file.name,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'business_id,section_key' }
-      )
+      .insert({
+        business_id: businessId,
+        section_key: sectionKey,
+        image_url: publicUrl,
+        alt_text: file.name,
+        updated_at: new Date().toISOString(),
+      })
       .select()
       .single();
 
-    if (dbError) {
-      console.error('Database Upsert Error:', dbError);
-      // Fallback: try simple insert if upsert with conflict fails
-      if (dbError.code === '42703' || dbError.message.includes('index')) {
-         const { data: insertData, error: insertError } = await supabase
-          .from('gallery_items')
-          .insert({
-            business_id: businessId,
-            section_key: sectionKey,
-            image_url: publicUrl,
-            alt_text: file.name,
-          })
-          .select()
-          .single();
-         
-         if (!insertError) return NextResponse.json(insertData);
-         console.error('Database Fallback Insert Error:', insertError);
-      }
-      return NextResponse.json(
-        { error: `Database error: ${dbError.message}` },
-        { status: 500 }
-      );
+    if (insertErr) {
+      console.error('[gallery upload] insert failed:', insertErr);
+      return NextResponse.json({ error: insertErr.message }, { status: 500 });
     }
+
     return NextResponse.json(data);
   } catch (err: any) {
     console.error('Unhandled POST /api/gallery/upload error:', err);

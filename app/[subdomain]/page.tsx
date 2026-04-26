@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Business, BusinessHours, Service } from "@/lib/types";
+import type { AiSection, AiSitePayload } from "@/lib/types/customization";
 import { normalizeIndustry } from "@/lib/industries";
 import { hexToHsl, fontFamilyOf } from "@/lib/utils";
 import TemplateRouter from "@/components/templates";
+import { DynamicSiteRenderer } from "@/components/templates/ai/DynamicSiteRenderer";
 
 export async function generateMetadata({ params }: { params: Promise<{ subdomain: string }> }) {
   const { subdomain } = await params;
@@ -170,6 +172,40 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
     openTime: row.open_time,
     closeTime: row.close_time,
   }));
+
+  // AI path — businesses created via the wizard store a parametric sections[]
+  // payload in customization.ai_sections. Render via DynamicSiteRenderer; the
+  // existing TemplateRouter is bypassed entirely. Templates path is unchanged.
+  const aiSections = customData?.ai_sections as AiSection[] | null | undefined;
+  if (
+    bizData.website_creation_method === 'ai_generated' &&
+    Array.isArray(aiSections) &&
+    aiSections.length > 0
+  ) {
+    const payload: AiSitePayload = {
+      sections: aiSections,
+      primaryColor: customData!.primary_color,
+      accentColor: customData!.accent_color,
+      bgColor: customData!.bg_color,
+      surfaceColor: customData!.surface_color,
+      textColor: customData!.text_color,
+      mutedTextColor: customData!.muted_text_color,
+      borderColor: customData!.border_color,
+      headingFont: customData!.heading_font,
+      bodyFont: customData!.body_font,
+      metaDescription: customData!.meta_description ?? '',
+    };
+    return (
+      <div style={themeStyles} className="theme-customized min-h-screen">
+        <DynamicSiteRenderer
+          business={JSON.parse(JSON.stringify(business))}
+          services={JSON.parse(JSON.stringify(services))}
+          hours={JSON.parse(JSON.stringify(hours))}
+          payload={JSON.parse(JSON.stringify(payload))}
+        />
+      </div>
+    );
+  }
 
   return (
     <div style={themeStyles} className="theme-customized min-h-screen">

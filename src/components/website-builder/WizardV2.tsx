@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { cn, fontFamilyOf, publicSiteHref, publicSiteLabel } from '@/lib/utils';
-import type { WizardInput } from '@/lib/types/customization';
+import { cn, publicSiteHref, publicSiteLabel } from '@/lib/utils';
+import type { WizardInput, AiSitePayload } from '@/lib/types/customization';
+import type { Business, Service } from '@/lib/types';
+import { DynamicSiteRenderer } from '@/components/templates/ai/DynamicSiteRenderer';
 
 type Brief = {
   positioning: string;
@@ -12,37 +14,9 @@ type Brief = {
   culturalAnchor: string;
 };
 
-type Theme = {
-  variantName?: string;
-  templateId?: string;
-  primaryColor: string;
-  accentColor: string;
-  bgColor: string;
-  surfaceColor: string;
-  textColor: string;
-  mutedTextColor: string;
-  borderColor: string;
-  headingFont: string;
-  bodyFont: string;
-  heroHeight?: string;
-  cardStyle?: string;
-  heroHeadline: string;
-  heroSubheadline: string;
-  aboutCopy: string;
-  ctaPrimary: string;
-  ctaSecondary?: string;
-  footerTagline?: string;
-  metaDescription?: string;
-  valueProps?: Array<{ icon: string; title: string; description: string }>;
-  testimonials?: Array<{ name: string; role: string; quote: string; rating: number }>;
-  faq?: Array<{ question: string; answer: string }>;
-  services?: Array<{ name: string; description: string; price: number; durationMinutes: number }>;
-  showTestimonials?: boolean;
-  showTeam?: boolean;
-  showContact?: boolean;
-  // honor wizard intent client-side; the AI may emit it back too
-  heroStyle?: WizardInput['hero'];
-};
+// The wizard's preview consumes the same AiSitePayload that the public site
+// renders. What you see in preview is what you get on the live tenant page.
+type Theme = AiSitePayload;
 
 type Props = {
   businessId: string;
@@ -288,8 +262,6 @@ export default function WizardV2({ businessId, subdomain }: Props) {
       }
       const themeData = await themeRes.json();
       const t = themeData.theme as Theme;
-      // Honor the wizard's chosen hero in preview, regardless of what AI emits.
-      t.heroStyle = input.hero;
       setTheme(t);
       setDoneSubsteps([0, 1, 2, 3, 4]);
       setActiveSubstep(5);
@@ -1227,11 +1199,11 @@ function PreviewScreen({
             </div>
           </div>
           <div className="rounded-xl overflow-hidden border border-border">
-            <PreviewSiteFromTheme
-              theme={theme}
-              subdomain={subdomain}
-              businessName={businessName}
-              city={city}
+            <DynamicSiteRenderer
+              business={previewBusiness(businessName, city)}
+              services={previewServicesFromTheme(theme)}
+              hours={[]}
+              payload={theme}
             />
           </div>
         </div>
@@ -1240,200 +1212,41 @@ function PreviewScreen({
   );
 }
 
-function PreviewSiteFromTheme({
-  theme, businessName, city,
-}: {
-  theme: Theme;
-  subdomain: string;
-  businessName: string;
-  city: string;
-}) {
-  const headingFont = fontFamilyOf(theme.headingFont) ?? 'system-ui, sans-serif';
-  const bodyFont = fontFamilyOf(theme.bodyFont) ?? 'system-ui, sans-serif';
-  const heroStyle = theme.heroStyle ?? 'cinematic';
-
-  const baseStyle: React.CSSProperties = {
-    background: theme.bgColor,
-    color: theme.textColor,
-    fontFamily: bodyFont,
+// Stub Business for the wizard preview. The renderer reads name/address/phone
+// for footer + hero metadata. Other fields default to safe empties.
+function previewBusiness(businessName: string, city: string): Business {
+  return {
+    id: 'preview',
+    name: businessName || 'Faqja jote',
+    subdomain: 'preview',
+    industry: 'other',
+    template: '__ai__',
+    templateId: '__ai__',
+    phone: '',
+    address: city,
+    description: '',
+    logoUrl: '',
+    accentColor: '',
+    socialLinks: { instagram: '', facebook: '', whatsapp: '' },
+    galleryImages: [],
+    createdAt: new Date().toISOString(),
   };
+}
 
-  return (
-    <div style={baseStyle}>
-      {heroStyle === 'cinematic' && (
-        <section
-          className="px-8 py-20 md:py-28 relative overflow-hidden"
-          style={{
-            background: `linear-gradient(135deg, ${theme.primaryColor}80 0%, ${theme.bgColor} 50%, ${theme.accentColor}40 100%)`,
-          }}
-        >
-          <div className="max-w-3xl">
-            <h1
-              className="text-3xl md:text-5xl font-bold leading-tight mb-4"
-              style={{ fontFamily: headingFont, color: theme.textColor }}
-            >
-              {theme.heroHeadline}
-            </h1>
-            <p
-              className="text-base md:text-lg mb-7"
-              style={{ color: theme.mutedTextColor }}
-            >
-              {theme.heroSubheadline}
-            </p>
-            <button
-              className="px-6 py-3 rounded-lg text-sm font-semibold"
-              style={{ background: theme.primaryColor, color: theme.bgColor }}
-            >
-              {theme.ctaPrimary}
-            </button>
-          </div>
-        </section>
-      )}
-
-      {heroStyle === 'split' && (
-        <section className="grid md:grid-cols-2">
-          <div
-            className="px-8 py-16 md:py-24"
-            style={{
-              background: `linear-gradient(135deg, ${theme.primaryColor}, ${theme.accentColor})`,
-              minHeight: 280,
-            }}
-          />
-          <div
-            className="px-8 py-16 md:py-24 flex flex-col justify-center"
-            style={{ background: theme.surfaceColor }}
-          >
-            <h1
-              className="text-2xl md:text-4xl font-bold leading-tight mb-3"
-              style={{ fontFamily: headingFont, color: theme.textColor }}
-            >
-              {theme.heroHeadline}
-            </h1>
-            <p className="text-sm md:text-base mb-5" style={{ color: theme.mutedTextColor }}>
-              {theme.heroSubheadline}
-            </p>
-            <button
-              className="px-5 py-2.5 rounded-lg text-sm font-semibold w-fit"
-              style={{ background: theme.primaryColor, color: theme.bgColor }}
-            >
-              {theme.ctaPrimary}
-            </button>
-          </div>
-        </section>
-      )}
-
-      {heroStyle === 'centered' && (
-        <section className="px-8 py-24 md:py-32 text-center">
-          <div className="max-w-2xl mx-auto">
-            <div
-              className="text-xs uppercase tracking-[0.3em] mb-6"
-              style={{ color: theme.mutedTextColor }}
-            >
-              {city || businessName}
-            </div>
-            <h1
-              className="text-3xl md:text-5xl font-bold leading-tight mb-5"
-              style={{ fontFamily: headingFont, color: theme.textColor }}
-            >
-              {theme.heroHeadline}
-            </h1>
-            <p className="text-base md:text-lg mb-8" style={{ color: theme.mutedTextColor }}>
-              {theme.heroSubheadline}
-            </p>
-            <button
-              className="px-6 py-3 rounded-lg text-sm font-semibold"
-              style={{ background: theme.primaryColor, color: theme.bgColor }}
-            >
-              {theme.ctaPrimary}
-            </button>
-          </div>
-        </section>
-      )}
-
-      {heroStyle === 'editorial' && (
-        <section className="px-8 py-16 md:py-24" style={{ background: theme.surfaceColor }}>
-          <div
-            className="flex items-center justify-between text-[11px] uppercase tracking-[0.2em] pb-4 mb-10 border-b"
-            style={{ color: theme.mutedTextColor, borderColor: theme.borderColor }}
-          >
-            <span>№ 01 · {businessName || 'Issue'}</span>
-            <span>{city || 'Kosovo'}</span>
-          </div>
-          <h1
-            className="text-4xl md:text-6xl font-bold leading-[1.05] mb-7 max-w-4xl"
-            style={{ fontFamily: headingFont, color: theme.textColor }}
-          >
-            {theme.heroHeadline}
-          </h1>
-          <p
-            className="text-base md:text-lg max-w-2xl leading-relaxed"
-            style={{ color: theme.mutedTextColor, fontFamily: bodyFont }}
-          >
-            {theme.heroSubheadline}
-          </p>
-        </section>
-      )}
-
-      {/* Services */}
-      {theme.services && theme.services.length > 0 && (
-        <section className="px-8 py-14" style={{ background: theme.bgColor }}>
-          <div className="max-w-3xl">
-            <h2
-              className="text-2xl md:text-3xl font-bold mb-7"
-              style={{ fontFamily: headingFont, color: theme.textColor }}
-            >
-              Shërbimet
-            </h2>
-            <div className="space-y-3">
-              {theme.services.map((s, i) => (
-                <div
-                  key={i}
-                  className="flex items-start justify-between gap-6 py-4 border-b"
-                  style={{ borderColor: theme.borderColor }}
-                >
-                  <div>
-                    <div className="text-base font-semibold" style={{ color: theme.textColor }}>
-                      {s.name}
-                    </div>
-                    <div className="text-sm mt-1" style={{ color: theme.mutedTextColor }}>
-                      {s.description}
-                    </div>
-                  </div>
-                  <div className="text-sm font-semibold whitespace-nowrap" style={{ color: theme.primaryColor }}>
-                    €{s.price}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* About */}
-      {theme.aboutCopy && (
-        <section className="px-8 py-14" style={{ background: theme.surfaceColor }}>
-          <div className="max-w-3xl">
-            <h2
-              className="text-2xl md:text-3xl font-bold mb-5"
-              style={{ fontFamily: headingFont, color: theme.textColor }}
-            >
-              Historia
-            </h2>
-            <p className="text-base leading-relaxed" style={{ color: theme.mutedTextColor }}>
-              {theme.aboutCopy}
-            </p>
-          </div>
-        </section>
-      )}
-
-      <footer
-        className="px-8 py-8 border-t"
-        style={{ borderColor: theme.borderColor, background: theme.bgColor }}
-      >
-        <div className="text-sm" style={{ color: theme.mutedTextColor }}>
-          © {new Date().getFullYear()} {businessName || 'LokalWeb'}{city ? ` · ${city}` : ''}
-        </div>
-      </footer>
-    </div>
-  );
+// Surface AI-generated services from the theme's services section so the
+// renderer's fallback (when section.items is empty) has data to display.
+function previewServicesFromTheme(theme: Theme): Service[] {
+  const servicesSection = theme.sections.find(s => s.kind === 'services');
+  if (!servicesSection || servicesSection.kind !== 'services') return [];
+  const items = Array.isArray(servicesSection.items) ? servicesSection.items : [];
+  return items
+    .filter(it => typeof it?.name === 'string' && it.name.trim().length > 0)
+    .map((it, idx) => ({
+      id: `preview-${idx}`,
+      businessId: 'preview',
+      name: String(it.name).trim(),
+      description: typeof it.description === 'string' ? it.description : '',
+      price: typeof it.price === 'number' ? it.price : 0,
+      durationMinutes: typeof it.durationMinutes === 'number' ? it.durationMinutes : 30,
+    }));
 }

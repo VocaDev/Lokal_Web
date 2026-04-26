@@ -14,6 +14,8 @@ const BarbershopModern = ({ business, services, hours }: {
   services: Service[]
   hours: BusinessHours[]
 }) => {
+  const heroImg = business.gallerySections?.hero?.[0];
+  const storyImg = business.gallerySections?.story?.[0];
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerService, setDrawerService] = useState<Service | null>(null)
 
@@ -94,9 +96,9 @@ const BarbershopModern = ({ business, services, hours }: {
           </div>
         </div>
         <div className="relative overflow-hidden min-h-[60vh] md:min-h-0">
-          {business.galleryImages?.[0] ? (
+          {heroImg ? (
             <img
-              src={business.galleryImages[0]}
+              src={heroImg!}
               alt={business.name}
               className="absolute inset-0 w-full h-full object-cover"
             />
@@ -166,9 +168,9 @@ const BarbershopModern = ({ business, services, hours }: {
       <section id="story" className="bg-card py-32 px-6 md:px-10">
         <div className="max-w-5xl mx-auto grid md:grid-cols-[1.2fr_1fr] gap-16 md:gap-24 items-center">
           <div className="aspect-[3/4] overflow-hidden">
-            {business.galleryImages?.[1] ? (
+            {storyImg ? (
               <img
-                src={business.galleryImages[1]}
+                src={storyImg!}
                 alt={business.name}
                 className="w-full h-full object-cover"
               />

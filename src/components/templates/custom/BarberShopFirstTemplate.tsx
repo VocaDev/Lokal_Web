@@ -11,6 +11,8 @@ type Props = {
 }
 
 const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
+  const heroImg = business.gallerySections?.hero?.[0];
+  const storyImg = business.gallerySections?.story?.[0];
   const [navVisible, setNavVisible] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerService, setDrawerService] = useState<Service | null>(null);
@@ -66,9 +68,9 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
           minHeight: business.heroHeight === 'small' ? '60vh' : business.heroHeight === 'large' ? '100vh' : '85vh' 
         }}
       >
-        {business.galleryImages?.[0] ? (
+        {heroImg ? (
           <img
-            src={business.galleryImages[0]}
+            src={heroImg!}
             alt={business.name}
             className="absolute inset-0 w-full h-full object-cover"
           />
@@ -187,9 +189,9 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
             )}
           </div>
           <div>
-            {business.galleryImages?.[1] ? (
+            {storyImg ? (
               <img
-                src={business.galleryImages[1]}
+                src={storyImg!}
                 alt={business.name}
                 className="object-cover w-full h-full min-h-[400px]"
               />

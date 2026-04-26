@@ -21,6 +21,7 @@ const ClinicPremium = ({ business, services, hours }: {
   services: Service[]
   hours: BusinessHours[]
 }) => {
+  const heroImg = business.gallerySections?.hero?.[0];
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerService, setDrawerService] = useState<Service | null>(null)
 
@@ -97,9 +98,9 @@ const ClinicPremium = ({ business, services, hours }: {
           </div>
         </div>
         <div className="relative overflow-hidden min-h-[400px]">
-          {business.galleryImages?.[0] ? (
+          {heroImg ? (
             <img
-              src={business.galleryImages[0]}
+              src={heroImg!}
               alt={business.name}
               className="absolute inset-0 w-full h-full object-cover"
             />

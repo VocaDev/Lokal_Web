@@ -9,6 +9,7 @@ export default function ClinicModern({ business, services, hours }: {
   services: Service[]
   hours: BusinessHours[]
 }) {
+  const heroImg = business.gallerySections?.hero?.[0];
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerService, setDrawerService] = useState<Service | null>(null)
 
@@ -34,11 +35,13 @@ export default function ClinicModern({ business, services, hours }: {
 
       {/* HERO */}
       <section className="relative min-h-screen flex items-center pt-24 px-8 md:px-24">
-        <img 
-          src={business.galleryImages?.[0] ?? "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80"}
+        {heroImg ? (
+          <img  src={heroImg!} 
           alt="Clinic"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+          className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-background to-accent/20" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent" />
         
         <div className="relative z-10 max-w-2xl">

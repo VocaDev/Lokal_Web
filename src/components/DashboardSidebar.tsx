@@ -1,4 +1,4 @@
-import { LayoutDashboard, Calendar, Scissors, User, Clock, Image, LogOut, Loader2, ChevronDown, Building2, Check, UserPlus, Palette } from "lucide-react";
+import { LayoutDashboard, Calendar, Scissors, User, Clock, Image as ImageIcon, LogOut, Loader2, ChevronDown, Building2, Check, UserPlus, Palette } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -31,7 +31,6 @@ const items = [
   { title: "Bookings", url: "/dashboard/bookings", icon: Calendar },
   { title: "Services", url: "/dashboard/services", icon: Scissors },
   { title: "Business Hours", url: "/dashboard/hours", icon: Clock },
-  { title: "Gallery", url: "/dashboard/gallery", icon: Image },
   { title: "Customization", url: "/dashboard/customization", icon: Palette },
   { title: "Profile", url: "/dashboard/profile", icon: User },
 ];
@@ -151,7 +150,7 @@ export function DashboardSidebar({ business }: { business: Business }) {
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-sm text-primary hover:underline font-medium px-2 py-1"
             >
-              <Image className="h-4 w-4" /> View my website
+              <ImageIcon className="h-4 w-4" /> View my website
             </a>
           )}
           <button

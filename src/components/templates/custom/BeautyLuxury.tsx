@@ -9,6 +9,7 @@ export default function BeautyLuxury({ business, services, hours }: {
   services: Service[]
   hours: BusinessHours[]
 }) {
+  const heroImg = business.gallerySections?.hero?.[0];
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerService, setDrawerService] = useState<Service | null>(null)
 
@@ -32,11 +33,13 @@ export default function BeautyLuxury({ business, services, hours }: {
 
       {/* HERO */}
       <section className="relative h-screen flex items-center justify-center pt-24 overflow-hidden">
-        <img 
-          src={business.galleryImages?.[0] ?? "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1600&q=80"}
+        {heroImg ? (
+          <img  src={heroImg!} 
           alt={business.name}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+          className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-background to-accent/20" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
         
         <div className="relative z-10 max-w-4xl text-center px-8">

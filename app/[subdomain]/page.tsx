@@ -45,7 +45,6 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
       logo_url,
       accent_color,
       social_links,
-      gallery_images,
       tagline,
       founded_year,
       timezone,
@@ -81,11 +80,6 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
     galleryBySection[key].push(item.image_url as string);
   });
 
-  const allGalleryImages = [
-    ...(bizData.gallery_images || []),
-    ...Object.values(galleryBySection).flat(),
-  ];
-
   const business: Business = {
     id: bizData.id,
     name: bizData.name,
@@ -99,7 +93,6 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
     logoUrl: bizData.logo_url,
     accentColor: customData?.primary_color || bizData.accent_color,
     socialLinks: bizData.social_links ?? { instagram: '', facebook: '', whatsapp: '' },
-    galleryImages: allGalleryImages,
     gallerySections: galleryBySection,
     // ownerId omitted — public visitors don't need to know who owns the business.
     createdAt: bizData.created_at,

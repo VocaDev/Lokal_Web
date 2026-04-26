@@ -1228,7 +1228,7 @@ function previewBusiness(businessName: string, city: string): Business {
     logoUrl: '',
     accentColor: '',
     socialLinks: { instagram: '', facebook: '', whatsapp: '' },
-    galleryImages: [],
+    gallerySections: {},
     createdAt: new Date().toISOString(),
   };
 }

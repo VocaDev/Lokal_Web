@@ -9,6 +9,7 @@ export default function ClinicClean({ business, services, hours }: {
   services: Service[]
   hours: BusinessHours[]
 }) {
+  const heroImg = business.gallerySections?.hero?.[0];
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerService, setDrawerService] = useState<Service | null>(null)
 
@@ -48,11 +49,13 @@ export default function ClinicClean({ business, services, hours }: {
           </div>
         </div>
         <div className="flex-1 bg-blue-600 relative overflow-hidden hidden md:block">
-           <img 
-              src={business.galleryImages?.[0] ?? "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80"}
+           {heroImg ? (
+          <img  src={heroImg!} 
               alt="Medical facility" 
-              className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-30" 
-            />
+              className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-30" />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-background to-accent/20" />
+        )}
             <div className="absolute inset-0 flex items-center justify-center">
                <div className="p-12 border-4 border-white/20 rounded-full animate-pulse"><Calendar className="h-20 w-20 text-white/40" /></div>
             </div>

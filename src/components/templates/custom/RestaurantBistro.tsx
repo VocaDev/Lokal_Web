@@ -14,6 +14,8 @@ const RestaurantBistro = ({ business, services, hours }: {
   services: Service[]
   hours: BusinessHours[]
 }) => {
+  const heroImg = business.gallerySections?.hero?.[0];
+  const storyImg = business.gallerySections?.story?.[0];
   const [drawerOpen, setDrawerOpen] = useState(false)
   const openReservation = () => setDrawerOpen(true)
 
@@ -46,9 +48,9 @@ const RestaurantBistro = ({ business, services, hours }: {
 
       {/* HERO */}
       <section className="min-h-screen relative flex flex-col items-center justify-center">
-        {business.galleryImages?.[0] ? (
+        {heroImg ? (
           <img
-            src={business.galleryImages[0]}
+            src={heroImg!}
             alt={business.name}
             className="absolute inset-0 w-full h-full object-cover"
           />
@@ -173,9 +175,9 @@ const RestaurantBistro = ({ business, services, hours }: {
             )}
           </div>
           <div className="h-96 md:h-[500px] overflow-hidden">
-            {business.galleryImages?.[1] ? (
+            {storyImg ? (
               <img
-                src={business.galleryImages[1]}
+                src={storyImg!}
                 alt={business.name}
                 className="w-full h-full object-cover"
               />

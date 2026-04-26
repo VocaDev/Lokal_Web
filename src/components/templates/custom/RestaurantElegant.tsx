@@ -9,6 +9,7 @@ export default function RestaurantElegant({ business, services, hours }: {
   services: Service[]
   hours: BusinessHours[]
 }) {
+  const heroImg = business.gallerySections?.hero?.[0];
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerService, setDrawerService] = useState<Service | null>(null)
 
@@ -29,11 +30,13 @@ export default function RestaurantElegant({ business, services, hours }: {
 
       {/* HERO */}
       <section className="relative h-screen flex items-center justify-center pt-20 overflow-hidden">
-        <img 
-          src={business.galleryImages?.[0] ?? "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1600&q=80"}
+        {heroImg ? (
+          <img  src={heroImg!} 
           alt={business.name}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+          className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-background to-accent/20" />
+        )}
         <div className="absolute inset-0 bg-background/70" />
         <div className="relative z-10 max-w-3xl text-center px-8">
           <div className="w-12 h-px bg-primary mx-auto mb-8" />

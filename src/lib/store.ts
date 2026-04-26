@@ -15,7 +15,6 @@ function fromSnakeBusiness(data: any): Business {
     logoUrl: data.logo_url ?? "",
     accentColor: data.accent_color ?? "#000000",
     socialLinks: data.social_links || { instagram: "", facebook: "", whatsapp: "" },
-    galleryImages: data.gallery_images || [],
     ownerId: data.owner_id,
     createdAt: data.created_at ?? new Date().toISOString(),
     websiteCreationMethod: data.website_creation_method,
@@ -288,46 +287,6 @@ export async function saveBusiness(business: Business): Promise<void> {
       template: business.template,
     })
     .eq("id", business.id);
-  if (error) throw error;
-}
-
-// ✅ Add Gallery Image
-export async function addGalleryImage(businessId: string, url: string): Promise<void> {
-  const supabase = createClient();
-  const { data, error: fetchError } = await supabase
-    .from("businesses")
-    .select("gallery_images")
-    .eq("id", businessId)
-    .maybeSingle();
-  
-  if (fetchError) throw fetchError;
-  const currentImages = data?.gallery_images || [];
-  const { error } = await supabase
-    .from("businesses")
-    .update({
-      gallery_images: [...currentImages, url]
-    })
-    .eq("id", businessId);
-  if (error) throw error;
-}
-
-// ✅ Remove Gallery Image
-export async function removeGalleryImage(businessId: string, url: string): Promise<void> {
-  const supabase = createClient();
-  const { data, error: fetchError } = await supabase
-    .from("businesses")
-    .select("gallery_images")
-    .eq("id", businessId)
-    .maybeSingle();
-  
-  if (fetchError) throw fetchError;
-  if (!data) return;
-  const { error } = await supabase
-    .from("businesses")
-    .update({
-      gallery_images: (data.gallery_images || []).filter((u: string) => u !== url)
-    })
-    .eq("id", businessId);
   if (error) throw error;
 }
 

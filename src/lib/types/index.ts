@@ -1,4 +1,5 @@
 import type { Industry } from '../industries';
+import type { GallerySectionKey } from './customization';
 
 export type IndustryType = Industry;
 export type { Industry } from '../industries';
@@ -53,8 +54,10 @@ export interface Business {
   logoUrl: string;
   accentColor: string;
   socialLinks: SocialLinks;
-  galleryImages: string[];
-  gallerySections?: Record<string, string[]>;
+  // Section-keyed image URLs (gallery_items table). Keys are GallerySectionKey
+  // ('hero' | 'story' | 'services' | 'gallery'). Migration 016 dropped the
+  // legacy flat businesses.gallery_images column.
+  gallerySections?: Partial<Record<GallerySectionKey, string[]>>;
   ownerId?: string;
   createdAt: string;
   // Editable metadata (migration 007)

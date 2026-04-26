@@ -1,4 +1,4 @@
-export type GallerySectionKey = 'hero' | 'about' | 'services' | 'team' | 'contact';
+export type GallerySectionKey = 'hero' | 'story' | 'services' | 'gallery';
 
 export interface GalleryItem {
   id: string;

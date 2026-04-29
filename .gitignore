@@ -36,3 +36,6 @@ Notes per Permirsim.md
 docs/Project Overview.md
 
 tsconfig.tsbuildinfo
+
+# Wizard testing harness output (screenshots, per-run folders)
+tests/wizard-harness/output/

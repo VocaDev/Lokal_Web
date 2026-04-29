@@ -41,8 +41,8 @@ export default async function WebsiteBuilderChoicePage() {
               <p className="text-muted-foreground mb-8 flex-1">
                 Përshkruaj biznesin tënd në pak sekonda dhe inteligjenca artificiale do të gjenerojë një website të kompletuar dhe të personalizuar për ju.
               </p>
-              <Link 
-                href="/dashboard/website-builder"
+              <Link
+                href="/register/website-builder"
                 className="inline-flex items-center justify-center w-full bg-gradient-to-r from-blue-500 to-violet-600 text-white font-bold py-4 rounded-xl transition-all duration-300 hover:shadow-[0_0_20px_rgba(79,158,247,0.4)] group/btn"
               >
                 Fillo tani

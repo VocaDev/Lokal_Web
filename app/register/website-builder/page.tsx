@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import WizardV2 from '@/components/website-builder/WizardV2'
 
-export default async function WebsiteBuilderPage() {
+export default async function RegisterWebsiteBuilderPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 

@@ -316,6 +316,16 @@ export default function WizardV2({ businessId, subdomain }: Props) {
             .map(s => s.name.trim())
             .filter(Boolean)
             .join(', '),
+          // Structured copy of the same input — used by postProcessTheme to
+          // overlay user-typed prices/durations onto the AI's items so the
+          // preview shows what the user actually entered.
+          wizardServices: input.services
+            .filter(s => s.name.trim())
+            .map(s => ({
+              name: s.name.trim(),
+              price: s.price,
+              durationMinutes: s.durationMinutes,
+            })),
           regenSeed: opts.reuseBrief ? Date.now().toString() : undefined,
           generationId: newGenId,
           businessId,
@@ -361,6 +371,15 @@ export default function WizardV2({ businessId, subdomain }: Props) {
           density: input.density,
           uniquenessStatement: input.uniqueness,
           bookingMethod: input.bookingMethod,
+          // Belt-and-suspenders: user prices/durations win even if the theme
+          // payload is stale or never went through /api/generate-variants.
+          wizardServices: input.services
+            .filter(s => s.name.trim())
+            .map(s => ({
+              name: s.name.trim(),
+              price: s.price,
+              durationMinutes: s.durationMinutes,
+            })),
         }),
       });
       const body = await res.json().catch(() => ({}));

@@ -124,3 +124,57 @@ export function fontFamilyOf(key: string | undefined | null): string | null {
   if (!key) return null;
   return FONT_FAMILY_MAP[key] ?? null;
 }
+
+// ----------------------------------------------------------------
+// Color contrast (WCAG)
+//
+// Sonnet occasionally generates a textColor whose luminance is too close to
+// bgColor — cream-on-cream is the canonical disaster. The post-processor in
+// app/api/generate-variants/route.ts uses these helpers to detect that case
+// and force-correct the textColor before the theme is returned to the client.
+// ----------------------------------------------------------------
+
+function parseHex6(hex: string): [number, number, number] | null {
+  const h = hex.trim().replace('#', '');
+  const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+  if (full.length !== 6 || /[^0-9a-fA-F]/.test(full)) return null;
+  return [
+    parseInt(full.slice(0, 2), 16),
+    parseInt(full.slice(2, 4), 16),
+    parseInt(full.slice(4, 6), 16),
+  ];
+}
+
+/**
+ * Relative luminance of a hex color, per WCAG 2.x. Returns 0..1.
+ * Returns 0 for unparseable input — caller treats it as worst-case dark.
+ */
+export function relativeLuminance(hex: string): number {
+  const rgb = parseHex6(hex);
+  if (!rgb) return 0;
+  const [r, g, b] = rgb.map(v => v / 255) as [number, number, number];
+  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
+/**
+ * WCAG contrast ratio between two hex colors. Returns 1..21.
+ * 4.5 is the AA threshold for normal-sized body text.
+ */
+export function contrastRatio(hex1: string, hex2: string): number {
+  const l1 = relativeLuminance(hex1);
+  const l2 = relativeLuminance(hex2);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/**
+ * If textColor and bgColor have insufficient contrast (< 4.5), return a
+ * corrected near-black or near-white textColor based on bg luminance.
+ * Otherwise return the original textColor unchanged.
+ */
+export function ensureReadableTextColor(textColor: string, bgColor: string): string {
+  if (contrastRatio(textColor, bgColor) >= 4.5) return textColor;
+  return relativeLuminance(bgColor) > 0.5 ? '#0a0a0a' : '#fafafa';
+}

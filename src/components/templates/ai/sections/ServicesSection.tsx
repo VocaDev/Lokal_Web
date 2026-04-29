@@ -146,9 +146,7 @@ function GridLayout({ items, cols, section, payload, images }: { items: Item[]; 
         <div className={`grid grid-cols-1 ${colsClass} ${gapClass}`}>
           {items.map((item, i) => {
             const img = images[i];
-            const description = cols === 2 && item.description && item.description.length > 100
-              ? item.description.slice(0, 100).trimEnd() + '…'
-              : item.description;
+            const description = item.description;
             return (
               <div
                 key={i}

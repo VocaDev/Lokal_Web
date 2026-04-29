@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser, bumpAiUsage } from '@/lib/api-auth';
 import { parseModelJson } from '@/lib/json-extract';
 import { emitProgress } from '@/lib/ai-progress';
+import { contrastRatio, ensureReadableTextColor, relativeLuminance } from '@/lib/utils';
 
 export const maxDuration = 120;
 
@@ -414,6 +415,13 @@ ${densityDirective(density)}
 Mood: ${mood}
 ${moodDirective(mood, brandPrimary, brandAccent)}
 
+CRITICAL CONTRAST RULE:
+The textColor and bgColor MUST have WCAG AA contrast (luminance ratio ≥ 4.5:1).
+This means: if bgColor is light (cream, off-white, pastel), textColor MUST be near-black.
+If bgColor is dark, textColor MUST be near-white.
+NEVER pick a textColor whose luminance is similar to bgColor — even if the mood feels "elegant" or "subtle." Cream text on a cream background is a critical failure: the visitor literally cannot read the page.
+Same rule applies to mutedTextColor against bgColor (≥ 3:1 minimum).
+
 Font personality: ${fontPersonality}
 ${fontDirective(fontPersonality)}
 
@@ -499,6 +507,16 @@ The following fields MUST contain the user's literal inputs, not invented varian
 
 If you find yourself wanting to add a brand code or short label that wasn't in the user's input, STOP. Use the literal businessName instead.
 
+ANTI-HALLUCINATION — FACTUAL CLAIMS:
+
+You MUST NOT invent factual claims that the user did not provide. Specifically:
+- Do NOT compare the business to "the average" or "the norm" with invented numbers (e.g. "while others wait 45 minutes, we wait 8" — only use the user's claim, not invented competitor stats).
+- Do NOT invent founding dates, employee counts, customer counts, awards, certifications, or accreditations.
+- Do NOT invent specific competitor behavior to compare against.
+- The brand brief and the wizard inputs are the FULL set of facts. If a fact isn't there, you cannot include it.
+
+If you find yourself wanting to add a "compared to others..." or "while typical X is 45 minutes..." or "since 1985" claim, STOP. Use only what the user provided.
+
 BANNED PHRASES — if you use any in the customer-facing copy, you have failed:
 ${BANNED_PHRASES.map(p => `- "${p}"`).join('\n')}
 
@@ -539,7 +557,10 @@ BEFORE OUTPUTTING — run these specific checks:
 6. BANNED PHRASE SWEEP: Scan character by character.
    If any banned phrase appears → REPLACE.
 
-Output JSON only after all 6 checks pass.
+7. FABRICATION TEST: Search your output for any specific number, date, or comparative claim (e.g. "45 minutes", "since 1987", "compared to others", "the only one in [city]").
+   For each one: was this number/date/claim in the brief or user inputs? If you cannot point to where it came from → REMOVE it.
+
+Output JSON only after all 7 checks pass.
 
 Output valid JSON matching this schema:
 ${JSON.stringify(THEME_SCHEMA.schema)}`;
@@ -606,11 +627,29 @@ function collectSectionCopy(sections: any[]): string {
 // Post-processor — runs after Haiku returns. Forces deterministic shape.
 // ----------------------------------------------------------------
 
+interface WizardServiceInput {
+  name?: string;
+  price?: string | number;
+  duration?: string | number;
+  durationMinutes?: string | number;
+}
+
 interface PostProcessCtx {
   sectionPriority: 'services' | 'story' | 'gallery';
   density: 'sparse' | 'dense';
   userHasServicePhotos: boolean;
   userHasGalleryPhotos: boolean;
+  language: string;
+  wizardServices: WizardServiceInput[];
+}
+
+// Coerce a wizard-supplied price/duration (which may be string or number)
+// to an integer. Returns undefined when the input is missing or not numeric,
+// so the caller can keep the AI's value rather than zeroing it.
+function coerceInt(v: string | number | undefined): number | undefined {
+  if (v === undefined || v === null || v === '') return undefined;
+  const n = typeof v === 'number' ? v : parseInt(String(v), 10);
+  return Number.isFinite(n) ? n : undefined;
 }
 
 function reorderSections(sections: any[], priority: 'services' | 'story' | 'gallery'): any[] {
@@ -644,8 +683,11 @@ function reorderSections(sections: any[], priority: 'services' | 'story' | 'gall
 function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
   let sections: any[] = (theme?.sections ?? []).filter(Boolean);
 
+  // 1. Strip section types we never render.
   sections = sections.filter(s => s?.kind !== 'testimonials' && s?.kind !== 'faq');
 
+  // 2. Force a gallery section if the user uploaded gallery photos but the
+  //    AI didn't include one.
   const hasGallery = sections.some(s => s?.kind === 'gallery');
   if (ctx.userHasGalleryPhotos && !hasGallery) {
     sections.push({
@@ -655,6 +697,76 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
     });
   }
 
+  // 3. Wizard's structured service inputs are authoritative for name / price /
+  //    duration. Sonnet sometimes invents prices that don't match what the
+  //    user typed — overlay the wizard values onto the AI items by index.
+  if (ctx.wizardServices.length > 0) {
+    sections = sections.map(s => {
+      if (s?.kind !== 'services') return s;
+      const aiItems: any[] = Array.isArray(s.items) ? s.items : [];
+      const items = aiItems.map((aiSvc, i) => {
+        const userSvc = ctx.wizardServices[i];
+        if (!userSvc) return aiSvc;
+        const overlaid = { ...aiSvc };
+        if (userSvc.name && userSvc.name.trim().length > 0) {
+          overlaid.name = userSvc.name.trim();
+        }
+        const userPrice = coerceInt(userSvc.price);
+        if (userPrice !== undefined) overlaid.price = userPrice;
+        const userDuration = coerceInt(userSvc.duration ?? userSvc.durationMinutes);
+        if (userDuration !== undefined) overlaid.durationMinutes = userDuration;
+        return overlaid;
+      });
+      return { ...s, items };
+    });
+  }
+
+  // 4. WCAG AA contrast on the text/bg pair. If Sonnet generated cream-on-cream
+  //    or similar, force-correct the textColor to near-black or near-white.
+  if (theme.textColor && theme.bgColor) {
+    const corrected = ensureReadableTextColor(theme.textColor, theme.bgColor);
+    if (corrected !== theme.textColor) {
+      console.warn('[generate-variants] textColor/bgColor contrast failed, correcting:', {
+        original: theme.textColor,
+        bg: theme.bgColor,
+        corrected,
+      });
+      theme.textColor = corrected;
+    }
+  }
+  if (theme.mutedTextColor && theme.bgColor) {
+    // Muted text uses a lower 3:1 floor (still readable, but allowed to be
+    // softer than primary body text). On failure, pick a softer-than-extremes
+    // grey on the appropriate side of the bg.
+    const cr = contrastRatio(theme.mutedTextColor, theme.bgColor);
+    if (cr < 3.0) {
+      const before = theme.mutedTextColor;
+      theme.mutedTextColor = relativeLuminance(theme.bgColor) > 0.5 ? '#5a5a5a' : '#a8a8a8';
+      console.warn('[generate-variants] mutedTextColor contrast failed, correcting:', {
+        original: before,
+        bg: theme.bgColor,
+        corrected: theme.mutedTextColor,
+      });
+    }
+  }
+
+  // 5. Hero must always have at least one CTA. Sonnet sometimes returns
+  //    ctaCount=0 which makes the renderer skip the button entirely — and the
+  //    hero is the most important conversion pixel on the page.
+  const fallbackCta = ctx.language === 'en' ? 'Get in touch' : 'Na kontaktoni';
+  sections = sections.map(s => {
+    if (s?.kind !== 'hero') return s;
+    const ctaCount = typeof s.ctaCount === 'number' ? s.ctaCount : 0;
+    return {
+      ...s,
+      ctaCount: ctaCount > 0 ? ctaCount : 1,
+      ctaPrimary: s.ctaPrimary && String(s.ctaPrimary).trim().length > 0
+        ? s.ctaPrimary
+        : fallbackCta,
+    };
+  });
+
+  // 6. Final ordering — hero, [user priority], [the rest], footer.
   sections = reorderSections(sections, ctx.sectionPriority);
 
   return { ...theme, sections };
@@ -690,7 +802,7 @@ export async function POST(request: NextRequest) {
       brief, businessName, industry, city, uniqueness,
       hero, sectionPriority, density, mood,
       brandPrimary, brandAccent, fontPersonality,
-      language, tone, userProvidedServices, regenSeed,
+      language, tone, userProvidedServices, wizardServices, regenSeed,
       generationId, businessId,
     } = body;
 
@@ -757,6 +869,10 @@ export async function POST(request: NextRequest) {
       density: (args.density as 'sparse' | 'dense') || 'dense',
       userHasServicePhotos,
       userHasGalleryPhotos,
+      language: args.language,
+      wizardServices: Array.isArray(wizardServices)
+        ? (wizardServices as WizardServiceInput[])
+        : [],
     };
 
     let theme = postProcessTheme(await generateTheme(args), postProcessCtx);

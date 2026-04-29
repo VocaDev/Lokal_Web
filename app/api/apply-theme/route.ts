@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
       density,
       uniquenessStatement,
       bookingMethod,
+      wizardServices,
     } = await request.json();
     if (!businessId || !theme) {
       return NextResponse.json({ error: 'businessId and theme required' }, { status: 400 });
@@ -163,15 +164,35 @@ export async function POST(request: NextRequest) {
         console.error('[apply-theme] Failed to clear existing services:', delErr);
       }
 
+      // Overlay user-entered wizard values (name / price / duration) onto the
+      // AI's items by index. The theme returned from /api/generate-variants
+      // is already overlaid, but applying again here defends against stale
+      // payloads or direct callers — user-typed prices must always win.
+      const wizardArr: any[] = Array.isArray(wizardServices) ? wizardServices : [];
+      const coerce = (v: any): number | undefined => {
+        if (v === undefined || v === null || v === '') return undefined;
+        const n = typeof v === 'number' ? v : parseInt(String(v), 10);
+        return Number.isFinite(n) ? n : undefined;
+      };
+
       const serviceRows = sectionItems
-        .filter((s: any) => s && typeof s.name === 'string' && s.name.trim().length > 0)
-        .map((s: any) => ({
-          business_id: businessId,
-          name: String(s.name).trim(),
-          description: typeof s.description === 'string' ? s.description : '',
-          price: typeof s.price === 'number' ? s.price : 0,
-          duration_minutes: typeof s.durationMinutes === 'number' ? s.durationMinutes : 30,
-        }));
+        .map((s: any, i: number) => {
+          const userSvc = wizardArr[i];
+          const name = (userSvc?.name && String(userSvc.name).trim().length > 0)
+            ? String(userSvc.name).trim()
+            : (typeof s?.name === 'string' ? s.name.trim() : '');
+          if (!name) return null;
+          const userPrice = coerce(userSvc?.price);
+          const userDuration = coerce(userSvc?.duration ?? userSvc?.durationMinutes);
+          return {
+            business_id: businessId,
+            name,
+            description: typeof s?.description === 'string' ? s.description : '',
+            price: userPrice ?? (typeof s?.price === 'number' ? s.price : 0),
+            duration_minutes: userDuration ?? (typeof s?.durationMinutes === 'number' ? s.durationMinutes : 30),
+          };
+        })
+        .filter((row: any): row is NonNullable<typeof row> => row !== null);
 
       if (serviceRows.length > 0) {
         const { error: servicesError } = await supabase

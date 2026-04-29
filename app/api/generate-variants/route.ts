@@ -17,7 +17,9 @@ import { requireUser, bumpAiUsage } from '@/lib/api-auth';
 import { parseModelJson } from '@/lib/json-extract';
 import { emitProgress } from '@/lib/ai-progress';
 
-export const maxDuration = 90;
+export const maxDuration = 120;
+
+const THEME_MODEL = process.env.THEME_GENERATION_MODEL || 'claude-haiku-4-5';
 
 const THEME_SCHEMA = {
   name: 'website_theme',
@@ -160,6 +162,7 @@ STORY PARAMETERS (kind: 'story'):
 - layout: 'centered-quote' | 'two-column' | 'long-form' | 'pull-quote'
 - body: text content
 - attribution: optional, for centered-quote
+- LENGTH CAP: The story body MUST be 2-3 short paragraphs maximum, ~120 words total. Each paragraph one specific point. Density preferences may vary other section copy lengths, but the story is always tight. Cut prose, never pad.
 
 STORY LAYOUT DECISION TREE:
 - Brief emphasizes a single founder / single defining moment       →  'centered-quote'
@@ -413,7 +416,7 @@ Write all customer-facing copy in: ${languageInstruction(language)}
 Tone: ${tone}
 ${toneDirective(tone)}
 
-THE BRIEF IS LAW. Every choice — layout, parameter, word — must echo the brief.
+THE BRAND BRIEF IS THE CREATIVE BRIEF. The brief tells you what makes this business different — every section choice must REINFORCE it. But "reinforcement" doesn't mean "literal repetition." Creative interpretation is encouraged. If forced to choose between safe and distinctive, choose distinctive — provided the choice still serves the brief.
 
 USER'S UNIQUENESS STATEMENT (gospel — reference this EVERYWHERE):
 "${uniqueness || '(not provided — derive from positioning)'}"
@@ -434,7 +437,30 @@ At least TWO of the brief's defining traits appear (as words or close synonyms) 
 
 If you cannot honestly say "yes, those traits appear" — REWRITE.
 
+ANTI-TEMPLATE RULE:
+
+If your output resembles a typical template for this industry — typical hero, typical sections, typical headlines — you have failed. Specifically AVOID:
+- "Welcome to [business name]"-style hero headlines
+- Generic emotional tone that could fit any business
+- Predictable section ordering (services → testimonials → contact)
+- Safe color choices that match every site in this category
+- Layouts that feel "industry default" rather than chosen
+
+Each output should feel like a deliberate design decision for THIS specific brief — not a default that the AI fell into.
+
+If two competitors in the same industry would receive a similar layout AND similar copy from your output, you have failed and must rewrite.
+
 Produce THE WEBSITE THIS BUSINESS WOULD HAVE IF THEY HIRED A DESIGNER WHO READ THE BRIEF — not a generic site for the category.
+
+STRUCTURAL INTERPRETATION RULE:
+
+The brief must influence not just copy but STRUCTURE:
+- "Traditional / family-owned / long history" → editorial-style hero, story-prominent section ordering, restrained color
+- "Bold / disruptive / no-bullshit" → asymmetric or fullbleed hero, services-prominent, high-contrast color
+- "Emotional / craft-driven / personal" → centered hero, story-first ordering, narrative-heavy density
+- "Practical / efficient / no-frills" → split or centered hero, services-first, sparse density
+
+Do NOT treat layout as independent from the brief. The brief sets the structural mood AND the copy mood.
 
 ${sectionsBriefing(userPriorityFirst)}
 
@@ -458,6 +484,14 @@ ${industryVoiceFor(canonicalIndustry)}
 
 ${fewShotsFor(canonicalIndustry)}
 
+ANTI-HALLUCINATION RULE — LITERAL TEXT FIELDS:
+
+The following fields MUST contain the user's literal inputs, not invented variants:
+- Any "metadata bar" text, eyebrow tag, top-of-hero label, or small text above the headline → MUST be the literal businessName in uppercase, OR the city name. Do NOT invent acronyms, brand codes, or shortened identifiers (e.g. "ONGO" from "Hana Coffee Lab" — wrong).
+- Story attribution (e.g. "— ADELINË, MITROVICË") → MUST use the literal businessName or city. Do NOT invent founder names not provided by the user.
+
+If you find yourself wanting to add a brand code or short label that wasn't in the user's input, STOP. Use the literal businessName instead.
+
 BANNED PHRASES — if you use any in the customer-facing copy, you have failed:
 ${BANNED_PHRASES.map(p => `- "${p}"`).join('\n')}
 
@@ -480,22 +514,25 @@ Write captions in: ${languageInstruction(language)}.
 
 BEFORE OUTPUTTING — run these specific checks:
 
-1. SAME-INDUSTRY TEST: Could a competitor in the same industry receive this exact output?
-   If yes → REWRITE the headline and at least one structural element.
+1. SAME-INDUSTRY TEST: Could a competitor in the same industry receive this exact output (layout AND copy)?
+   If yes → REWRITE the headline AND change at least one structural parameter.
 
-2. LAYOUT DECISION TEST: Did you actually use the hero/story decision trees, or did you default?
-   If you defaulted to 'fullbleed' or 'long-form' without justification → PICK SOMETHING ELSE.
+2. LITERAL-INPUT TEST: Search your output for any text label, eyebrow, brand code, or attribution that isn't the literal businessName or city.
+   If you invented something (e.g. an acronym, a code, a founder name) → REPLACE with the literal user input.
 
-3. UNIQUENESS PRESENCE TEST: Search your output for words from the user's uniqueness statement.
-   If you cannot find them in any major section → REWRITE the hero headline to incorporate them.
+3. STRUCTURAL DECISION TEST: Did the brief actually influence your hero/story/density choices, or did you default?
+   If you defaulted to safe choices ('fullbleed' hero, 'long-form' story, dense everywhere) without justification from the brief → PICK DIFFERENTLY.
 
-4. VOICE CONSISTENCY: Search for the defining traits.
-   If at least 2 do not appear → REWRITE the most generic-feeling sentence.
+4. UNIQUENESS PRESENCE TEST: Search your output for the user's uniqueness statement (or its key phrases).
+   If you cannot find it echoed in any section → REWRITE the hero or story to incorporate it.
 
-5. BANNED PHRASE SWEEP: Scan your output character by character.
+5. STORY LENGTH TEST: Count the words in your story body.
+   If over 130 words → CUT until under 120.
+
+6. BANNED PHRASE SWEEP: Scan character by character.
    If any banned phrase appears → REPLACE.
 
-Output JSON only after these 5 checks pass.
+Output JSON only after all 6 checks pass.
 
 Output valid JSON matching this schema:
 ${JSON.stringify(THEME_SCHEMA.schema)}`;
@@ -521,7 +558,7 @@ ${regenSeed ? `REGENERATION ATTEMPT — produce a notably DIFFERENT direction th
 Generate the theme.`;
 
   const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5',
+    model: THEME_MODEL,
     max_tokens: 6000,
     temperature: 0.85,
     system: systemPrompt,

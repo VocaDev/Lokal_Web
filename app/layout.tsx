@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
 import ProviderContext from '@/components/ProviderContext'
-import '@/index.css'
+import '../src/index.css'
 import { ThemeProvider } from 'next-themes';
 import { headers } from 'next/headers'
 import { isMainDomain } from '@/lib/utils'
+import { SpeedInsights } from '@vercel/speed-insights/next'
+import { Analytics } from '@vercel/analytics/next'
 
 export const metadata: Metadata = {
   title: 'LokalWeb — Websites for Kosovo Businesses',
@@ -33,7 +35,13 @@ export default async function RootLayout({
   // root layout only wraps chrome routes. Detection mirrors middleware.ts via
   // the shared helper so the two never drift.
   if (!isMainDomain(host) && host.includes('.')) {
-    return <>{children}</>
+    return (
+      <>
+        {children}
+        <SpeedInsights />
+        <Analytics />
+      </>
+    )
   }
 
   return (
@@ -56,6 +64,8 @@ export default async function RootLayout({
             {children}
           </ProviderContext>
         </ThemeProvider>
+        <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   )

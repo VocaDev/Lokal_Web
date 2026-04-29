@@ -193,7 +193,7 @@ function CenteredHero({ section, business, payload, onPrimaryCta, onSecondaryCta
     : section;
   return (
     <section
-      className={`${SECTION_PADDING_X} relative flex items-center justify-center text-center min-h-[70vh] py-28 md:py-44`}
+      className={`${SECTION_PADDING_X} relative flex items-center justify-center text-center min-h-[600px] py-28 md:py-44`}
       style={{ background: payload.bgColor }}
     >
       <div className="max-w-2xl mx-auto relative">
@@ -310,7 +310,7 @@ function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta,
 
   return (
     <section
-      className={`${SECTION_PADDING_X} min-h-[90vh] relative overflow-hidden flex ${positionClasses}`}
+      className={`${SECTION_PADDING_X} min-h-[700px] relative overflow-hidden flex ${positionClasses}`}
       style={backgroundStyle(payload, imageStyle, heroImageUrl)}
     >
       {showPlaceholder && (
@@ -354,7 +354,7 @@ function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta,
 function EditorialHero({ section, business, payload, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   return (
     <section
-      className={`${SECTION_PADDING_X} relative flex flex-col min-h-[80vh] py-10 md:py-16`}
+      className={`${SECTION_PADDING_X} relative flex flex-col min-h-[600px] py-10 md:py-16`}
       style={{ background: payload.surfaceColor }}
     >
       <div
@@ -409,7 +409,7 @@ function AsymmetricHero({ section, business, payload, heroImageUrl, onPrimaryCta
   const imageStyle = section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
   return (
     <section
-      className="relative overflow-hidden min-h-[80vh] md:min-h-[85vh]"
+      className="relative overflow-hidden min-h-[600px] md:min-h-[640px]"
       style={{ background: payload.bgColor }}
     >
       <div
@@ -438,7 +438,7 @@ function AsymmetricHero({ section, business, payload, heroImageUrl, onPrimaryCta
         style={{ background: payload.accentColor }}
       />
 
-      <div className={`relative ${SECTION_PADDING_X} flex flex-col h-full min-h-[80vh] justify-end pb-16 md:pb-24 pt-28 md:pt-40 max-w-6xl`}>
+      <div className={`relative ${SECTION_PADDING_X} flex flex-col h-full min-h-[600px] justify-end pb-16 md:pb-24 pt-28 md:pt-40 max-w-6xl`}>
         <div
           className="text-[10px] uppercase tracking-[0.4em] mb-6"
           style={{ color: payload.mutedTextColor }}

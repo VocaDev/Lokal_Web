@@ -1287,13 +1287,15 @@ function PreviewScreen({
               {publicSiteLabel(subdomain)}
             </div>
           </div>
-          <div className="rounded-xl overflow-hidden border border-border">
-            <DynamicSiteRenderer
-              business={previewBusiness(businessName, city)}
-              services={previewServicesFromTheme(theme)}
-              hours={[]}
-              payload={theme}
-            />
+          <div className="rounded-xl border border-border overflow-hidden bg-card">
+            <div className="max-h-[600px] md:max-h-[70vh] overflow-y-auto">
+              <DynamicSiteRenderer
+                business={previewBusiness(businessName, city)}
+                services={previewServicesFromTheme(theme)}
+                hours={[]}
+                payload={theme}
+              />
+            </div>
           </div>
         </div>
       </div>

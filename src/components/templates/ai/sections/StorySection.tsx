@@ -34,7 +34,7 @@ function CenteredQuote({ section, payload, business }: { section: AiStorySection
   const attribution = section.attribution || business?.name;
   return (
     <section
-      className={`${SECTION_PADDING_X} flex items-center justify-center min-h-[60vh] py-24 md:py-32 text-center`}
+      className={`${SECTION_PADDING_X} flex items-center justify-center min-h-[500px] py-24 md:py-32 text-center`}
       style={{ background: payload.surfaceColor }}
     >
       <div className="max-w-[600px] mx-auto">

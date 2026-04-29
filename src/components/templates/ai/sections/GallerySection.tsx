@@ -55,7 +55,7 @@ function Masonry({ images, section, payload }: { images: string[]; section: AiGa
             <div key={i} className="mb-3 break-inside-avoid rounded-lg overflow-hidden">
               {src ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={src} alt="" className="w-full h-auto block" loading="lazy" />
+                <img src={src} alt="" className="w-full h-auto max-h-[560px] object-cover block" loading="lazy" />
               ) : (
                 <PhotoPlaceholder payload={payload} shape="gallery" label="GALLERY PHOTO" />
               )}

@@ -157,7 +157,7 @@ function GridLayout({ items, cols, section, payload, images }: { items: Item[]; 
               >
                 {showPhoto(img) && (
                   img ? (
-                    <div className="aspect-[4/3] w-full overflow-hidden" style={{ background: payload.bgColor }}>
+                    <div className="aspect-[4/3] w-full max-h-[360px] overflow-hidden" style={{ background: payload.bgColor }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
                     </div>
@@ -283,7 +283,7 @@ function CardsLayout({ items, section, payload, images }: { items: Item[]; secti
                   boxShadow: `0 24px 60px -32px ${payload.primaryColor}`,
                 }}
               >
-                <div className="relative aspect-[5/4] w-full overflow-hidden" style={{ background: payload.bgColor }}>
+                <div className="relative aspect-[5/4] w-full max-h-[420px] overflow-hidden" style={{ background: payload.bgColor }}>
                   {img ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />

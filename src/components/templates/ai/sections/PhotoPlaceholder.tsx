@@ -20,6 +20,16 @@ const ASPECT: Record<string, string> = {
   gallery: 'aspect-square',
 };
 
+// Upper bound on placeholder height per shape, so wide containers
+// (single-column mobile breakpoints, narrow viewports, etc.) can't
+// blow the placeholder up to fill the screen.
+const MAX_HEIGHT: Record<string, string> = {
+  hero: 'max-h-[520px]',
+  story: 'max-h-[460px]',
+  service: 'max-h-[360px]',
+  gallery: 'max-h-[400px]',
+};
+
 export function PhotoPlaceholder({
   payload,
   shape = 'hero',
@@ -28,11 +38,12 @@ export function PhotoPlaceholder({
   fill,
 }: Props) {
   const aspect = fill ? '' : ASPECT[shape];
+  const maxHeight = fill ? '' : MAX_HEIGHT[shape];
   const positioning = fill ? 'absolute inset-0' : 'w-full';
 
   return (
     <div
-      className={[positioning, aspect, 'rounded-lg flex items-center justify-center', className]
+      className={[positioning, aspect, maxHeight, 'rounded-lg flex items-center justify-center', className]
         .filter(Boolean)
         .join(' ')}
       style={{

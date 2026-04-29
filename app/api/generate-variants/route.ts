@@ -150,13 +150,20 @@ HERO LAYOUT DECISION TREE — pick based on the brief's defining traits:
 Do NOT default to 'fullbleed' unless the brief actually demands it. Most briefs do not.
 
 SERVICES PARAMETERS (kind: 'services'):
+- layout: 'list' | 'grid-2' | 'grid-3' | 'editorial-rows' | 'cards'
 - showPrices: true if prices visible
 - showDuration: true if durations shown
 - divider: 'none' | 'line' | 'number'
 - intro: optional intro paragraph
 - items: array of services with name, description, price (number), durationMinutes (number)
 
-DO NOT output a 'layout' field for services. The server picks it. Just supply the content.
+SERVICES LAYOUT DECISION TREE — pick based on the brief AND the user's photos:
+- User has services photos uploaded? → STRONGLY prefer 'cards' or 'grid-3' (layouts that show images well)
+- User does NOT have service photos + brief is "editorial / traditional / long history" → 'editorial-rows' (rich descriptions per row)
+- User does NOT have service photos + brief is "minimal / refined / quiet" → 'list' (sparse, type-focused)
+- User does NOT have service photos + brief is "bold / energetic" → 'grid-2' (balanced cards even without images)
+- DEFAULT → 'cards' (most flexible)
+The renderer adapts to whichever you pick. Don't default to the same layout.
 
 STORY PARAMETERS (kind: 'story'):
 - layout: 'centered-quote' | 'two-column' | 'long-form' | 'pull-quote'
@@ -606,13 +613,6 @@ interface PostProcessCtx {
   userHasGalleryPhotos: boolean;
 }
 
-function pickServicesLayout(hasPhotos: boolean, density: 'sparse' | 'dense'): string {
-  if (hasPhotos && density === 'dense') return 'cards';
-  if (hasPhotos && density === 'sparse') return 'grid-3';
-  if (!hasPhotos && density === 'dense') return 'editorial-rows';
-  return 'list';
-}
-
 function reorderSections(sections: any[], priority: 'services' | 'story' | 'gallery'): any[] {
   // Standard order: hero, [user priority], [the others], footer
   const hero = sections.find(s => s.kind === 'hero');
@@ -644,16 +644,8 @@ function reorderSections(sections: any[], priority: 'services' | 'story' | 'gall
 function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
   let sections: any[] = (theme?.sections ?? []).filter(Boolean);
 
-  // 1. Strip any testimonials/faq sections the model accidentally produced.
   sections = sections.filter(s => s?.kind !== 'testimonials' && s?.kind !== 'faq');
 
-  // 2. Force services layout based on photos + density. OVERRIDES Haiku's pick.
-  sections = sections.map(s => {
-    if (s?.kind !== 'services') return s;
-    return { ...s, layout: pickServicesLayout(ctx.userHasServicePhotos, ctx.density) };
-  });
-
-  // 3. Force gallery section when user has gallery photos.
   const hasGallery = sections.some(s => s?.kind === 'gallery');
   if (ctx.userHasGalleryPhotos && !hasGallery) {
     sections.push({
@@ -663,7 +655,6 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
     });
   }
 
-  // 4. Reorder per the user's sectionPriority + standard order.
   sections = reorderSections(sections, ctx.sectionPriority);
 
   return { ...theme, sections };
@@ -715,7 +706,7 @@ export async function POST(request: NextRequest) {
     const canonical = normalizeIndustry(industry);
 
     // Look up uploaded photo slots so the prompt can be photo-aware and the
-    // post-processor can force a gallery section / pick services layout.
+    // post-processor can force a gallery section.
     // Read-only query; gallery_items has a public-SELECT RLS policy
     // (migration 011) so user-scoped client is fine.
     let userHasGalleryPhotos = false;

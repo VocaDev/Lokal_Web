@@ -89,7 +89,6 @@ const FONT_PERSONALITY_CHIPS: Array<{ label: string; value: WizardInput['fontPer
 const LANGUAGE_CHIPS: Array<{ label: string; value: WizardInput['language'] }> = [
   { label: 'Shqip', value: 'sq' },
   { label: 'Anglisht', value: 'en' },
-  { label: 'Të dyja', value: 'both' },
 ];
 
 const TONE_CHIPS: Array<{ label: string; value: WizardInput['tone'] }> = [

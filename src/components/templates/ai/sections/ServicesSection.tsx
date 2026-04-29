@@ -18,7 +18,6 @@ type Item = {
 };
 
 function resolveItems(section: AiServicesSection, dbServices: Service[]): Item[] {
-  // Prefer the AI-generated items; fall back to the DB services if items is empty/missing.
   const items = Array.isArray(section.items) ? section.items.filter(Boolean) : [];
   if (items.length > 0) return items;
   return dbServices.map(s => ({
@@ -86,37 +85,38 @@ function DurationTag({ item, section, payload }: { item: Item; section: AiServic
 }
 
 // ----------------------------------------------------------------
+// List — single column, names left, price/duration right. NO descriptions.
+// ----------------------------------------------------------------
 
 function ListLayout({ items, section, payload }: { items: Item[]; section: AiServicesSection; payload: AiSitePayload }) {
   return (
     <section className={`${SECTION_PADDING_X} ${SECTION_PADDING_Y}`} style={{ background: payload.bgColor }}>
-      <div className="max-w-3xl">
+      <div className="max-w-3xl mx-auto">
         <SectionHeader section={section} payload={payload} />
         <div>
           {items.map((item, i) => (
             <div
               key={i}
-              className="flex items-baseline justify-between gap-6 py-5"
-              style={section.divider !== 'none' ? { borderBottom: `1px solid ${payload.borderColor}` } : undefined}
+              className="flex items-baseline justify-between gap-6 py-6"
+              style={section.divider === 'line' || section.divider === 'number' ? { borderBottom: `1px solid ${payload.borderColor}` } : undefined}
             >
               <div className="flex items-baseline gap-4 min-w-0">
                 {section.divider === 'number' && (
-                  <span className="text-xs font-mono" style={{ color: payload.mutedTextColor }}>
+                  <span
+                    className="text-xs font-mono shrink-0"
+                    style={{ color: payload.mutedTextColor }}
+                  >
                     {String(i + 1).padStart(2, '0')}
                   </span>
                 )}
-                <div className="min-w-0">
-                  <div className="text-base md:text-lg font-semibold truncate" style={{ color: payload.textColor }}>
-                    {item.name}
-                  </div>
-                  {item.description && (
-                    <div className="text-sm mt-0.5" style={{ color: payload.mutedTextColor }}>
-                      {item.description}
-                    </div>
-                  )}
+                <div
+                  className="text-lg md:text-2xl font-semibold truncate"
+                  style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
+                >
+                  {item.name}
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-1 shrink-0">
+              <div className="flex items-baseline gap-4 shrink-0">
                 <PriceTag item={item} section={section} payload={payload} />
                 <DurationTag item={item} section={section} payload={payload} />
               </div>
@@ -129,48 +129,66 @@ function ListLayout({ items, section, payload }: { items: Item[]; section: AiSer
 }
 
 // ----------------------------------------------------------------
+// Grid — grid-2 (photos optional, lighter cards) and grid-3 (photos required, heavier cards)
+// ----------------------------------------------------------------
 
 function GridLayout({ items, cols, section, payload, images }: { items: Item[]; cols: 2 | 3; section: AiServicesSection; payload: AiSitePayload; images: string[] }) {
   const colsClass = cols === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2';
+  const gapClass = cols === 3 ? 'gap-6' : 'gap-5';
+  const padClass = cols === 3 ? 'p-7' : 'p-6';
+  const radiusClass = cols === 3 ? 'rounded-2xl' : 'rounded-lg';
+  const showPhoto = (img: string | undefined) => cols === 3 || Boolean(img);
+
   return (
     <section className={`${SECTION_PADDING_X} ${SECTION_PADDING_Y}`} style={{ background: payload.bgColor }}>
       <div className="max-w-6xl mx-auto">
         <SectionHeader section={section} payload={payload} />
-        <div className={`grid grid-cols-1 ${colsClass} gap-5`}>
+        <div className={`grid grid-cols-1 ${colsClass} ${gapClass}`}>
           {items.map((item, i) => {
             const img = images[i];
+            const description = cols === 2 && item.description && item.description.length > 100
+              ? item.description.slice(0, 100).trimEnd() + '…'
+              : item.description;
             return (
               <div
                 key={i}
-                className="rounded-lg flex flex-col overflow-hidden"
+                className={`${radiusClass} flex flex-col overflow-hidden`}
                 style={{ background: payload.surfaceColor, border: `1px solid ${payload.borderColor}` }}
               >
-                {img ? (
-                  <div className="aspect-[4/3] w-full overflow-hidden" style={{ background: payload.bgColor }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  </div>
-                ) : (
-                  <PhotoPlaceholder payload={payload} shape="service" />
+                {showPhoto(img) && (
+                  img ? (
+                    <div className="aspect-[4/3] w-full overflow-hidden" style={{ background: payload.bgColor }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                  ) : (
+                    <PhotoPlaceholder payload={payload} shape="service" />
+                  )
                 )}
-                <div className="p-6 flex flex-col flex-1">
+                <div className={`${padClass} flex flex-col flex-1`}>
                   {section.divider === 'number' && (
-                    <div className="text-xs font-mono mb-3" style={{ color: payload.primaryColor }}>
+                    <div
+                      className="inline-block self-start text-[10px] font-mono uppercase tracking-[0.3em] px-2 py-1 mb-3 rounded"
+                      style={{ color: payload.primaryColor, background: payload.bgColor, border: `1px solid ${payload.borderColor}` }}
+                    >
                       {String(i + 1).padStart(2, '0')}
                     </div>
                   )}
                   <h3
-                    className="text-lg font-semibold mb-2"
+                    className={cols === 3 ? 'text-xl font-semibold mb-3' : 'text-lg font-semibold mb-2'}
                     style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
                   >
                     {item.name}
                   </h3>
-                  {item.description && (
-                    <p className="text-sm mb-4 flex-1" style={{ color: payload.mutedTextColor }}>
-                      {item.description}
+                  {description && (
+                    <p className={`${cols === 3 ? 'text-base' : 'text-sm'} mb-4 flex-1`} style={{ color: payload.mutedTextColor }}>
+                      {description}
                     </p>
                   )}
-                  <div className="flex items-center justify-between mt-auto">
+                  <div
+                    className={`flex items-center justify-between mt-auto ${section.divider === 'line' ? 'pt-3' : ''}`}
+                    style={section.divider === 'line' ? { borderTop: `1px solid ${payload.borderColor}` } : undefined}
+                  >
                     <PriceTag item={item} section={section} payload={payload} />
                     <DurationTag item={item} section={section} payload={payload} />
                   </div>
@@ -185,47 +203,57 @@ function GridLayout({ items, cols, section, payload, images }: { items: Item[]; 
 }
 
 // ----------------------------------------------------------------
+// Editorial rows — full-width rows, ghost numerals, NO images.
+// ----------------------------------------------------------------
 
 function EditorialRowsLayout({ items, section, payload }: { items: Item[]; section: AiServicesSection; payload: AiSitePayload }) {
+  const showRule = section.divider !== 'none';
   return (
     <section className={`${SECTION_PADDING_X} ${SECTION_PADDING_Y}`} style={{ background: payload.surfaceColor }}>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <SectionHeader section={section} payload={payload} />
         <div>
           {items.map((item, i) => (
             <div
               key={i}
-              className="grid grid-cols-12 gap-6 py-8"
-              style={section.divider !== 'none' ? { borderTop: `1px solid ${payload.borderColor}` } : undefined}
+              className="grid grid-cols-12 gap-6 py-10 md:py-12 items-baseline"
+              style={showRule ? { borderTop: `1px solid ${payload.borderColor}` } : undefined}
             >
               <div className="col-span-12 md:col-span-2">
-                {section.divider === 'number' ? (
-                  <div className="text-3xl font-bold" style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.primaryColor }}>
-                    {String(i + 1).padStart(2, '0')}
-                  </div>
-                ) : (
-                  <DurationTag item={item} section={section} payload={payload} />
-                )}
+                <div
+                  className="font-bold leading-none"
+                  style={{
+                    fontFamily: headingFontFamily(payload.headingFont),
+                    color: payload.primaryColor,
+                    opacity: section.divider === 'number' ? 0.85 : 0.25,
+                    fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
+                  }}
+                >
+                  {String(i + 1).padStart(2, '0')}
+                </div>
               </div>
               <div className="col-span-12 md:col-span-7">
                 <h3
-                  className="text-2xl font-semibold mb-2"
+                  className="text-2xl md:text-3xl font-semibold mb-3"
                   style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
                 >
                   {item.name}
                 </h3>
                 {item.description && (
-                  <p className="text-base" style={{ color: payload.mutedTextColor }}>
+                  <p className="text-base md:text-lg leading-relaxed" style={{ color: payload.mutedTextColor }}>
                     {item.description}
                   </p>
                 )}
               </div>
-              <div className="col-span-12 md:col-span-3 md:text-right flex md:flex-col gap-2 md:gap-1 items-baseline md:items-end">
+              <div className="col-span-12 md:col-span-3 md:text-right flex md:flex-col gap-3 md:gap-2 items-baseline md:items-end">
                 <PriceTag item={item} section={section} payload={payload} />
-                {section.divider === 'number' && <DurationTag item={item} section={section} payload={payload} />}
+                <DurationTag item={item} section={section} payload={payload} />
               </div>
             </div>
           ))}
+          {showRule && (
+            <div className="h-px w-full" style={{ background: payload.borderColor }} />
+          )}
         </div>
       </div>
     </section>
@@ -233,50 +261,77 @@ function EditorialRowsLayout({ items, section, payload }: { items: Item[]; secti
 }
 
 // ----------------------------------------------------------------
+// Cards — heavy 2-col cards, 5:4 photos, price as a chip.
+// ----------------------------------------------------------------
 
 function CardsLayout({ items, section, payload, images }: { items: Item[]; section: AiServicesSection; payload: AiSitePayload; images: string[] }) {
   return (
     <section className={`${SECTION_PADDING_X} ${SECTION_PADDING_Y}`} style={{ background: payload.bgColor }}>
       <div className="max-w-6xl mx-auto">
         <SectionHeader section={section} payload={payload} />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
           {items.map((item, i) => {
             const img = images[i];
+            const showPriceChip = section.showPrices && typeof item.price === 'number';
             return (
               <div
                 key={i}
-                className="rounded-xl flex flex-col overflow-hidden transition-transform hover:-translate-y-1"
+                className="rounded-2xl flex flex-col overflow-hidden transition-transform hover:-translate-y-1"
                 style={{
                   background: payload.surfaceColor,
-                  border: `1px solid ${payload.borderColor}`,
-                  boxShadow: `0 14px 40px -28px ${payload.primaryColor}`,
+                  border: `1.5px solid ${payload.borderColor}`,
+                  boxShadow: `0 24px 60px -32px ${payload.primaryColor}`,
                 }}
               >
-                {img ? (
-                  <div className="aspect-[16/10] w-full overflow-hidden" style={{ background: payload.bgColor }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                <div className="relative aspect-[5/4] w-full overflow-hidden" style={{ background: payload.bgColor }}>
+                  {img ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  </div>
-                ) : (
-                  <PhotoPlaceholder payload={payload} shape="service" />
-                )}
-                <div className="p-7 flex flex-col gap-4 flex-1">
-                  <div className="flex items-start justify-between">
-                    <h3
-                      className="text-xl font-semibold leading-tight"
-                      style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
+                  ) : (
+                    <PhotoPlaceholder payload={payload} shape="service" fill />
+                  )}
+                  {showPriceChip && (
+                    <div
+                      className="absolute top-4 right-4 px-3 py-1.5 rounded-full text-sm font-bold"
+                      style={{
+                        background: payload.primaryColor,
+                        color: payload.surfaceColor,
+                        boxShadow: `0 8px 20px -8px ${payload.primaryColor}`,
+                      }}
                     >
-                      {item.name}
-                    </h3>
-                    <PriceTag item={item} section={section} payload={payload} />
-                  </div>
+                      €{item.price}
+                    </div>
+                  )}
+                  {section.divider === 'number' && (
+                    <div
+                      className="absolute top-4 left-4 text-[10px] font-mono uppercase tracking-[0.3em] px-2.5 py-1 rounded"
+                      style={{
+                        background: payload.surfaceColor,
+                        color: payload.primaryColor,
+                        border: `1px solid ${payload.borderColor}`,
+                      }}
+                    >
+                      {String(i + 1).padStart(2, '0')}
+                    </div>
+                  )}
+                </div>
+                <div className="p-8 flex flex-col gap-4 flex-1">
+                  <h3
+                    className="text-2xl font-semibold leading-tight"
+                    style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
+                  >
+                    {item.name}
+                  </h3>
                   {item.description && (
-                    <p className="text-sm" style={{ color: payload.mutedTextColor }}>
+                    <p className="text-base leading-relaxed" style={{ color: payload.mutedTextColor }}>
                       {item.description}
                     </p>
                   )}
-                  <div className="mt-auto">
+                  <div className="mt-auto pt-2 flex items-center justify-between">
                     <DurationTag item={item} section={section} payload={payload} />
+                    {!showPriceChip && (
+                      <PriceTag item={item} section={section} payload={payload} />
+                    )}
                   </div>
                 </div>
               </div>

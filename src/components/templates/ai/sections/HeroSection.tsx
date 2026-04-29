@@ -184,41 +184,44 @@ function shouldShowHeroPlaceholder(section: AiHeroSection, heroImageUrl?: string
 }
 
 // ----------------------------------------------------------------
-// Centered hero
+// Centered hero — minimal, all-text. No image area, lots of whitespace.
 // ----------------------------------------------------------------
 
-function CenteredHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
-  const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
+function CenteredHero({ section, business, payload, onPrimaryCta, onSecondaryCta }: LayoutProps) {
+  const singleCtaSection: AiHeroSection = section.ctaCount
+    ? { ...section, ctaCount: 1 }
+    : section;
   return (
     <section
-      className={`${SECTION_PADDING_X} py-24 md:py-36 text-center relative overflow-hidden`}
-      style={backgroundStyle(payload, section.imageStyle, heroImageUrl)}
+      className={`${SECTION_PADDING_X} relative flex items-center justify-center text-center min-h-[70vh] py-28 md:py-44`}
+      style={{ background: payload.bgColor }}
     >
-      <Decoration kind={section.decorativeElement} payload={payload} />
-      <div className="max-w-3xl mx-auto relative">
-        {showPlaceholder && (
-          <div className="max-w-md mx-auto mb-8">
-            <PhotoPlaceholder payload={payload} shape="hero" label="HERO PHOTO" />
-          </div>
-        )}
-        {section.decorativeElement === 'rule' && (
-          <div className="flex justify-center"><div className="h-px w-16 mb-6" style={{ background: payload.primaryColor }} /></div>
-        )}
-        <div className="text-xs uppercase tracking-[0.3em] mb-6" style={{ color: payload.mutedTextColor }}>
+      <div className="max-w-2xl mx-auto relative">
+        <span
+          className="inline-block px-4 py-1.5 rounded-full text-[10px] uppercase tracking-[0.3em] mb-10 border"
+          style={{
+            color: payload.mutedTextColor,
+            borderColor: payload.borderColor,
+            background: payload.surfaceColor,
+          }}
+        >
           {business.name}
-        </div>
+        </span>
         <h1
-          className="text-3xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-5"
+          className="text-4xl md:text-6xl lg:text-7xl font-bold leading-[1.05] mb-8"
           style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
         >
           {section.headline}
         </h1>
         {section.subheadline && (
-          <p className="text-base md:text-lg max-w-2xl mx-auto" style={{ color: payload.mutedTextColor }}>
+          <p
+            className="text-base md:text-lg max-w-xl mx-auto leading-relaxed"
+            style={{ color: payload.mutedTextColor }}
+          >
             {section.subheadline}
           </p>
         )}
-        <HeroCtas section={section} payload={payload} align="center" onPrimary={onPrimaryCta} onSecondary={onSecondaryCta} />
+        <HeroCtas section={singleCtaSection} payload={payload} align="center" onPrimary={onPrimaryCta} onSecondary={onSecondaryCta} />
       </div>
     </section>
   );
@@ -230,33 +233,39 @@ function CenteredHero({ section, business, payload, heroImageUrl, onPrimaryCta, 
 
 function SplitHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
+  const imageStyle = section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
   return (
-    <section className="grid md:grid-cols-2 min-h-[420px] md:min-h-[560px] relative overflow-hidden">
+    <section className="grid grid-cols-1 md:grid-cols-2 min-h-[520px] md:min-h-[640px] relative overflow-hidden">
       <div
-        className="min-h-[220px] md:min-h-[560px] relative"
-        style={backgroundStyle(payload, section.imageStyle, heroImageUrl)}
+        className="relative min-h-[260px] md:min-h-full"
+        style={backgroundStyle(payload, imageStyle, heroImageUrl)}
       >
         {showPlaceholder && (
           <PhotoPlaceholder payload={payload} shape="hero" label="HERO PHOTO" fill />
         )}
-        <Decoration kind={section.decorativeElement} payload={payload} />
       </div>
       <div
-        className={`${SECTION_PADDING_X} py-16 md:py-24 flex flex-col justify-center`}
+        className="flex flex-col justify-center px-8 md:px-14 py-16 md:py-20"
         style={{ background: payload.surfaceColor }}
       >
-        <div className="max-w-md">
-          <div className="text-xs uppercase tracking-[0.25em] mb-5" style={{ color: payload.mutedTextColor }}>
+        <div className="max-w-lg">
+          <div
+            className="text-[10px] uppercase tracking-[0.4em] mb-6"
+            style={{ color: payload.primaryColor }}
+          >
             {business.name}
           </div>
           <h1
-            className="text-3xl md:text-5xl font-bold leading-[1.1] mb-4"
+            className="text-3xl md:text-5xl lg:text-6xl font-bold leading-[1.05] mb-5"
             style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
           >
             {section.headline}
           </h1>
           {section.subheadline && (
-            <p className="text-base md:text-lg" style={{ color: payload.mutedTextColor }}>
+            <p
+              className="text-base md:text-lg leading-relaxed"
+              style={{ color: payload.mutedTextColor }}
+            >
               {section.subheadline}
             </p>
           )}
@@ -273,53 +282,63 @@ function SplitHero({ section, business, payload, heroImageUrl, onPrimaryCta, onS
 
 function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
+  const imageStyle = section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
+  const position = section.headlinePosition ?? 'bottom-left';
   const positionClasses = (() => {
-    switch (section.headlinePosition) {
+    switch (position) {
       case 'top':           return 'items-start justify-center text-center pt-20';
-      case 'bottom-left':   return 'items-end justify-start text-left pb-20';
       case 'bottom-right':  return 'items-end justify-end text-right pb-20';
       case 'left':          return 'items-center justify-start text-left';
       case 'right':         return 'items-center justify-end text-right';
-      case 'center':
-      default:              return 'items-center justify-center text-center';
+      case 'center':        return 'items-center justify-center text-center';
+      case 'bottom-left':
+      default:              return 'items-end justify-start text-left pb-20';
     }
   })();
+  const scrim = (() => {
+    if (position === 'top') {
+      return 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.15) 45%, transparent 100%)';
+    }
+    if (position === 'center') {
+      return 'linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.25) 100%)';
+    }
+    return 'linear-gradient(0deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 45%, transparent 100%)';
+  })();
+  const ctaSection: AiHeroSection = section.ctaCount && section.ctaCount > 1
+    ? { ...section, ctaCount: 1 }
+    : section;
 
   return (
     <section
-      className={`${SECTION_PADDING_X} min-h-[520px] md:min-h-[680px] relative overflow-hidden flex ${positionClasses}`}
-      style={backgroundStyle(payload, section.imageStyle, heroImageUrl)}
+      className={`${SECTION_PADDING_X} min-h-[90vh] relative overflow-hidden flex ${positionClasses}`}
+      style={backgroundStyle(payload, imageStyle, heroImageUrl)}
     >
       {showPlaceholder && (
         <PhotoPlaceholder payload={payload} shape="hero" label="HERO PHOTO" fill />
       )}
-      {/* Subtle overlay for text legibility — only when there's a real photo or gradient */}
-      {((section.imageStyle === 'photo' && heroImageUrl) || section.imageStyle === 'gradient') && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: `linear-gradient(180deg, transparent 0%, ${payload.bgColor}66 100%)` }}
-        />
-      )}
-      <Decoration kind={section.decorativeElement} payload={payload} />
-      <div className="relative max-w-2xl">
-        <div className="text-xs uppercase tracking-[0.3em] mb-5 opacity-80" style={{ color: payload.textColor }}>
+      <div className="absolute inset-0 pointer-events-none" style={{ background: scrim }} />
+      <div className="relative max-w-3xl z-10">
+        <div className="text-[10px] uppercase tracking-[0.4em] mb-6" style={{ color: '#ffffff', opacity: 0.85 }}>
           {business.name}
         </div>
         <h1
-          className="text-4xl md:text-6xl lg:text-7xl font-bold leading-[1.05] mb-5"
-          style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
+          className="text-5xl md:text-7xl lg:text-[5.5rem] font-bold leading-[1.0] mb-5"
+          style={{ fontFamily: headingFontFamily(payload.headingFont), color: '#ffffff' }}
         >
           {section.headline}
         </h1>
         {section.subheadline && (
-          <p className="text-base md:text-xl opacity-90" style={{ color: payload.textColor }}>
+          <p
+            className="text-lg md:text-xl max-w-xl"
+            style={{ color: '#ffffff', opacity: 0.92 }}
+          >
             {section.subheadline}
           </p>
         )}
         <HeroCtas
-          section={section}
+          section={ctaSection}
           payload={payload}
-          align={section.headlinePosition === 'bottom-right' || section.headlinePosition === 'right' ? 'right' : section.headlinePosition === 'top' || section.headlinePosition === 'center' ? 'center' : 'left'}
+          align={position === 'bottom-right' || position === 'right' ? 'right' : position === 'top' || position === 'center' ? 'center' : 'left'}
           onPrimary={onPrimaryCta}
           onSecondary={onSecondaryCta}
         />
@@ -332,41 +351,51 @@ function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta,
 // Editorial hero (magazine-style)
 // ----------------------------------------------------------------
 
-function EditorialHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
+function EditorialHero({ section, business, payload, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   return (
     <section
-      className={`${SECTION_PADDING_X} py-12 md:py-20 relative`}
+      className={`${SECTION_PADDING_X} relative flex flex-col min-h-[80vh] py-10 md:py-16`}
       style={{ background: payload.surfaceColor }}
     >
-      {section.metadataBar && (
-        <div
-          className="flex items-center justify-between text-[11px] uppercase tracking-[0.25em] pb-4 mb-12 border-b"
-          style={{ color: payload.mutedTextColor, borderColor: payload.borderColor }}
-        >
-          <span>{section.metadataLeft || `№ 01 · ${business.name}`}</span>
-          <span>{section.metadataRight || business.address || 'Kosovo'}</span>
-        </div>
-      )}
-      <div className="max-w-5xl">
-        {section.decorativeElement === 'rule' && (
-          <div className="h-px w-24 mb-8" style={{ background: payload.primaryColor }} />
-        )}
-        <h1
-          className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.02] mb-8 max-w-4xl"
-          style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
-        >
-          {section.headline}
-        </h1>
-        {section.subheadline && (
-          <p
-            className="text-lg md:text-xl leading-relaxed max-w-2xl"
-            style={{ color: payload.mutedTextColor }}
-          >
-            {section.subheadline}
-          </p>
-        )}
-        <HeroCtas section={section} payload={payload} align="left" onPrimary={onPrimaryCta} onSecondary={onSecondaryCta} />
+      <div
+        className="flex items-center justify-between text-[10px] uppercase tracking-[0.4em] pb-5 border-b"
+        style={{ color: payload.mutedTextColor, borderColor: payload.borderColor }}
+      >
+        <span>{section.metadataLeft || `Nº 01 — ${new Date().getFullYear()}`}</span>
+        <span>{section.metadataRight || business.address || business.name}</span>
       </div>
+
+      <div className="flex-1 flex flex-col justify-center py-12 md:py-16">
+        <div className="max-w-5xl">
+          <h1
+            className="text-5xl md:text-7xl lg:text-[7.5rem] font-bold leading-[0.98] mb-10"
+            style={{
+              fontFamily: headingFontFamily(payload.headingFont),
+              color: payload.textColor,
+              maxWidth: '14ch',
+            }}
+          >
+            {section.headline}
+          </h1>
+          {section.subheadline && (
+            <p
+              className="text-xl md:text-2xl leading-relaxed max-w-2xl italic"
+              style={{
+                fontFamily: headingFontFamily(payload.headingFont),
+                color: payload.mutedTextColor,
+              }}
+            >
+              {section.subheadline}
+            </p>
+          )}
+          <HeroCtas section={section} payload={payload} align="left" onPrimary={onPrimaryCta} onSecondary={onSecondaryCta} />
+        </div>
+      </div>
+
+      <div
+        className="h-px w-full mt-auto"
+        style={{ background: payload.borderColor }}
+      />
     </section>
   );
 }
@@ -377,46 +406,60 @@ function EditorialHero({ section, business, payload, heroImageUrl, onPrimaryCta,
 
 function AsymmetricHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
+  const imageStyle = section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
   return (
     <section
-      className="relative min-h-[560px] md:min-h-[720px] overflow-hidden"
+      className="relative overflow-hidden min-h-[80vh] md:min-h-[85vh]"
       style={{ background: payload.bgColor }}
     >
-      {/* Off-grid background block */}
       <div
-        className="absolute right-0 top-0 w-[55%] h-[70%] hidden md:block"
-        style={backgroundStyle(payload, section.imageStyle === 'none' ? 'gradient' : section.imageStyle, heroImageUrl)}
+        className="absolute right-[-2%] top-[8%] w-[58%] h-[65%] hidden md:block rounded-bl-[40px] overflow-hidden"
+        style={backgroundStyle(payload, imageStyle, heroImageUrl)}
       >
         {showPlaceholder && (
           <PhotoPlaceholder payload={payload} shape="hero" label="HERO PHOTO" fill />
         )}
       </div>
-      {/* Bottom-left decorative blob */}
+
       <div
-        className="absolute -left-20 -bottom-20 w-80 h-80 rounded-full blur-3xl opacity-40 pointer-events-none"
+        className="absolute right-6 md:right-12 top-4 md:top-8 leading-none pointer-events-none select-none font-bold"
+        style={{
+          color: payload.primaryColor,
+          opacity: 0.08,
+          fontFamily: headingFontFamily(payload.headingFont),
+          fontSize: 'clamp(140px, 22vw, 320px)',
+        }}
+      >
+        01
+      </div>
+
+      <div
+        className="absolute left-[-80px] bottom-[-80px] w-72 h-72 rounded-full blur-3xl opacity-35 pointer-events-none"
         style={{ background: payload.accentColor }}
       />
-      <Decoration kind={section.decorativeElement} payload={payload} />
 
-      <div className={`relative ${SECTION_PADDING_X} pt-24 md:pt-40 pb-16 md:pb-24 max-w-6xl`}>
-        <div className="text-xs uppercase tracking-[0.3em] mb-8" style={{ color: payload.mutedTextColor }}>
+      <div className={`relative ${SECTION_PADDING_X} flex flex-col h-full min-h-[80vh] justify-end pb-16 md:pb-24 pt-28 md:pt-40 max-w-6xl`}>
+        <div
+          className="text-[10px] uppercase tracking-[0.4em] mb-6"
+          style={{ color: payload.mutedTextColor }}
+        >
           {business.name}
         </div>
         <h1
-          className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[0.95] mb-6 max-w-3xl"
+          className="text-5xl md:text-7xl lg:text-[6.5rem] font-bold leading-[0.95] mb-6 max-w-3xl"
           style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
         >
           {section.headline}
         </h1>
         {section.subheadline && (
           <p
-            className="text-base md:text-lg max-w-md ml-0 md:ml-24 mt-8"
+            className="text-base md:text-lg max-w-md ml-0 md:ml-32 mt-6"
             style={{ color: payload.mutedTextColor }}
           >
             {section.subheadline}
           </p>
         )}
-        <div className="ml-0 md:ml-24">
+        <div className="ml-0 md:ml-32 mt-2">
           <HeroCtas section={section} payload={payload} align="left" onPrimary={onPrimaryCta} onSecondary={onSecondaryCta} />
         </div>
       </div>

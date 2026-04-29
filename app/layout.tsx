@@ -1,7 +1,5 @@
-import type { Metadata } from 'next'
-import ProviderContext from '@/components/ProviderContext'
-import '../src/index.css'
-import { ThemeProvider } from 'next-themes';
+import type { Metadata, Viewport } from 'next'
+import Providers from '@/components/Providers'
 import { headers } from 'next/headers'
 import { isMainDomain } from '@/lib/utils'
 import { SpeedInsights } from '@vercel/speed-insights/next'
@@ -10,17 +8,18 @@ import { Analytics } from '@vercel/analytics/next'
 export const metadata: Metadata = {
   title: 'LokalWeb — Websites for Kosovo Businesses',
   description: 'Get a professional website and booking system for your Kosovo business in minutes.',
-  themeColor: '#4f8ef7',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'LokalWeb',
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#4f8ef7',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default async function RootLayout({
@@ -59,11 +58,9 @@ export default async function RootLayout({
         />
       </head>
       <body>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          <ProviderContext>
-            {children}
-          </ProviderContext>
-        </ThemeProvider>
+        <Providers>
+          {children}
+        </Providers>
         <SpeedInsights />
         <Analytics />
       </body>

@@ -15,6 +15,35 @@ import { fileURLToPath } from 'url';
 import { FIXTURES, type WizardFixture } from './fixtures';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = path.join(__dirname, '..', '..');
+
+// Load .env.local so credentials placed there (Next.js convention) are
+// picked up automatically when running via `npx tsx`. Existing process.env
+// values win — explicit shell exports always override the file.
+function loadEnvFile(filename: string): void {
+  const envPath = path.join(REPO_ROOT, filename);
+  if (!fs.existsSync(envPath)) return;
+  const content = fs.readFileSync(envPath, 'utf8');
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+    const eq = line.indexOf('=');
+    if (eq === -1) continue;
+    const key = line.slice(0, eq).trim();
+    let value = line.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (!(key in process.env)) {
+      process.env[key] = value;
+    }
+  }
+}
+loadEnvFile('.env.local');
+loadEnvFile('.env');
 
 const BASE_URL = process.env.LOKAL_TEST_URL || 'https://lokal-web-one.vercel.app';
 const TEST_EMAIL = process.env.LOKAL_TEST_EMAIL;
@@ -22,7 +51,7 @@ const TEST_PASSWORD = process.env.LOKAL_TEST_PASSWORD;
 const HEADLESS = process.argv.includes('--headless');
 
 if (!TEST_EMAIL || !TEST_PASSWORD) {
-  console.error('Set LOKAL_TEST_EMAIL and LOKAL_TEST_PASSWORD env vars.');
+  console.error('Set LOKAL_TEST_EMAIL and LOKAL_TEST_PASSWORD in .env.local or your shell.');
   process.exit(1);
 }
 

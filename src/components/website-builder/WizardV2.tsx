@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { cn, publicSiteHref, publicSiteLabel } from '@/lib/utils';
+import { cn, publicSiteLabel } from '@/lib/utils';
 import type { WizardInput, AiSitePayload } from '@/lib/types/customization';
 import type { Business, Service } from '@/lib/types';
 import { DynamicSiteRenderer } from '@/components/templates/ai/DynamicSiteRenderer';
@@ -365,8 +365,7 @@ export default function WizardV2({ businessId, subdomain }: Props) {
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error || 'Aplikimi dështoi');
-      const target = body.subdomain || subdomain;
-      window.location.href = publicSiteHref(target);
+      window.location.href = '/dashboard';
     } catch (e: any) {
       setApplyError(e?.message || 'Aplikimi dështoi');
       setApplying(false);

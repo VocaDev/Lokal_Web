@@ -118,79 +118,103 @@ const BANNED_PHRASES = [
   'where style meets', 'more than just',
 ];
 
-function sectionsBriefing(userPriorityFirst: string): string {
+// Returns the per-section layout instruction the system prompt embeds.
+// 'ai' means the AI picks freely from the listed options. Anything else is
+// the user's explicit choice and MUST be respected verbatim.
+function layoutInstruction(section: 'hero' | 'story' | 'services' | 'gallery', userPick: string): string {
+  if (userPick && userPick !== 'ai') {
+    return `${section.toUpperCase()} LAYOUT — LOCKED BY USER: '${userPick}'. You MUST output this exact layout value in the ${section} section. Do not pick a different one.`;
+  }
+  // AI free choice. Provide the catalog + a short decision tree per section.
+  switch (section) {
+    case 'hero':
+      return `HERO LAYOUT — AI free choice. Options: 'centered' | 'split' | 'fullbleed' | 'editorial' | 'asymmetric'. Pick by brief:
+- "traditional" / "family-owned" / "long history" / "since YYYY"  →  'editorial' (newspaper-feel)
+- "bold" / "modern" / "disruptive" / "no-bullshit"               →  'asymmetric' or 'fullbleed'
+- "minimal" / "precise" / "quiet" / "refined"                    →  'centered'
+- "warm" / "approachable" / "neighborly"                         →  'split'
+Do NOT default to 'fullbleed' unless the brief demands it.`;
+    case 'story':
+      return `STORY LAYOUT — AI free choice. Options: 'centered-quote' | 'two-column' | 'long-form' | 'pull-quote'. Pick by brief:
+- Single founder / single defining moment       →  'centered-quote'
+- Multiple defining traits / multifaceted        →  'two-column'
+- Rich narrative, history, specifics             →  'long-form'
+- One quotable phrase captures everything        →  'pull-quote'`;
+    case 'services':
+      return `SERVICES LAYOUT — AI free choice. Options: 'list' | 'grid-2' | 'grid-3' | 'editorial-rows' | 'cards'. Pick by brief AND photo state:
+- User has services photos → STRONGLY prefer 'cards' or 'grid-3'
+- No photos + brief "editorial / traditional / long history" → 'editorial-rows'
+- No photos + brief "minimal / refined / quiet" → 'list'
+- No photos + brief "bold / energetic" → 'grid-2'
+- DEFAULT → 'cards'`;
+    case 'gallery':
+      return `GALLERY LAYOUT — AI free choice. Options: 'masonry' | 'grid-uniform' | 'showcase' | 'strip'. Pick by feel:
+- "calm / curated" → 'showcase' or 'strip'
+- "rich / abundant" → 'masonry' or 'grid-uniform'`;
+  }
+}
+
+function sectionsBriefing(
+  heroLayout: string,
+  storyLayout: string,
+  servicesLayout: string,
+  galleryLayout: string,
+): string {
   return `
 THIS IS HOW SECTIONS WORK:
 
 You output a sections[] array. Each section has a 'kind' and parameters specific to that kind. The renderer composes the page from these — you are NOT picking from a fixed catalog of designs.
 
-REQUIRED SECTIONS (in this exact order, with one variation):
+REQUIRED SECTIONS (in this exact order):
 1. hero
-2. ${userPriorityFirst}            ← driven by user's sectionPriority choice
-3. The remaining of: services, story, gallery (in standard order, skipping the one used in #2)
-4. footer
+2. services
+3. story
+4. gallery (only if relevant — see below)
+5. footer
 
-Total sections: 4 to 6 (depends on whether user has gallery photos).
+Total sections: 4 to 5 (gallery is optional).
 
 ABSOLUTELY NO testimonials section. NO FAQ section. Do not output them.
 
 HERO PARAMETERS (kind: 'hero'):
-- layout: 'centered' | 'split' | 'fullbleed' | 'editorial' | 'asymmetric'
+- layout: see HERO LAYOUT instruction below — respect any user lock
 - imageStyle: 'photo' | 'gradient' | 'pattern' | 'none' (PREFER 'photo' unless the brief explicitly demands type-first)
-- metadataBar: true to show top metadata bar (issue number, location) — primarily for 'editorial'
+- metadataBar: true to show top metadata bar — primarily for 'editorial'
 - headlinePosition: 'top' | 'center' | 'bottom-left' | 'bottom-right' | 'left' | 'right'
 - ctaCount: 0 | 1 | 2
 - decorativeElement: 'none' | 'rule' | 'number' | 'glyph'
 
-HERO LAYOUT DECISION TREE — pick based on the brief's defining traits:
-- "traditional" / "family-owned" / "long history" / "since YYYY"  →  'editorial' (newspaper-feel)
-- "bold" / "modern" / "disruptive" / "no-bullshit"               →  'asymmetric' or 'fullbleed'
-- "minimal" / "precise" / "quiet" / "refined"                    →  'centered'
-- "warm" / "approachable" / "neighborly"                         →  'split'
-- DEFAULT (use sparingly):                                        →  'fullbleed'
-Do NOT default to 'fullbleed' unless the brief actually demands it. Most briefs do not.
+${layoutInstruction('hero', heroLayout)}
 
 SERVICES PARAMETERS (kind: 'services'):
-- layout: 'list' | 'grid-2' | 'grid-3' | 'editorial-rows' | 'cards'
+- layout: see SERVICES LAYOUT instruction below — respect any user lock
 - showPrices: true if prices visible
 - showDuration: true if durations shown
 - divider: 'none' | 'line' | 'number'
 - intro: optional intro paragraph
 - items: array of services with name, description, price (number), durationMinutes (number)
 
-SERVICES LAYOUT DECISION TREE — pick based on the brief AND the user's photos:
-- User has services photos uploaded? → STRONGLY prefer 'cards' or 'grid-3' (layouts that show images well)
-- User does NOT have service photos + brief is "editorial / traditional / long history" → 'editorial-rows' (rich descriptions per row)
-- User does NOT have service photos + brief is "minimal / refined / quiet" → 'list' (sparse, type-focused)
-- User does NOT have service photos + brief is "bold / energetic" → 'grid-2' (balanced cards even without images)
-- DEFAULT → 'cards' (most flexible)
-The renderer adapts to whichever you pick. Don't default to the same layout.
+${layoutInstruction('services', servicesLayout)}
 
 STORY PARAMETERS (kind: 'story'):
-- layout: 'centered-quote' | 'two-column' | 'long-form' | 'pull-quote'
+- layout: see STORY LAYOUT instruction below — respect any user lock
 - body: text content
 - attribution: optional, for centered-quote
-- LENGTH CAP: The story body MUST be 2-3 short paragraphs maximum, ~120 words total. Each paragraph one specific point. Density preferences may vary other section copy lengths, but the story is always tight. Cut prose, never pad.
+- LENGTH CAP: The story body MUST be 2-3 short paragraphs maximum, ~120 words total. Each paragraph one specific point. The story is always tight. Cut prose, never pad.
 
-STORY LAYOUT DECISION TREE:
-- Brief emphasizes a single founder / single defining moment       →  'centered-quote'
-- Brief has multiple defining traits / multifaceted positioning    →  'two-column'
-- Brief is rich in narrative, history, specifics                   →  'long-form'
-- Brief has one quotable phrase that captures everything           →  'pull-quote'
+${layoutInstruction('story', storyLayout)}
 
 GALLERY PARAMETERS (kind: 'gallery'):
-- layout: 'masonry' | 'grid-uniform' | 'showcase' | 'strip'
+- layout: see GALLERY LAYOUT instruction below — respect any user lock
 - caption: optional caption above gallery
 
-If a gallery section appears in your output, pick the layout based on density:
-- sparse  →  'showcase' (one large + thumbnails) or 'strip'
-- dense   →  'masonry' or 'grid-uniform'
+${layoutInstruction('gallery', galleryLayout)}
 
 FOOTER PARAMETERS (kind: 'footer'):
 - layout: 'centered' | 'three-column' | 'editorial' | 'minimal'
 - tagline: optional short closing line
 
-THE GAME: pick parameter combinations the brief actually NEEDS. Two businesses with the same industry but different briefs SHOULD produce different combinations. Use the decision trees above; do not default to safe choices.`;
+THE GAME: pick parameter combinations the brief actually NEEDS. Two businesses with the same industry but different briefs SHOULD produce different combinations. Don't default to safe choices when the user left a layout on 'AI free choice'.`;
 }
 
 function fewShotsFor(canonicalIndustry: string): string {
@@ -245,26 +269,6 @@ GOOD: "Three friends sent me here. They all said the same thing: you'll know it 
   };
 
   return fewShots[canonicalIndustry] || fewShots.other;
-}
-
-function heroDirective(hero: string): string {
-  switch (hero) {
-    case 'cinematic': return 'Full-bleed feel — dramatic background image or gradient, large headline. Cinematic and immersive.';
-    case 'split': return '50/50 split — image on one side, text on the other. Balanced.';
-    case 'centered': return 'Minimal centered — small label, big headline, brief subheadline. All centered. Lots of whitespace.';
-    case 'editorial': return 'Magazine-style — metadata bar at top, oversized headline, prose-style subheadline. No image.';
-    default: return '';
-  }
-}
-
-function sectionPriorityDirective(priority: string): string {
-  return `After the hero, the FIRST major section should be: ${priority}. Other sections follow in natural order.`;
-}
-
-function densityDirective(density: string): string {
-  return density === 'sparse'
-    ? 'Sparse and airy: shorter copy, fewer items per row, generous whitespace. Prefer "list" or "grid-2" for services.'
-    : 'Rich and dense: longer copy, more items per row, tighter spacing, more sections. Prefer "cards" or "editorial-rows" for services.';
 }
 
 function moodDirective(mood: string, primary?: string, accent?: string): string {
@@ -349,9 +353,12 @@ type GenerateThemeArgs = {
   industry: string;
   city: string;
   uniqueness: string;
-  hero: string;
-  sectionPriority: string;
-  density: string;
+  // Per-section layout picks. 'ai' = AI free choice; any other value forces
+  // that exact layout in the post-processor.
+  heroLayout: string;
+  storyLayout: string;
+  servicesLayout: string;
+  galleryLayout: string;
   mood: string;
   brandPrimary?: string;
   brandAccent?: string;
@@ -365,22 +372,11 @@ type GenerateThemeArgs = {
   regenSeed?: string;
 };
 
-// Map the wizard's sectionPriority + photo state to the section that comes
-// first after the hero. If the user picked 'gallery' but has no gallery
-// photos, fall back to 'services' so we never demand a photo-less gallery.
-function priorityToFirstSection(
-  priority: string,
-  userHasGalleryPhotos: boolean,
-): 'services' | 'story' | 'gallery' {
-  if (priority === 'story') return 'story';
-  if (priority === 'gallery') return userHasGalleryPhotos ? 'gallery' : 'services';
-  return 'services';
-}
-
 async function generateTheme(args: GenerateThemeArgs) {
   const {
     brief, businessName, industry, city, uniqueness,
-    hero, sectionPriority, density, mood, brandPrimary, brandAccent,
+    heroLayout, storyLayout, servicesLayout, galleryLayout,
+    mood, brandPrimary, brandAccent,
     fontPersonality, language, tone, userProvidedServices,
     canonicalIndustry, userHasGalleryPhotos, userHasServicePhotos, regenSeed,
   } = args;
@@ -393,24 +389,13 @@ async function generateTheme(args: GenerateThemeArgs) {
     ? brief.definingTraits.join(' / ')
     : String(brief.definingTraits ?? '');
 
-  const userPriorityFirst = priorityToFirstSection(sectionPriority, userHasGalleryPhotos);
-
-  const systemPrompt = `You are a senior designer translating a brand strategy brief into a unique website. The user has chosen specific structural direction. HONOR IT, but use it as creative input — not a recipe.
+  const systemPrompt = `You are a senior designer translating a brand strategy brief into a unique website. The user has made specific layout choices for each section — some they locked, some they left to you. Respect every locked layout exactly; for the rest, pick what best serves the brief.
 
 CRITICAL OUTPUT RULES:
 - Service prices MUST be integers (number type). Use the midpoint if a range is intended. Example: 25 not "20-30 Eur".
 - Output ONLY raw JSON — no markdown code fences, no explanation, no backticks.
 
-USER'S STRUCTURAL CHOICES (creative input, not literal recipe):
-
-Hero feel: ${hero}
-${heroDirective(hero)}
-
-Section priority: ${sectionPriority}
-${sectionPriorityDirective(sectionPriority)}
-
-Density: ${density}
-${densityDirective(density)}
+USER'S STRUCTURAL CHOICES (each section is either user-locked or AI free choice — see per-section instructions below in the SECTIONS block).
 
 Mood: ${mood}
 ${moodDirective(mood, brandPrimary, brandAccent)}
@@ -467,17 +452,17 @@ If two competitors in the same industry would receive a similar layout AND simil
 
 Produce THE WEBSITE THIS BUSINESS WOULD HAVE IF THEY HIRED A DESIGNER WHO READ THE BRIEF — not a generic site for the category.
 
-STRUCTURAL INTERPRETATION RULE:
+STRUCTURAL INTERPRETATION RULE (applies ONLY to sections the user left as 'AI free choice' — locked layouts win):
 
-The brief must influence not just copy but STRUCTURE:
-- "Traditional / family-owned / long history" → editorial-style hero, story-prominent section ordering, restrained color
-- "Bold / disruptive / no-bullshit" → asymmetric or fullbleed hero, services-prominent, high-contrast color
-- "Emotional / craft-driven / personal" → centered hero, story-first ordering, narrative-heavy density
-- "Practical / efficient / no-frills" → split or centered hero, services-first, sparse density
+The brief must influence STRUCTURE for any free-choice section:
+- "Traditional / family-owned / long history" → editorial-style hero, restrained color
+- "Bold / disruptive / no-bullshit" → asymmetric or fullbleed hero, high-contrast color
+- "Emotional / craft-driven / personal" → centered hero, narrative-heavy story
+- "Practical / efficient / no-frills" → split or centered hero, list-style services
 
-Do NOT treat layout as independent from the brief. The brief sets the structural mood AND the copy mood.
+Do NOT treat layout as independent from the brief on free-choice sections.
 
-${sectionsBriefing(userPriorityFirst)}
+${sectionsBriefing(heroLayout, storyLayout, servicesLayout, galleryLayout)}
 
 REALISTIC PRICING (Kosovo market, EUR):
 - barbershop: €5-25 (haircut €8-12, fade €10-15, full package €20)
@@ -545,8 +530,9 @@ BEFORE OUTPUTTING — run these specific checks:
 2. LITERAL-INPUT TEST: Search your output for any text label, eyebrow, brand code, or attribution that isn't the literal businessName or city.
    If you invented something (e.g. an acronym, a code, a founder name) → REPLACE with the literal user input.
 
-3. STRUCTURAL DECISION TEST: Did the brief actually influence your hero/story/density choices, or did you default?
-   If you defaulted to safe choices ('fullbleed' hero, 'long-form' story, dense everywhere) without justification from the brief → PICK DIFFERENTLY.
+3. STRUCTURAL DECISION TEST: For every section the user left as 'AI free choice', did the brief actually influence your layout pick, or did you default?
+   If you defaulted to safe choices ('fullbleed' hero, 'long-form' story, 'cards' services) without justification from the brief → PICK DIFFERENTLY.
+   For sections the user locked, you have NO discretion — output the locked layout exactly.
 
 4. UNIQUENESS PRESENCE TEST: Search your output for the user's uniqueness statement (or its key phrases).
    If you cannot find it echoed in any section → REWRITE the hero or story to incorporate it.
@@ -635,8 +621,11 @@ interface WizardServiceInput {
 }
 
 interface PostProcessCtx {
-  sectionPriority: 'services' | 'story' | 'gallery';
-  density: 'sparse' | 'dense';
+  // Per-section user picks. 'ai' = leave AI's choice; specific value = force it.
+  heroLayout: string;
+  storyLayout: string;
+  servicesLayout: string;
+  galleryLayout: string;
   userHasServicePhotos: boolean;
   userHasGalleryPhotos: boolean;
   language: string;
@@ -659,8 +648,10 @@ function coerceInt(v: string | number | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-function reorderSections(sections: any[], priority: 'services' | 'story' | 'gallery'): any[] {
-  // Standard order: hero, [user priority], [the others], footer
+function reorderSections(sections: any[]): any[] {
+  // Fixed standard order: hero -> services -> story -> gallery -> footer.
+  // The user's per-section layout picker replaces the old sectionPriority
+  // input, so the macro-ordering can be deterministic.
   const hero = sections.find(s => s.kind === 'hero');
   const footer = sections.find(s => s.kind === 'footer');
   const services = sections.find(s => s.kind === 'services');
@@ -669,20 +660,9 @@ function reorderSections(sections: any[], priority: 'services' | 'story' | 'gall
 
   const result: any[] = [];
   if (hero) result.push(hero);
-
-  // Priority-driven first content section
-  const priorityOrder: ('services' | 'story' | 'gallery')[] = (() => {
-    if (priority === 'services') return ['services', 'story', 'gallery'];
-    if (priority === 'story') return ['story', 'services', 'gallery'];
-    return ['gallery', 'services', 'story'];
-  })();
-
-  for (const k of priorityOrder) {
-    if (k === 'services' && services) result.push(services);
-    if (k === 'story' && story) result.push(story);
-    if (k === 'gallery' && gallery) result.push(gallery);
-  }
-
+  if (services) result.push(services);
+  if (story) result.push(story);
+  if (gallery) result.push(gallery);
   if (footer) result.push(footer);
   return result;
 }
@@ -694,12 +674,16 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
   sections = sections.filter(s => s?.kind !== 'testimonials' && s?.kind !== 'faq');
 
   // 2. Force a gallery section if the user uploaded gallery photos but the
-  //    AI didn't include one.
+  //    AI didn't include one. Default to user-locked layout when present,
+  //    'masonry' otherwise.
   const hasGallery = sections.some(s => s?.kind === 'gallery');
   if (ctx.userHasGalleryPhotos && !hasGallery) {
+    const lockedGallery = ctx.galleryLayout && ctx.galleryLayout !== 'ai'
+      ? ctx.galleryLayout
+      : 'masonry';
     sections.push({
       kind: 'gallery',
-      layout: ctx.density === 'sparse' ? 'showcase' : 'masonry',
+      layout: lockedGallery,
       caption: undefined,
     });
   }
@@ -778,8 +762,28 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
     };
   });
 
-  // 6. Final ordering — hero, [user priority], [the rest], footer.
-  sections = reorderSections(sections, ctx.sectionPriority);
+  // 6. Lock user-chosen layouts. When the wizard picked a specific value
+  //    (anything other than 'ai'), force it onto the AI's section so the
+  //    rendered site matches what the user saw in the picker.
+  sections = sections.map(s => {
+    if (!s || typeof s.kind !== 'string') return s;
+    if (s.kind === 'hero' && ctx.heroLayout && ctx.heroLayout !== 'ai') {
+      return { ...s, layout: ctx.heroLayout };
+    }
+    if (s.kind === 'story' && ctx.storyLayout && ctx.storyLayout !== 'ai') {
+      return { ...s, layout: ctx.storyLayout };
+    }
+    if (s.kind === 'services' && ctx.servicesLayout && ctx.servicesLayout !== 'ai') {
+      return { ...s, layout: ctx.servicesLayout };
+    }
+    if (s.kind === 'gallery' && ctx.galleryLayout && ctx.galleryLayout !== 'ai') {
+      return { ...s, layout: ctx.galleryLayout };
+    }
+    return s;
+  });
+
+  // 7. Final ordering — hero -> services -> story -> gallery -> footer.
+  sections = reorderSections(sections);
 
   return { ...theme, sections };
 }
@@ -812,7 +816,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       brief, businessName, industry, city, uniqueness,
-      hero, sectionPriority, density, mood,
+      heroLayout, storyLayout, servicesLayout, galleryLayout,
+      mood,
       brandPrimary, brandAccent, fontPersonality,
       language, tone, userProvidedServices, wizardServices, regenSeed,
       generationId, businessId,
@@ -851,9 +856,10 @@ export async function POST(request: NextRequest) {
       industry,
       city: city || '',
       uniqueness: typeof uniqueness === 'string' ? uniqueness : '',
-      hero: hero || 'cinematic',
-      sectionPriority: sectionPriority || 'services',
-      density: density || 'dense',
+      heroLayout: typeof heroLayout === 'string' && heroLayout ? heroLayout : 'ai',
+      storyLayout: typeof storyLayout === 'string' && storyLayout ? storyLayout : 'ai',
+      servicesLayout: typeof servicesLayout === 'string' && servicesLayout ? servicesLayout : 'ai',
+      galleryLayout: typeof galleryLayout === 'string' && galleryLayout ? galleryLayout : 'ai',
       mood: mood || 'warm',
       brandPrimary,
       brandAccent,
@@ -867,7 +873,15 @@ export async function POST(request: NextRequest) {
       regenSeed,
     };
 
-    console.log('[generate-variants] Generating parametric theme', { canonical, hero: args.hero, mood: args.mood });
+    console.log('[generate-variants] Generating parametric theme', {
+      canonical, mood: args.mood,
+      layouts: {
+        hero: args.heroLayout,
+        story: args.storyLayout,
+        services: args.servicesLayout,
+        gallery: args.galleryLayout,
+      },
+    });
 
     if (canEmit) {
       await emitProgress({
@@ -877,8 +891,10 @@ export async function POST(request: NextRequest) {
     }
 
     const postProcessCtx: PostProcessCtx = {
-      sectionPriority: (args.sectionPriority as 'services' | 'story' | 'gallery') || 'services',
-      density: (args.density as 'sparse' | 'dense') || 'dense',
+      heroLayout: args.heroLayout,
+      storyLayout: args.storyLayout,
+      servicesLayout: args.servicesLayout,
+      galleryLayout: args.galleryLayout,
       userHasServicePhotos,
       userHasGalleryPhotos,
       language: args.language,

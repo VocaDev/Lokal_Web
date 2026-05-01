@@ -43,22 +43,42 @@ const BOOKING_CHIPS: Array<{ label: string; value: WizardInput['bookingMethod'] 
   { label: 'Nuk është e zbatueshme', value: 'none' },
 ];
 
-const HERO_OPTIONS: Array<{ id: WizardInput['hero']; label: string; sub: string }> = [
-  { id: 'cinematic', label: 'Kinematik', sub: 'Foto e plotë' },
-  { id: 'split', label: 'I ndarë', sub: 'Foto + tekst' },
-  { id: 'centered', label: 'I qendërsuar', sub: 'Minimalist' },
-  { id: 'editorial', label: 'Editorial', sub: 'Si revistë' },
+// Per-section layout pickers. Each ends with an 'ai' option that is the
+// default and lets the model pick freely. Specific values force the AI's
+// layout choice in the post-processor.
+//
+// `sub` is the 1-2 word descriptor under the label.
+
+const HERO_LAYOUTS: Array<{ id: WizardInput['heroLayout']; label: string; sub: string }> = [
+  { id: 'fullbleed', label: 'Kinematik', sub: 'Foto e plotë' },
+  { id: 'split',     label: 'I ndarë',    sub: 'Foto + tekst' },
+  { id: 'centered',  label: 'I qendërsuar', sub: 'Minimalist' },
+  { id: 'editorial', label: 'Editorial',  sub: 'Si revistë' },
+  { id: 'ai',        label: 'AI vendos',  sub: 'Le AI të zgjedhë' },
 ];
 
-const SECTION_PRIORITY_CHIPS: Array<{ label: string; value: WizardInput['sectionPriority'] }> = [
-  { label: 'Shërbimet', value: 'services' },
-  { label: 'Historia', value: 'story' },
-  { label: 'Galeria', value: 'gallery' },
+const STORY_LAYOUTS: Array<{ id: WizardInput['storyLayout']; label: string; sub: string }> = [
+  { id: 'centered-quote', label: 'Citim qendror', sub: 'Një frazë e madhe' },
+  { id: 'two-column',     label: 'Dy kolona',     sub: 'Foto + tekst' },
+  { id: 'long-form',      label: 'Tekst i gjatë', sub: 'Foto sipër' },
+  { id: 'pull-quote',     label: 'Citat i nxjerrë', sub: 'Citat + prozë' },
+  { id: 'ai',             label: 'AI vendos',     sub: 'Le AI të zgjedhë' },
 ];
 
-const DENSITY_CHIPS: Array<{ label: string; value: WizardInput['density'] }> = [
-  { label: 'Hapësirë e gjerë', value: 'sparse' },
-  { label: 'I dendur dhe i pasur', value: 'dense' },
+const SERVICES_LAYOUTS: Array<{ id: WizardInput['servicesLayout']; label: string; sub: string }> = [
+  { id: 'list',            label: 'Listë',           sub: 'Sparse, type-first' },
+  { id: 'grid-3',          label: 'Rrjet 3 kolona',  sub: 'Karta të vogla' },
+  { id: 'editorial-rows',  label: 'Rreshta editorial', sub: 'Numrash + prozë' },
+  { id: 'cards',           label: 'Karta',           sub: 'Foto + tekst' },
+  { id: 'ai',              label: 'AI vendos',       sub: 'Le AI të zgjedhë' },
+];
+
+const GALLERY_LAYOUTS: Array<{ id: WizardInput['galleryLayout']; label: string; sub: string }> = [
+  { id: 'masonry',       label: 'Masonry',          sub: 'Lartësi të ndryshme' },
+  { id: 'grid-uniform',  label: 'Rrjet uniform',    sub: 'Të gjitha të barabarta' },
+  { id: 'showcase',      label: 'Vetrina',          sub: 'Një e madhe + miniatura' },
+  { id: 'strip',         label: 'Shirit',           sub: 'Horizontal, scroll' },
+  { id: 'ai',            label: 'AI vendos',        sub: 'Le AI të zgjedhë' },
 ];
 
 // Mood swatches are intentional palette samples — the only place hex literals
@@ -122,9 +142,10 @@ function defaultInput(): WizardInput {
       { name: '', price: '', durationMinutes: undefined },
     ],
     bookingMethod: 'appointments',
-    hero: 'cinematic',
-    sectionPriority: 'services',
-    density: 'dense',
+    heroLayout: 'ai',
+    storyLayout: 'ai',
+    servicesLayout: 'ai',
+    galleryLayout: 'ai',
     mood: 'warm',
     brandPrimary: undefined,
     brandAccent: undefined,
@@ -224,7 +245,8 @@ export default function WizardV2({ businessId, subdomain }: Props) {
              input.city.trim().length >= 2;
     }
     if (s === 2) return true;
-    if (s === 3) return !!input.hero && !!input.sectionPriority && !!input.density;
+    // Step 3 always valid — every layout picker defaults to 'ai'.
+    if (s === 3) return true;
     if (s === 4) {
       if (!input.mood) return false;
       if (input.mood === 'custom') return isHex(input.brandPrimary) && isHex(input.brandAccent);
@@ -303,9 +325,10 @@ export default function WizardV2({ businessId, subdomain }: Props) {
           industry: input.industry,
           city: input.city,
           uniqueness: input.uniqueness,
-          hero: input.hero,
-          sectionPriority: input.sectionPriority,
-          density: input.density,
+          heroLayout: input.heroLayout,
+          storyLayout: input.storyLayout,
+          servicesLayout: input.servicesLayout,
+          galleryLayout: input.galleryLayout,
           mood: input.mood,
           brandPrimary: input.brandPrimary,
           brandAccent: input.brandAccent,
@@ -366,9 +389,6 @@ export default function WizardV2({ businessId, subdomain }: Props) {
           theme,
           siteLanguage: input.language,
           siteTone: input.tone,
-          heroStyle: input.hero,
-          sectionPriority: input.sectionPriority,
-          density: input.density,
           uniquenessStatement: input.uniqueness,
           bookingMethod: input.bookingMethod,
           // Belt-and-suspenders: user prices/durations win even if the theme
@@ -780,65 +800,86 @@ function Step2({
 }
 
 // ---------- Step 3 ----------
+//
+// One scrollable step with four layout pickers. Each picker is a 5-card grid
+// (4 specific layouts + 'AI vendos'). Default selection is 'ai' across the
+// board; the post-processor in /api/generate-variants only forces the AI's
+// layout when the user picked a specific one.
 function Step3({
   input, update,
 }: { input: WizardInput; update: (p: Partial<WizardInput>) => void }) {
   return (
-    <div className="space-y-7">
-      <div className="space-y-3">
-        <FieldLabel>Stili i hero-s</FieldLabel>
-        <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
-          {HERO_OPTIONS.map(h => (
-            <HeroCard
-              key={h.id}
-              option={h}
-              active={input.hero === h.id}
-              onClick={() => update({ hero: h.id })}
-            />
-          ))}
-        </div>
-      </div>
+    <div className="space-y-10">
+      <LayoutPicker
+        title="Hero"
+        family="hero"
+        options={HERO_LAYOUTS}
+        selected={input.heroLayout}
+        onPick={(v) => update({ heroLayout: v as WizardInput['heroLayout'] })}
+      />
+      <LayoutPicker
+        title="Historia"
+        family="story"
+        options={STORY_LAYOUTS}
+        selected={input.storyLayout}
+        onPick={(v) => update({ storyLayout: v as WizardInput['storyLayout'] })}
+      />
+      <LayoutPicker
+        title="Shërbimet"
+        family="services"
+        options={SERVICES_LAYOUTS}
+        selected={input.servicesLayout}
+        onPick={(v) => update({ servicesLayout: v as WizardInput['servicesLayout'] })}
+      />
+      <LayoutPicker
+        title="Galeria"
+        family="gallery"
+        options={GALLERY_LAYOUTS}
+        selected={input.galleryLayout}
+        onPick={(v) => update({ galleryLayout: v as WizardInput['galleryLayout'] })}
+      />
+    </div>
+  );
+}
 
-      <div className="space-y-3">
-        <FieldLabel>Cila pjesë vjen e para?</FieldLabel>
-        <div className="flex flex-wrap gap-2">
-          {SECTION_PRIORITY_CHIPS.map(c => (
-            <Chip
-              key={c.value}
-              active={input.sectionPriority === c.value}
-              onClick={() => update({ sectionPriority: c.value })}
-            >
-              {c.label}
-            </Chip>
-          ))}
-        </div>
-      </div>
+type LayoutFamily = 'hero' | 'story' | 'services' | 'gallery';
 
-      <div className="space-y-3">
-        <FieldLabel>Densiteti vizual</FieldLabel>
-        <div className="flex flex-wrap gap-2">
-          {DENSITY_CHIPS.map(c => (
-            <Chip
-              key={c.value}
-              active={input.density === c.value}
-              onClick={() => update({ density: c.value })}
-            >
-              {c.label}
-            </Chip>
-          ))}
-        </div>
+function LayoutPicker({
+  title, family, options, selected, onPick,
+}: {
+  title: string;
+  family: LayoutFamily;
+  options: Array<{ id: string; label: string; sub: string }>;
+  selected: string;
+  onPick: (id: string) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <h3 className="text-[15px] font-semibold text-foreground">{title}</h3>
+      <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
+        {options.map(opt => (
+          <LayoutCard
+            key={opt.id}
+            family={family}
+            option={opt}
+            active={selected === opt.id}
+            onClick={() => onPick(opt.id)}
+          />
+        ))}
       </div>
     </div>
   );
 }
 
-function HeroCard({
-  option, active, onClick,
+function LayoutCard({
+  family, option, active, onClick,
 }: {
-  option: { id: WizardInput['hero']; label: string; sub: string };
+  family: LayoutFamily;
+  option: { id: string; label: string; sub: string };
   active: boolean;
   onClick: () => void;
 }) {
+  const isAi = option.id === 'ai';
   return (
     <button
       type="button"
@@ -848,23 +889,53 @@ function HeroCard({
         active
           ? 'border-primary ring-2 ring-primary/30'
           : 'border-border hover:border-foreground/30',
+        isAi && !active && 'opacity-80',
       )}
     >
       <div className="rounded-md overflow-hidden mb-2 bg-muted/50">
-        <HeroThumb id={option.id} />
+        <LayoutThumb family={family} id={option.id} />
       </div>
-      <div className="text-[13px] font-semibold text-foreground">{option.label}</div>
+      <div className="text-[13px] font-semibold text-foreground flex items-center gap-1">
+        {isAi && <span aria-hidden="true">✨</span>}
+        {option.label}
+      </div>
       <div className="text-[11px] text-muted-foreground">{option.sub}</div>
     </button>
   );
 }
 
-function HeroThumb({ id }: { id: WizardInput['hero'] }) {
+// Inline schematic SVG thumbnails for every layout. Kept tiny + abstract —
+// they suggest composition rather than render the real layout.
+function LayoutThumb({ family, id }: { family: LayoutFamily; id: string }) {
+  if (family === 'hero')     return <HeroThumb id={id} />;
+  if (family === 'story')    return <StoryThumb id={id} />;
+  if (family === 'services') return <ServicesThumb id={id} />;
+  return <GalleryThumb id={id} />;
+}
+
+function AiThumb() {
+  return (
+    <svg viewBox="0 0 140 70" className="w-full h-auto block text-muted-foreground/30">
+      <rect width="140" height="70" fill="currentColor" opacity="0.18" />
+      <text
+        x="70" y="44" textAnchor="middle"
+        fontSize="22" fontWeight="700"
+        fill="hsl(var(--primary))" opacity="0.85"
+        fontFamily="system-ui, sans-serif"
+      >
+        ✨ AI
+      </text>
+    </svg>
+  );
+}
+
+function HeroThumb({ id }: { id: string }) {
+  if (id === 'ai') return <AiThumb />;
   const fill = 'currentColor';
   const muted = 'currentColor';
   const accent = 'hsl(var(--primary))';
 
-  if (id === 'cinematic') {
+  if (id === 'fullbleed') {
     return (
       <svg viewBox="0 0 140 70" className="w-full h-auto block text-muted-foreground/30">
         <defs>
@@ -912,6 +983,163 @@ function HeroThumb({ id }: { id: WizardInput['hero'] }) {
       <rect x="10" y="28" width="120" height="10" rx="1" fill="currentColor" opacity="0.85" />
       <rect x="10" y="46" width="80" height="3" rx="1" fill="currentColor" opacity="0.45" />
       <rect x="10" y="54" width="60" height="3" rx="1" fill="currentColor" opacity="0.45" />
+    </svg>
+  );
+}
+
+function StoryThumb({ id }: { id: string }) {
+  if (id === 'ai') return <AiThumb />;
+  const fill = 'currentColor';
+  const accent = 'hsl(var(--primary))';
+  if (id === 'centered-quote') {
+    return (
+      <svg viewBox="0 0 140 70" className="w-full h-auto block text-muted-foreground/30">
+        <rect width="140" height="70" fill={fill} opacity="0.12" />
+        <text x="20" y="38" fontSize="20" fontWeight="700" fill={accent} opacity="0.7" fontFamily="serif">"</text>
+        <rect x="34" y="26" width="72" height="5" rx="1" fill="currentColor" opacity="0.7" />
+        <rect x="34" y="36" width="56" height="5" rx="1" fill="currentColor" opacity="0.7" />
+        <text x="106" y="46" fontSize="20" fontWeight="700" fill={accent} opacity="0.7" fontFamily="serif">"</text>
+      </svg>
+    );
+  }
+  if (id === 'two-column') {
+    return (
+      <svg viewBox="0 0 140 70" className="w-full h-auto block text-muted-foreground/30">
+        <rect x="8" y="8" width="56" height="54" rx="2" fill={fill} opacity="0.35" />
+        <rect x="74" y="14" width="58" height="4" rx="1" fill="currentColor" opacity="0.7" />
+        <rect x="74" y="24" width="50" height="3" rx="1" fill="currentColor" opacity="0.45" />
+        <rect x="74" y="32" width="56" height="3" rx="1" fill="currentColor" opacity="0.45" />
+        <rect x="74" y="40" width="44" height="3" rx="1" fill="currentColor" opacity="0.45" />
+        <rect x="74" y="48" width="52" height="3" rx="1" fill="currentColor" opacity="0.45" />
+      </svg>
+    );
+  }
+  if (id === 'long-form') {
+    return (
+      <svg viewBox="0 0 140 70" className="w-full h-auto block text-muted-foreground/30">
+        <rect x="22" y="6" width="96" height="22" rx="2" fill={fill} opacity="0.35" />
+        <rect x="22" y="34" width="96" height="3" rx="1" fill="currentColor" opacity="0.55" />
+        <rect x="22" y="42" width="96" height="3" rx="1" fill="currentColor" opacity="0.45" />
+        <rect x="22" y="50" width="80" height="3" rx="1" fill="currentColor" opacity="0.45" />
+        <rect x="22" y="58" width="60" height="3" rx="1" fill="currentColor" opacity="0.45" />
+      </svg>
+    );
+  }
+  // pull-quote
+  return (
+    <svg viewBox="0 0 140 70" className="w-full h-auto block text-muted-foreground/30">
+      <rect x="14" y="14" width="3" height="42" fill={accent} opacity="0.85" />
+      <rect x="22" y="20" width="100" height="6" rx="1" fill="currentColor" opacity="0.75" />
+      <rect x="22" y="32" width="80" height="4" rx="1" fill="currentColor" opacity="0.5" />
+      <rect x="22" y="42" width="100" height="3" rx="1" fill="currentColor" opacity="0.4" />
+      <rect x="22" y="50" width="74" height="3" rx="1" fill="currentColor" opacity="0.4" />
+    </svg>
+  );
+}
+
+function ServicesThumb({ id }: { id: string }) {
+  if (id === 'ai') return <AiThumb />;
+  const fill = 'currentColor';
+  const accent = 'hsl(var(--primary))';
+  if (id === 'list') {
+    return (
+      <svg viewBox="0 0 140 70" className="w-full h-auto block text-muted-foreground/30">
+        {[12, 28, 44, 60].map((y, i) => (
+          <g key={i}>
+            <rect x="8" y={y} width="80" height="3" rx="1" fill="currentColor" opacity="0.7" />
+            <rect x="116" y={y} width="16" height="3" rx="1" fill={accent} opacity="0.85" />
+            <rect x="8" y={y + 6} width="124" height="0.5" fill="currentColor" opacity="0.25" />
+          </g>
+        ))}
+      </svg>
+    );
+  }
+  if (id === 'grid-3') {
+    return (
+      <svg viewBox="0 0 140 70" className="w-full h-auto block text-muted-foreground/30">
+        {[8, 50, 92].map((x, i) => (
+          <g key={i}>
+            <rect x={x} y="8" width="40" height="20" rx="2" fill={fill} opacity="0.3" />
+            <rect x={x} y="32" width="34" height="3" rx="1" fill="currentColor" opacity="0.7" />
+            <rect x={x} y="40" width="24" height="2" rx="1" fill="currentColor" opacity="0.45" />
+          </g>
+        ))}
+      </svg>
+    );
+  }
+  if (id === 'editorial-rows') {
+    return (
+      <svg viewBox="0 0 140 70" className="w-full h-auto block text-muted-foreground/30">
+        {[8, 30, 52].map((y, i) => (
+          <g key={i}>
+            <text x="10" y={y + 12} fontSize="11" fontWeight="700" fill={accent} opacity="0.6" fontFamily="serif">0{i + 1}</text>
+            <rect x="32" y={y + 4} width="80" height="3" rx="1" fill="currentColor" opacity="0.7" />
+            <rect x="32" y={y + 10} width="60" height="2" rx="1" fill="currentColor" opacity="0.45" />
+            <rect x="116" y={y + 4} width="16" height="3" rx="1" fill={accent} opacity="0.85" />
+            <rect x="8" y={y + 18} width="124" height="0.5" fill="currentColor" opacity="0.25" />
+          </g>
+        ))}
+      </svg>
+    );
+  }
+  // cards
+  return (
+    <svg viewBox="0 0 140 70" className="w-full h-auto block text-muted-foreground/30">
+      {[8, 74].map((x, i) => (
+        <g key={i}>
+          <rect x={x} y="8" width="58" height="54" rx="3" fill={fill} opacity="0.25" />
+          <rect x={x} y="8" width="58" height="22" rx="3" fill={fill} opacity="0.4" />
+          <rect x={x + 6} y="36" width="46" height="3" rx="1" fill="currentColor" opacity="0.7" />
+          <rect x={x + 6} y="44" width="34" height="2" rx="1" fill="currentColor" opacity="0.45" />
+          <circle cx={x + 50} cy="16" r="6" fill={accent} opacity="0.85" />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function GalleryThumb({ id }: { id: string }) {
+  if (id === 'ai') return <AiThumb />;
+  const fill = 'currentColor';
+  if (id === 'masonry') {
+    return (
+      <svg viewBox="0 0 140 70" className="w-full h-auto block text-muted-foreground/30">
+        <rect x="6" y="6" width="40" height="36" rx="2" fill={fill} opacity="0.35" />
+        <rect x="6" y="46" width="40" height="18" rx="2" fill={fill} opacity="0.3" />
+        <rect x="50" y="6" width="40" height="22" rx="2" fill={fill} opacity="0.3" />
+        <rect x="50" y="32" width="40" height="32" rx="2" fill={fill} opacity="0.35" />
+        <rect x="94" y="6" width="40" height="28" rx="2" fill={fill} opacity="0.3" />
+        <rect x="94" y="38" width="40" height="26" rx="2" fill={fill} opacity="0.35" />
+      </svg>
+    );
+  }
+  if (id === 'grid-uniform') {
+    return (
+      <svg viewBox="0 0 140 70" className="w-full h-auto block text-muted-foreground/30">
+        {[6, 50, 94].flatMap((x, i) =>
+          [6, 38].map((y, j) => (
+            <rect key={`${i}-${j}`} x={x} y={y} width="40" height="26" rx="2" fill={fill} opacity="0.3" />
+          )),
+        )}
+      </svg>
+    );
+  }
+  if (id === 'showcase') {
+    return (
+      <svg viewBox="0 0 140 70" className="w-full h-auto block text-muted-foreground/30">
+        <rect x="6" y="6" width="80" height="58" rx="2" fill={fill} opacity="0.4" />
+        <rect x="92" y="6" width="42" height="18" rx="2" fill={fill} opacity="0.3" />
+        <rect x="92" y="26" width="42" height="18" rx="2" fill={fill} opacity="0.3" />
+        <rect x="92" y="46" width="42" height="18" rx="2" fill={fill} opacity="0.3" />
+      </svg>
+    );
+  }
+  // strip
+  return (
+    <svg viewBox="0 0 140 70" className="w-full h-auto block text-muted-foreground/30">
+      {[6, 36, 66, 96, 126].map((x, i) => (
+        <rect key={i} x={x} y="14" width="26" height="42" rx="2" fill={fill} opacity={0.35 - i * 0.03} />
+      ))}
     </svg>
   );
 }
@@ -1082,20 +1310,25 @@ function Step5({
 }
 
 function RecapCard({ input }: { input: WizardInput }) {
-  const heroLabel = HERO_OPTIONS.find(h => h.id === input.hero)?.label ?? input.hero;
-  const sectionLabel = SECTION_PRIORITY_CHIPS.find(c => c.value === input.sectionPriority)?.label ?? input.sectionPriority;
-  const densityLabel = DENSITY_CHIPS.find(c => c.value === input.density)?.label ?? input.density;
   const moodLabel = MOOD_OPTIONS.find(m => m.id === input.mood)?.label ?? input.mood;
   const fontLabel = FONT_PERSONALITY_CHIPS.find(c => c.value === input.fontPersonality)?.label ?? input.fontPersonality;
   const bookingLabel = BOOKING_CHIPS.find(c => c.value === input.bookingMethod)?.label ?? input.bookingMethod;
   const namedServices = input.services.filter(s => s.name.trim()).length;
+
+  const heroLayoutLabel = HERO_LAYOUTS.find(o => o.id === input.heroLayout)?.label ?? input.heroLayout;
+  const storyLayoutLabel = STORY_LAYOUTS.find(o => o.id === input.storyLayout)?.label ?? input.storyLayout;
+  const servicesLayoutLabel = SERVICES_LAYOUTS.find(o => o.id === input.servicesLayout)?.label ?? input.servicesLayout;
+  const galleryLayoutLabel = GALLERY_LAYOUTS.find(o => o.id === input.galleryLayout)?.label ?? input.galleryLayout;
 
   const rows: Array<[string, string]> = [
     ['Biznesi', input.businessName || '—'],
     ['Lloji', input.industry || '—'],
     ['Vendndodhja', input.city || '—'],
     ['Shërbime', `${namedServices} shtuar · ${bookingLabel}`],
-    ['Layout', `${heroLabel} · ${sectionLabel} · ${densityLabel}`],
+    ['Hero', heroLayoutLabel],
+    ['Historia', storyLayoutLabel],
+    ['Shërbimet (layout)', servicesLayoutLabel],
+    ['Galeria', galleryLayoutLabel],
     ['Atmosfera', `${moodLabel} · ${fontLabel}`],
   ];
 

@@ -9,9 +9,6 @@ export async function POST(request: NextRequest) {
       theme,
       siteLanguage,
       siteTone,
-      heroStyle,
-      sectionPriority,
-      density,
       uniquenessStatement,
       bookingMethod,
       wizardServices,
@@ -72,11 +69,12 @@ export async function POST(request: NextRequest) {
     };
 
     // Wizard v2 inputs (migration 014). Only included if provided.
+    // hero_style / section_priority / density columns still exist in the
+    // schema but are no longer written — Step 3 was replaced by per-section
+    // layout pickers and the structured layout choices live inside
+    // ai_sections (theme.sections[].layout).
     if (siteLanguage !== undefined) payload.site_language = siteLanguage;
     if (siteTone !== undefined) payload.site_tone = siteTone;
-    if (heroStyle !== undefined) payload.hero_style = heroStyle;
-    if (sectionPriority !== undefined) payload.section_priority = sectionPriority;
-    if (density !== undefined) payload.density = density;
     if (uniquenessStatement !== undefined) payload.uniqueness_statement = uniquenessStatement;
     if (bookingMethod !== undefined) payload.booking_method = bookingMethod;
 
@@ -110,11 +108,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Fallback for migration 014 — strip wizard v2 columns if missing.
-    if (error && /site_language|site_tone|hero_style|section_priority|density|uniqueness_statement|booking_method/i.test(error.message || '')) {
+    if (error && /site_language|site_tone|uniqueness_statement|booking_method/i.test(error.message || '')) {
       console.warn('[apply-theme] Wizard v2 columns missing, retrying without them. Run docs/migrations/014_wizard_v2_columns.sql.');
       const {
-        site_language, site_tone, hero_style, section_priority,
-        density: _d, uniqueness_statement, booking_method,
+        site_language, site_tone,
+        uniqueness_statement, booking_method,
         ai_sections, ai_layout_seed,
         hero_photo_caption, story_photo_caption,
         ...withoutWizardV2
@@ -132,8 +130,8 @@ export async function POST(request: NextRequest) {
         meta_description,
         ai_sections, ai_layout_seed,
         hero_photo_caption, story_photo_caption,
-        site_language, site_tone, hero_style, section_priority,
-        density: _d, uniqueness_statement, booking_method,
+        site_language, site_tone,
+        uniqueness_statement, booking_method,
         ...core
       } = payload;
       const retry = await supabase

@@ -81,25 +81,45 @@ const BOOKING_LABEL: Record<WizardFixture['bookingMethod'], string> = {
   none: 'Nuk është e zbatueshme',
 };
 
-// Hero cards have an accessible name like "Kinematik Foto e plotë" because
-// the button concatenates label + sub. We disambiguate via the unique sub
-// regex (each sub is unique among the 4 hero options).
-const HERO_CARD_SUB: Record<WizardFixture['hero'], RegExp> = {
-  cinematic: /Foto e plotë/,
-  split: /Foto \+ tekst/,
-  centered: /Minimalist/,
+// Step 3 has 4 layout pickers, each with 5 cards. Each card's accessible
+// name = label + sub. Within a picker, every sub is unique, so we match
+// by sub regex AND scope to the picker via its <h3> title — that way subs
+// like "Foto + tekst" (which appears in both hero/split and story/two-column)
+// don't cross-match.
+//
+// AI cards all share the sub "Le AI të zgjedhë" — but scoped to a picker,
+// only one of them exists per scope, so the regex still resolves uniquely.
+
+const HERO_LAYOUT_SUB: Record<WizardFixture['heroLayout'], RegExp> = {
+  fullbleed: /Foto e plotë/,
+  split:     /Foto \+ tekst/,
+  centered:  /Minimalist/,
   editorial: /Si revistë/,
+  ai:        /Le AI të zgjedhë/,
 };
 
-const SECTION_PRIORITY_LABEL: Record<WizardFixture['sectionPriority'], string> = {
-  services: 'Shërbimet',
-  story: 'Historia',
-  gallery: 'Galeria',
+const STORY_LAYOUT_SUB: Record<WizardFixture['storyLayout'], RegExp> = {
+  'centered-quote': /Një frazë e madhe/,
+  'two-column':     /Foto \+ tekst/,
+  'long-form':      /Foto sipër/,
+  'pull-quote':     /Citat \+ prozë/,
+  ai:               /Le AI të zgjedhë/,
 };
 
-const DENSITY_LABEL: Record<WizardFixture['density'], string> = {
-  sparse: 'Hapësirë e gjerë',
-  dense: 'I dendur dhe i pasur',
+const SERVICES_LAYOUT_SUB: Record<WizardFixture['servicesLayout'], RegExp> = {
+  list:             /Sparse, type-first/,
+  'grid-3':         /Karta të vogla/,
+  'editorial-rows': /Numrash \+ prozë/,
+  cards:            /Foto \+ tekst/,
+  ai:               /Le AI të zgjedhë/,
+};
+
+const GALLERY_LAYOUT_SUB: Record<WizardFixture['galleryLayout'], RegExp> = {
+  masonry:        /Lartësi të ndryshme/,
+  'grid-uniform': /Të gjitha të barabarta/,
+  showcase:       /Një e madhe \+ miniatura/,
+  strip:          /Horizontal, scroll/,
+  ai:             /Le AI të zgjedhë/,
 };
 
 // Mood cards collide on label "I guximshëm" with the font chip — same step.
@@ -188,12 +208,23 @@ async function fillWizard(page: Page, f: WizardFixture): Promise<void> {
   await page.getByRole('button', { name: BOOKING_LABEL[f.bookingMethod] }).click();
   await page.getByRole('button', { name: 'Vazhdo →' }).click();
 
-  // ----- Step 3 -----
+  // ----- Step 3 — 4 per-section layout pickers -----
   await page.getByText(/Hapi 3 nga 5/).waitFor({ timeout: 5000 });
 
-  await page.getByRole('button', { name: HERO_CARD_SUB[f.hero] }).click();
-  await page.getByRole('button', { name: SECTION_PRIORITY_LABEL[f.sectionPriority], exact: true }).click();
-  await page.getByRole('button', { name: DENSITY_LABEL[f.density], exact: true }).click();
+  // Each picker is scoped by its <h3> title so identical sub strings
+  // (e.g. "Foto + tekst" in hero/split AND story/two-column) don't collide.
+  const pickerScope = (title: string) =>
+    page.getByRole('heading', { level: 3, name: title }).locator('xpath=..');
+
+  await pickerScope('Hero')
+    .getByRole('button', { name: HERO_LAYOUT_SUB[f.heroLayout] }).click();
+  await pickerScope('Historia')
+    .getByRole('button', { name: STORY_LAYOUT_SUB[f.storyLayout] }).click();
+  await pickerScope('Shërbimet')
+    .getByRole('button', { name: SERVICES_LAYOUT_SUB[f.servicesLayout] }).click();
+  await pickerScope('Galeria')
+    .getByRole('button', { name: GALLERY_LAYOUT_SUB[f.galleryLayout] }).click();
+
   await page.getByRole('button', { name: 'Vazhdo →' }).click();
 
   // ----- Step 4 -----

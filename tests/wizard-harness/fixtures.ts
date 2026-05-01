@@ -2,10 +2,10 @@
 // Each entry drives one full wizard run end-to-end and produces a screenshot
 // folder under output/<timestamp>/<name>/.
 //
-// `hero` is restricted to the four layouts the wizard UI actually exposes
-// in Step 3. The AI itself can emit `asymmetric`/`fullbleed` heroes, but a
-// human user can never pick those, so testing them via this harness would
-// not represent real usage.
+// Layout fields each accept a specific value OR 'ai' to let the model decide.
+// Mixed coverage in this list — half lock specific layouts (so we can verify
+// the post-process layout-lock pass works), half use 'ai' across the board
+// (so we exercise the AI free-choice + brief-driven decision tree).
 
 export interface WizardFixture {
   name: string;
@@ -16,9 +16,10 @@ export interface WizardFixture {
   uniqueness: string;
   services: { name: string; price?: string; duration?: string }[];
   bookingMethod: 'appointments' | 'walkin' | 'both' | 'none';
-  hero: 'cinematic' | 'split' | 'centered' | 'editorial';
-  sectionPriority: 'services' | 'story' | 'gallery';
-  density: 'sparse' | 'dense';
+  heroLayout: 'centered' | 'split' | 'fullbleed' | 'editorial' | 'ai';
+  storyLayout: 'centered-quote' | 'two-column' | 'long-form' | 'pull-quote' | 'ai';
+  servicesLayout: 'list' | 'grid-3' | 'editorial-rows' | 'cards' | 'ai';
+  galleryLayout: 'masonry' | 'grid-uniform' | 'showcase' | 'strip' | 'ai';
   mood: 'warm' | 'cool' | 'bold' | 'elegant' | 'custom';
   fontPersonality: 'editorial' | 'modern' | 'friendly' | 'bold' | 'elegant';
   language: 'sq' | 'en';
@@ -26,6 +27,7 @@ export interface WizardFixture {
 }
 
 export const FIXTURES: WizardFixture[] = [
+  // 1. Fully locked — every section uses a specific layout.
   {
     name: 'barbershop-traditional',
     businessName: 'Berberi i Babës',
@@ -38,14 +40,16 @@ export const FIXTURES: WizardFixture[] = [
       { name: 'Paketa e plotë', price: '18', duration: '60' },
     ],
     bookingMethod: 'appointments',
-    hero: 'editorial',
-    sectionPriority: 'story',
-    density: 'dense',
+    heroLayout: 'editorial',
+    storyLayout: 'pull-quote',
+    servicesLayout: 'editorial-rows',
+    galleryLayout: 'grid-uniform',
     mood: 'warm',
     fontPersonality: 'editorial',
     language: 'sq',
     tone: 'friendly',
   },
+  // 2. All AI — nothing locked, full creative latitude.
   {
     name: 'coffee-modern',
     businessName: 'Hana Coffee Lab',
@@ -59,14 +63,16 @@ export const FIXTURES: WizardFixture[] = [
       { name: 'Filtër V60', price: '4', duration: '8' },
     ],
     bookingMethod: 'walkin',
-    hero: 'editorial',
-    sectionPriority: 'story',
-    density: 'sparse',
+    heroLayout: 'ai',
+    storyLayout: 'ai',
+    servicesLayout: 'ai',
+    galleryLayout: 'ai',
     mood: 'cool',
     fontPersonality: 'modern',
     language: 'sq',
     tone: 'professional',
   },
+  // 3. Fully locked, bold direction.
   {
     name: 'gym-bold',
     businessName: 'Forca Studio',
@@ -79,14 +85,16 @@ export const FIXTURES: WizardFixture[] = [
       { name: 'Anëtarësim mujor', price: '100', duration: '60' },
     ],
     bookingMethod: 'appointments',
-    hero: 'cinematic',
-    sectionPriority: 'services',
-    density: 'dense',
+    heroLayout: 'fullbleed',
+    storyLayout: 'two-column',
+    servicesLayout: 'cards',
+    galleryLayout: 'masonry',
     mood: 'bold',
     fontPersonality: 'bold',
     language: 'sq',
     tone: 'bold',
   },
+  // 4. All AI, elegant direction.
   {
     name: 'salon-elegant',
     businessName: 'Studio Adelina',
@@ -99,14 +107,17 @@ export const FIXTURES: WizardFixture[] = [
       { name: 'Paketa nuse', price: '150', duration: '240' },
     ],
     bookingMethod: 'appointments',
-    hero: 'centered',
-    sectionPriority: 'story',
-    density: 'sparse',
+    heroLayout: 'ai',
+    storyLayout: 'ai',
+    servicesLayout: 'ai',
+    galleryLayout: 'ai',
     mood: 'elegant',
     fontPersonality: 'elegant',
     language: 'sq',
     tone: 'friendly',
   },
+  // 5. Mixed — hero + services locked, story + gallery on AI. Tests the
+  //    "some locked, some AI" path the post-processor must handle cleanly.
   {
     name: 'clinic-trust',
     businessName: 'Klinika Familjare Dr. Krasniqi',
@@ -119,9 +130,10 @@ export const FIXTURES: WizardFixture[] = [
       { name: 'Analizë gjaku', price: '25', duration: '15' },
     ],
     bookingMethod: 'appointments',
-    hero: 'split',
-    sectionPriority: 'services',
-    density: 'dense',
+    heroLayout: 'split',
+    storyLayout: 'ai',
+    servicesLayout: 'list',
+    galleryLayout: 'ai',
     mood: 'cool',
     fontPersonality: 'friendly',
     language: 'sq',

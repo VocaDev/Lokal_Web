@@ -96,9 +96,14 @@ export interface WizardInput {
   uniqueness?: string;
   services: Array<{ name: string; price?: string; durationMinutes?: number }>;
   bookingMethod: 'appointments' | 'walkin' | 'both' | 'none';
-  hero: 'cinematic' | 'split' | 'centered' | 'editorial';
-  sectionPriority: 'services' | 'story' | 'gallery';
-  density: 'sparse' | 'dense';
+  // Per-section layout pickers. Each can hold a specific layout OR 'ai' to
+  // let the model decide. Defaults to 'ai' across the board, so users who
+  // skip Step 3 get full AI control. When a specific value is set, the
+  // post-processor in /api/generate-variants forces it onto the AI's output.
+  heroLayout: 'centered' | 'split' | 'fullbleed' | 'editorial' | 'ai';
+  storyLayout: 'centered-quote' | 'two-column' | 'long-form' | 'pull-quote' | 'ai';
+  servicesLayout: 'list' | 'grid-3' | 'editorial-rows' | 'cards' | 'ai';
+  galleryLayout: 'masonry' | 'grid-uniform' | 'showcase' | 'strip' | 'ai';
   mood: 'warm' | 'cool' | 'bold' | 'elegant' | 'custom';
   brandPrimary?: string;
   brandAccent?: string;

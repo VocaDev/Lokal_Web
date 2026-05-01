@@ -641,6 +641,13 @@ interface PostProcessCtx {
   userHasGalleryPhotos: boolean;
   language: string;
   wizardServices: WizardServiceInput[];
+  businessName: string;
+  uniqueness: string;
+  city: string;
+}
+
+function nonEmptyString(v: any): string {
+  return typeof v === 'string' && v.trim().length > 0 ? v.trim() : '';
 }
 
 // Coerce a wizard-supplied price/duration (which may be string or number)
@@ -750,19 +757,24 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
     }
   }
 
-  // 5. Hero must always have at least one CTA. Sonnet sometimes returns
-  //    ctaCount=0 which makes the renderer skip the button entirely — and the
-  //    hero is the most important conversion pixel on the page.
+  // 5. Hero must have non-empty content + at least one CTA. Sonnet
+  //    occasionally emits empty `headline` / `subheadline` strings (especially
+  //    on "elegant" / "cool" / sparse moods, which it interprets as
+  //    "minimalist = empty"). An empty <h1> renders as a 0px element — the
+  //    visitor sees a blank section. Backfill with the user's own inputs so
+  //    the hero is never void.
   const fallbackCta = ctx.language === 'en' ? 'Get in touch' : 'Na kontaktoni';
+  const fallbackHeadline = nonEmptyString(ctx.uniqueness) || ctx.businessName;
+  const fallbackSubheadline = ctx.businessName + (ctx.city ? ` — ${ctx.city}` : '');
   sections = sections.map(s => {
     if (s?.kind !== 'hero') return s;
     const ctaCount = typeof s.ctaCount === 'number' ? s.ctaCount : 0;
     return {
       ...s,
+      headline: nonEmptyString(s.headline) || fallbackHeadline,
+      subheadline: nonEmptyString(s.subheadline) || fallbackSubheadline,
       ctaCount: ctaCount > 0 ? ctaCount : 1,
-      ctaPrimary: s.ctaPrimary && String(s.ctaPrimary).trim().length > 0
-        ? s.ctaPrimary
-        : fallbackCta,
+      ctaPrimary: nonEmptyString(s.ctaPrimary) || fallbackCta,
     };
   });
 
@@ -873,6 +885,9 @@ export async function POST(request: NextRequest) {
       wizardServices: Array.isArray(wizardServices)
         ? (wizardServices as WizardServiceInput[])
         : [],
+      businessName: args.businessName,
+      uniqueness: args.uniqueness,
+      city: args.city,
     };
 
     let theme = postProcessTheme(await generateTheme(args), postProcessCtx);

@@ -284,6 +284,16 @@ function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta,
   const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
   const imageStyle = section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
   const position = section.headlinePosition ?? 'bottom-left';
+  // When there's no real photo + the section is filled by a light-colored
+  // placeholder, hardcoded white text is invisible. Use payload.textColor
+  // (which the post-processor has already corrected for contrast). When a
+  // real photo IS uploaded, keep white because the photo gives the dark
+  // backdrop that the layout was designed around.
+  const hasRealPhoto = imageStyle === 'photo' && !!heroImageUrl;
+  const hasDarkBg = imageStyle === 'gradient' || imageStyle === 'pattern';
+  const useWhiteText = hasRealPhoto || hasDarkBg;
+  const textColor = useWhiteText ? '#ffffff' : payload.textColor;
+  const mutedColor = useWhiteText ? '#ffffff' : payload.mutedTextColor;
   const positionClasses = (() => {
     switch (position) {
       case 'top':           return 'items-start justify-center text-center pt-20';
@@ -296,6 +306,9 @@ function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta,
     }
   })();
   const scrim = (() => {
+    // No scrim when the bg is the light placeholder — the dark gradient
+    // would just make the placeholder dirty without a real photo to overlay.
+    if (!useWhiteText) return 'transparent';
     if (position === 'top') {
       return 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.15) 45%, transparent 100%)';
     }
@@ -318,19 +331,19 @@ function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta,
       )}
       <div className="absolute inset-0 pointer-events-none" style={{ background: scrim }} />
       <div className="relative max-w-3xl z-10">
-        <div className="text-[10px] uppercase tracking-[0.4em] mb-6" style={{ color: '#ffffff', opacity: 0.85 }}>
+        <div className="text-[10px] uppercase tracking-[0.4em] mb-6" style={{ color: textColor, opacity: 0.85 }}>
           {business.name}
         </div>
         <h1
           className="text-5xl md:text-7xl lg:text-[5.5rem] font-bold leading-[1.0] mb-5"
-          style={{ fontFamily: headingFontFamily(payload.headingFont), color: '#ffffff' }}
+          style={{ fontFamily: headingFontFamily(payload.headingFont), color: textColor }}
         >
           {section.headline}
         </h1>
         {section.subheadline && (
           <p
             className="text-lg md:text-xl max-w-xl"
-            style={{ color: '#ffffff', opacity: 0.92 }}
+            style={{ color: mutedColor, opacity: 0.92 }}
           >
             {section.subheadline}
           </p>

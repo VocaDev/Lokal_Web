@@ -9,6 +9,7 @@ export default function BeautyMinimal({ business, services, hours }: {
   services: Service[]
   hours: BusinessHours[]
 }) {
+  const heroImg = business.gallerySections?.hero?.[0]
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerService, setDrawerService] = useState<Service | null>(null)
 
@@ -28,13 +29,19 @@ export default function BeautyMinimal({ business, services, hours }: {
       </nav>
 
       {/* HERO */}
-      <section className="py-40 px-8 max-w-4xl mx-auto text-center relative">
-        <div className="w-20 h-px bg-primary/20 mx-auto mb-10" />
-        <h1 className="text-4xl md:text-6xl font-black tracking-[0.2em] text-white italic uppercase mb-10">
+      <section className="py-40 px-8 max-w-4xl mx-auto text-center relative overflow-hidden">
+        {heroImg && (
+          <>
+            <img src={heroImg} alt={business.name} className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/60" />
+          </>
+        )}
+        <div className="relative z-10 w-20 h-px bg-primary/20 mx-auto mb-10" />
+        <h1 className="relative z-10 text-4xl md:text-6xl font-black tracking-[0.2em] text-white italic uppercase mb-10">
           {business.heroHeadline ? business.heroHeadline : <>Soft.<br />Luminous.<br />Lokal.</>}
         </h1>
-        <div className="w-20 h-px bg-primary/20 mx-auto mb-16" />
-        <p className="text-primary/40 max-w-md mx-auto leading-relaxed text-sm tracking-wide lowercase">
+        <div className="relative z-10 w-20 h-px bg-primary/20 mx-auto mb-16" />
+        <p className="relative z-10 text-primary/40 max-w-md mx-auto leading-relaxed text-sm tracking-wide lowercase">
           {business.heroSubheadline || business.description || "A space of tranquility and light, specializing in minimal beauty treatments that let your natural glow shine through."}
         </p>
       </section>

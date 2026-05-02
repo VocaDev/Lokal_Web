@@ -9,6 +9,7 @@ export default function RestaurantCasual({ business, services, hours }: {
   services: Service[]
   hours: BusinessHours[]
 }) {
+  const heroImg = business.gallerySections?.hero?.[0]
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerService, setDrawerService] = useState<Service | null>(null)
 
@@ -31,8 +32,14 @@ export default function RestaurantCasual({ business, services, hours }: {
       </nav>
 
       {/* HERO */}
-      <section className="min-h-screen flex items-center justify-center pt-24 px-8 text-center bg-gradient-to-b from-zinc-900 to-zinc-950">
-        <div className="max-w-3xl">
+      <section className="relative min-h-screen flex items-center justify-center pt-24 px-8 text-center bg-gradient-to-b from-zinc-900 to-zinc-950 overflow-hidden">
+        {heroImg && (
+          <>
+            <img src={heroImg} alt={business.name} className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/60" />
+          </>
+        )}
+        <div className="relative z-10 max-w-3xl">
           <span className="text-red-500 font-bold tracking-[0.2em] uppercase text-sm mb-6 block">EAT • DRINK • ENJOY</span>
           <h1 className="text-6xl md:text-8xl font-black italic tracking-tighter mb-8 uppercase leading-[0.9]">
             {business.heroHeadline || business.name}

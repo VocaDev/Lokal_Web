@@ -191,36 +191,42 @@ function shouldShowHeroPlaceholder(section: AiHeroSection, heroImageUrl?: string
 // Centered hero — minimal, all-text. No image area, lots of whitespace.
 // ----------------------------------------------------------------
 
-function CenteredHero({ section, business, payload, onPrimaryCta, onSecondaryCta }: LayoutProps) {
+function CenteredHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const singleCtaSection: AiHeroSection = section.ctaCount
     ? { ...section, ctaCount: 1 }
     : section;
+  const hasHeroPhoto = !!heroImageUrl;
+  const textColor = hasHeroPhoto ? '#ffffff' : payload.textColor;
+  const mutedColor = hasHeroPhoto ? '#ffffff' : payload.mutedTextColor;
   return (
     <section
       className={`${SECTION_PADDING_X} relative flex items-center justify-center text-center min-h-[600px] py-28 md:py-44`}
-      style={{ background: payload.bgColor }}
+      style={hasHeroPhoto ? backgroundStyle(payload, 'photo', heroImageUrl) : { background: payload.bgColor }}
     >
-      <div className="max-w-2xl mx-auto relative">
+      {hasHeroPhoto && (
+        <div className="absolute inset-0 pointer-events-none bg-black/55" />
+      )}
+      <div className="max-w-2xl mx-auto relative z-10">
         <span
           className="inline-block px-4 py-1.5 rounded-full text-[10px] uppercase tracking-[0.3em] mb-10 border"
           style={{
-            color: payload.mutedTextColor,
-            borderColor: payload.borderColor,
-            background: payload.surfaceColor,
+            color: hasHeroPhoto ? '#ffffff' : payload.mutedTextColor,
+            borderColor: hasHeroPhoto ? 'rgba(255,255,255,0.35)' : payload.borderColor,
+            background: hasHeroPhoto ? 'rgba(0,0,0,0.25)' : payload.surfaceColor,
           }}
         >
           {business.name}
         </span>
         <h1
           className="text-4xl md:text-6xl lg:text-7xl font-bold leading-[1.05] mb-8"
-          style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
+          style={{ fontFamily: headingFontFamily(payload.headingFont), color: textColor }}
         >
           {section.headline}
         </h1>
         {section.subheadline && (
           <p
             className="text-base md:text-lg max-w-xl mx-auto leading-relaxed"
-            style={{ color: payload.mutedTextColor }}
+            style={{ color: mutedColor, opacity: hasHeroPhoto ? 0.9 : 1 }}
           >
             {section.subheadline}
           </p>
@@ -237,7 +243,7 @@ function CenteredHero({ section, business, payload, onPrimaryCta, onSecondaryCta
 
 function SplitHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
-  const imageStyle = section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
+  const imageStyle = heroImageUrl ? 'photo' : section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 min-h-[520px] md:min-h-[640px] relative overflow-hidden">
       <div
@@ -286,7 +292,7 @@ function SplitHero({ section, business, payload, heroImageUrl, onPrimaryCta, onS
 
 function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
-  const imageStyle = section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
+  const imageStyle = heroImageUrl ? 'photo' : section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
   const position = section.headlinePosition ?? 'bottom-left';
   // When there's no real photo + the section is filled by a light-colored
   // placeholder, hardcoded white text is invisible. Use payload.textColor
@@ -368,27 +374,34 @@ function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta,
 // Editorial hero (magazine-style)
 // ----------------------------------------------------------------
 
-function EditorialHero({ section, business, payload, onPrimaryCta, onSecondaryCta }: LayoutProps) {
+function EditorialHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
+  const hasHeroPhoto = !!heroImageUrl;
+  const textColor = hasHeroPhoto ? '#ffffff' : payload.textColor;
+  const mutedColor = hasHeroPhoto ? '#ffffff' : payload.mutedTextColor;
+  const borderColor = hasHeroPhoto ? 'rgba(255,255,255,0.28)' : payload.borderColor;
   return (
     <section
       className={`${SECTION_PADDING_X} relative flex flex-col min-h-[600px] py-10 md:py-16`}
-      style={{ background: payload.surfaceColor }}
+      style={hasHeroPhoto ? backgroundStyle(payload, 'photo', heroImageUrl) : { background: payload.surfaceColor }}
     >
+      {hasHeroPhoto && (
+        <div className="absolute inset-0 pointer-events-none bg-black/60" />
+      )}
       <div
-        className="flex items-center justify-between text-[10px] uppercase tracking-[0.4em] pb-5 border-b"
-        style={{ color: payload.mutedTextColor, borderColor: payload.borderColor }}
+        className="relative z-10 flex items-center justify-between text-[10px] uppercase tracking-[0.4em] pb-5 border-b"
+        style={{ color: mutedColor, opacity: hasHeroPhoto ? 0.85 : 1, borderColor }}
       >
         <span>{section.metadataLeft || `Nº 01 — ${new Date().getFullYear()}`}</span>
         <span>{section.metadataRight || business.address || business.name}</span>
       </div>
 
-      <div className="flex-1 flex flex-col justify-center py-12 md:py-16">
+      <div className="relative z-10 flex-1 flex flex-col justify-center py-12 md:py-16">
         <div className="max-w-5xl">
           <h1
             className="text-5xl md:text-7xl lg:text-[7.5rem] font-bold leading-[0.98] mb-10"
             style={{
               fontFamily: headingFontFamily(payload.headingFont),
-              color: payload.textColor,
+              color: textColor,
               maxWidth: '14ch',
             }}
           >
@@ -399,7 +412,8 @@ function EditorialHero({ section, business, payload, onPrimaryCta, onSecondaryCt
               className="text-xl md:text-2xl leading-relaxed max-w-2xl italic"
               style={{
                 fontFamily: headingFontFamily(payload.headingFont),
-                color: payload.mutedTextColor,
+                color: mutedColor,
+                opacity: hasHeroPhoto ? 0.88 : 1,
               }}
             >
               {section.subheadline}
@@ -410,8 +424,8 @@ function EditorialHero({ section, business, payload, onPrimaryCta, onSecondaryCt
       </div>
 
       <div
-        className="h-px w-full mt-auto"
-        style={{ background: payload.borderColor }}
+        className="relative z-10 h-px w-full mt-auto"
+        style={{ background: borderColor }}
       />
     </section>
   );
@@ -423,7 +437,7 @@ function EditorialHero({ section, business, payload, onPrimaryCta, onSecondaryCt
 
 function AsymmetricHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
-  const imageStyle = section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
+  const imageStyle = heroImageUrl ? 'photo' : section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
   return (
     <section
       className="relative overflow-hidden min-h-[600px] md:min-h-[640px]"

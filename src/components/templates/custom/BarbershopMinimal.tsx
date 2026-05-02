@@ -9,6 +9,7 @@ export default function BarbershopMinimal({ business, services, hours }: {
   services: Service[]
   hours: BusinessHours[]
 }) {
+  const heroImg = business.gallerySections?.hero?.[0]
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerService, setDrawerService] = useState<Service | null>(null)
 
@@ -26,11 +27,17 @@ export default function BarbershopMinimal({ business, services, hours }: {
         </button>
       </nav>
 
-      <section className="py-32 px-8 max-w-4xl mx-auto text-center">
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mb-8 uppercase">
+      <section className="relative overflow-hidden py-32 px-8 max-w-4xl mx-auto text-center">
+        {heroImg && (
+          <>
+            <img src={heroImg} alt={business.name} className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/60" />
+          </>
+        )}
+        <h1 className="relative z-10 text-5xl md:text-7xl font-bold tracking-tighter mb-8 uppercase">
           {business.heroHeadline || business.name}
         </h1>
-        <p className="text-white/40 max-w-lg mx-auto leading-relaxed">
+        <p className="relative z-10 text-white/40 max-w-lg mx-auto leading-relaxed">
           {business.heroSubheadline || business.description || "Minimalist grooming for the modern individual."}
         </p>
       </section>

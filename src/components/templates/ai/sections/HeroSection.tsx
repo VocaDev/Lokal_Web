@@ -291,7 +291,6 @@ function SplitHero({ section, business, payload, heroImageUrl, onPrimaryCta, onS
 // ----------------------------------------------------------------
 
 function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
-  const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
   const imageStyle = heroImageUrl ? 'photo' : section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
   const position = section.headlinePosition ?? 'bottom-left';
   // When there's no real photo + the section is filled by a light-colored
@@ -336,9 +335,6 @@ function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta,
       className={`${SECTION_PADDING_X} min-h-[700px] relative overflow-hidden flex ${positionClasses}`}
       style={backgroundStyle(payload, imageStyle, heroImageUrl)}
     >
-      {showPlaceholder && (
-        <PhotoPlaceholder payload={payload} shape="hero" label="HERO PHOTO" fill />
-      )}
       <div className="absolute inset-0 pointer-events-none" style={{ background: scrim }} />
       <div className="relative max-w-3xl z-10">
         <div className="text-[10px] uppercase tracking-[0.4em] mb-6" style={{ color: textColor, opacity: 0.85 }}>
@@ -436,7 +432,6 @@ function EditorialHero({ section, business, payload, heroImageUrl, onPrimaryCta,
 // ----------------------------------------------------------------
 
 function AsymmetricHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
-  const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
   const imageStyle = heroImageUrl ? 'photo' : section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
   return (
     <section
@@ -447,9 +442,6 @@ function AsymmetricHero({ section, business, payload, heroImageUrl, onPrimaryCta
         className="absolute right-[-2%] top-[8%] w-[58%] h-[65%] hidden md:block rounded-bl-[40px] overflow-hidden"
         style={backgroundStyle(payload, imageStyle, heroImageUrl)}
       >
-        {showPlaceholder && (
-          <PhotoPlaceholder payload={payload} shape="hero" label="HERO PHOTO" fill />
-        )}
       </div>
 
       <div

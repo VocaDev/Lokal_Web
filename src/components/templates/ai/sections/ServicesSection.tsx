@@ -15,6 +15,7 @@ type Item = {
   description?: string;
   price?: number;
   durationMinutes?: number;
+  durationLabel?: string;
 };
 
 function resolveItems(section: AiServicesSection, dbServices: Service[]): Item[] {
@@ -76,10 +77,16 @@ function PriceTag({ item, section, payload }: { item: Item; section: AiServicesS
 }
 
 function DurationTag({ item, section, payload }: { item: Item; section: AiServicesSection; payload: AiSitePayload }) {
-  if (!section.showDuration || typeof item.durationMinutes !== 'number') return null;
+  if (!section.showDuration) return null;
+  const label = typeof item.durationLabel === 'string' && item.durationLabel.trim().length > 0
+    ? item.durationLabel.trim()
+    : typeof item.durationMinutes === 'number'
+      ? `${item.durationMinutes} min`
+      : '';
+  if (!label) return null;
   return (
     <span className="text-xs uppercase tracking-wider" style={{ color: payload.mutedTextColor }}>
-      {item.durationMinutes} min
+      {label}
     </span>
   );
 }

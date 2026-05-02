@@ -141,4 +141,30 @@ export const FIXTURES: WizardFixture[] = [
     language: 'sq',
     tone: 'professional',
   },
+  // 6. Public institution — specific programs but no prices/durations. The
+  //    services section should present academic programs, not appointments:
+  //    no euros, no "180 min"; duration labels should be years if shown.
+  {
+    name: 'public-university',
+    industryChip: 'other',
+    industryText: 'Universitet publik shtetëror',
+    city: 'Mitrovicë',
+    uniqueness: 'Universitet publik pa pagesë studimi, me programe të akredituara dhe fokus në zhvillimin e kapitalit njerëzor të rajonit.',
+    businessDescription: 'Universitet publik shtetëror që ofron programe Bachelor dhe Master falas në shkenca kompjuterike, drejtësi, menaxhim publik dhe inxhinieri për studentët e Mitrovicës dhe rajonit.',
+    services: [
+      { name: 'Bachelor në Shkenca Kompjuterike' },
+      { name: 'Bachelor në Drejtësi' },
+      { name: 'Master në Menaxhim Publik' },
+      { name: 'Master në Inxhinieri dhe Teknologji' },
+    ],
+    bookingMethod: 'none',
+    heroLayout: 'fullbleed',
+    storyLayout: 'long-form',
+    servicesLayout: 'editorial-rows',
+    galleryLayout: 'ai',
+    mood: 'cool',
+    fontPersonality: 'editorial',
+    language: 'sq',
+    tone: 'professional',
+  },
 ];

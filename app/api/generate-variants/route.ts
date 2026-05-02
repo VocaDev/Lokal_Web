@@ -393,7 +393,9 @@ async function generateTheme(args: GenerateThemeArgs) {
   const systemPrompt = `You are a senior designer translating a brand strategy brief into a unique website. The user has made specific layout choices for each section — some they locked, some they left to you. Respect every locked layout exactly; for the rest, pick what best serves the brief.
 
 CRITICAL OUTPUT RULES:
-- Service prices MUST be integers (number type). Use the midpoint if a range is intended. Example: 25 not "20-30 Eur".
+- Service prices MUST be integers (number type) ONLY when the offering is actually sold per item/session. Use the midpoint if a range is intended. Example: 25 not "20-30 Eur".
+- Do NOT invent prices for public/free/non-commercial offerings (public universities, state schools, municipal programs, NGOs, free events). Set showPrices=false and omit price on every item.
+- durationMinutes is ONLY for appointment-like services measured in minutes. Academic programs, memberships, subscriptions, events, courses, degree programs, and long-running offerings must NOT use durationMinutes. If duration matters, use durationLabel as text, e.g. "3-4 years", "semester-based", "monthly", "8 weeks".
 - Output ONLY raw JSON — no markdown code fences, no explanation, no backticks.
 
 USER'S STRUCTURAL CHOICES (each section is either user-locked or AI free choice — see per-section instructions below in the SECTIONS block).
@@ -471,15 +473,16 @@ REALISTIC PRICING (Kosovo market, EUR):
 - clinic: €25-80 consultations
 - beauty_salon: €15-50
 - gym: €10-40
-- other: infer from the user's services
+- other: infer from the user's services and businessDescription. If the business is public/free/non-commercial, do not show prices.
 
 THIS BUSINESS'S CANONICAL INDUSTRY: ${canonicalIndustry}
-Each service MUST have a realistic duration (15, 30, 45, 60, 90, 120 minutes).
+Appointment-like services should have realistic minute durations (15, 30, 45, 60, 90, 120 minutes). Non-appointment offerings should use durationLabel or no duration.
 
 USER-PROVIDED SERVICES (gospel — build the services array around these):
-${userProvidedServices || '(none provided — infer 3-5 typical services for this industry)'}
+${userProvidedServices || '(none provided — infer 3-5 representative offerings from the business description)'}
 
 If the user listed services, every entry in the services section's items array MUST correspond to one of them. Do not invent unrelated services when the user has been specific.
+If a user-provided service has no price or duration, do NOT invent a price or minute duration just to fill the schema. Omit missing fields and set showPrices/showDuration accordingly.
 
 ${industryVoiceFor(canonicalIndustry)}
 
@@ -494,6 +497,9 @@ If the user's businessDescription says "I teach programming and languages" and t
 The SERVICES section is where specific services are listed. The HERO is where the business identity lives. Don't conflate them.
 
 If the user provided no specific services in the wizard, generate a representative 3-5 services for the services section based on the businessDescription. Do NOT omit the services section.
+
+ACADEMIC / PUBLIC INSTITUTION RULE:
+If the business is a public university, state school, public education institution, or the description says programs are free, the services section represents programs/departments/offerings, not appointments. Set showPrices=false. Do not output euro prices. Set showDuration=true only if you use durationLabel values like "3-4 years" for Bachelor programs or "1-2 years" for Master programs. Never output "180 min" for degree programs.
 
 ANTI-HALLUCINATION RULE — LITERAL TEXT FIELDS:
 
@@ -579,7 +585,7 @@ ${mood === 'custom' ? `- BRAND COLORS (LOCKED): primary=${brandPrimary}, accent=
 USER-PROVIDED SERVICES (may be empty — that's fine):
 ${userProvidedServices || '(none provided — infer 3-5 representative services from the business description)'}
 
-If services were provided, the services section MUST list them faithfully (don't change names or invent new ones). If none were provided, generate 3-5 representative services that fit the business description.
+If services were provided, the services section MUST list them faithfully (don't change names or invent new ones). If none were provided, generate 3-5 representative services that fit the business description. Do not invent prices or minute durations for non-appointment offerings.
 
 USER HAS UPLOADED GALLERY PHOTOS: ${userHasGalleryPhotos ? 'YES — you MUST include a gallery section' : 'No — gallery section is optional'}
 USER HAS UPLOADED SERVICE PHOTOS: ${userHasServicePhotos ? 'YES — services should be designed knowing photos will appear' : 'No — services may be type-only'}
@@ -647,6 +653,8 @@ interface PostProcessCtx {
   userHasGalleryPhotos: boolean;
   language: string;
   wizardServices: WizardServiceInput[];
+  businessDescription: string;
+  industry: string;
   businessName: string;
   uniqueness: string;
   city: string;
@@ -663,6 +671,30 @@ function coerceInt(v: string | number | undefined): number | undefined {
   if (v === undefined || v === null || v === '') return undefined;
   const n = typeof v === 'number' ? v : parseInt(String(v), 10);
   return Number.isFinite(n) ? n : undefined;
+}
+
+function academicDurationLabel(name: string): string {
+  const lower = name.toLowerCase();
+  if (/\bmaster\b|msc|m\.sc|\bma\b/.test(lower)) return '1-2 years';
+  if (/\bbachelor\b|bsc|b\.sc|\bba\b/.test(lower)) return '3-4 years';
+  return 'multi-year program';
+}
+
+function isPublicAcademicContext(ctx: PostProcessCtx): boolean {
+  const haystack = [
+    ctx.businessName,
+    ctx.industry,
+    ctx.businessDescription,
+    ctx.uniqueness,
+    ...ctx.wizardServices.map(s => s.name ?? ''),
+  ].join(' ').toLowerCase();
+
+  const hasAcademicSignal =
+    /universit|university|college|faculty|fakultet|school|shkoll|academy|akademi|bachelor|master|degree|program/.test(haystack);
+  const hasPublicFreeSignal =
+    /public|publik|state|shtet|free|falas|tuition-free|pa pages|komunal|municipal/.test(haystack);
+
+  return hasAcademicSignal && hasPublicFreeSignal;
 }
 
 function reorderSections(sections: any[]): any[] {
@@ -686,6 +718,7 @@ function reorderSections(sections: any[]): any[] {
 
 function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
   let sections: any[] = (theme?.sections ?? []).filter(Boolean);
+  const publicAcademic = isPublicAcademicContext(ctx);
 
   // 1. Strip section types we never render.
   sections = sections.filter(s => s?.kind !== 'testimonials' && s?.kind !== 'faq');
@@ -720,12 +753,39 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
           overlaid.name = userSvc.name.trim();
         }
         const userPrice = coerceInt(userSvc.price);
-        if (userPrice !== undefined) overlaid.price = userPrice;
+        if (userPrice !== undefined) {
+          overlaid.price = userPrice;
+        } else {
+          delete overlaid.price;
+        }
         const userDuration = coerceInt(userSvc.duration ?? userSvc.durationMinutes);
-        if (userDuration !== undefined) overlaid.durationMinutes = userDuration;
+        if (userDuration !== undefined) {
+          overlaid.durationMinutes = userDuration;
+          delete overlaid.durationLabel;
+        } else {
+          delete overlaid.durationMinutes;
+        }
         return overlaid;
       });
-      return { ...s, items };
+      const anyUserPrice = ctx.wizardServices.some(svc => coerceInt(svc.price) !== undefined);
+      const anyUserDuration = ctx.wizardServices.some(svc => coerceInt(svc.duration ?? svc.durationMinutes) !== undefined);
+      return { ...s, showPrices: anyUserPrice, showDuration: anyUserDuration, items };
+    });
+  }
+
+  if (publicAcademic) {
+    sections = sections.map(s => {
+      if (s?.kind !== 'services') return s;
+      const items = Array.isArray(s.items)
+        ? s.items.map((item: any) => {
+            const next = { ...item };
+            delete next.price;
+            delete next.durationMinutes;
+            next.durationLabel = nonEmptyString(next.durationLabel) || academicDurationLabel(nonEmptyString(next.name));
+            return next;
+          })
+        : s.items;
+      return { ...s, showPrices: false, showDuration: true, items };
     });
   }
 
@@ -919,6 +979,8 @@ export async function POST(request: NextRequest) {
       wizardServices: Array.isArray(wizardServices)
         ? (wizardServices as WizardServiceInput[])
         : [],
+      businessDescription: args.businessDescription,
+      industry: args.industry,
       businessName: args.businessName,
       uniqueness: args.uniqueness,
       city: args.city,

@@ -172,6 +172,9 @@ export async function POST(request: NextRequest) {
         const n = typeof v === 'number' ? v : parseInt(String(v), 10);
         return Number.isFinite(n) ? n : undefined;
       };
+      const hasBookableServiceMetadata =
+        wizardArr.some((s: any) => coerce(s?.price) !== undefined || coerce(s?.duration ?? s?.durationMinutes) !== undefined) ||
+        sectionItems.some((s: any) => typeof s?.price === 'number' || typeof s?.durationMinutes === 'number');
 
       const serviceRows = sectionItems
         .map((s: any, i: number) => {
@@ -192,7 +195,7 @@ export async function POST(request: NextRequest) {
         })
         .filter((row: any): row is NonNullable<typeof row> => row !== null);
 
-      if (serviceRows.length > 0) {
+      if (hasBookableServiceMetadata && serviceRows.length > 0) {
         const { error: servicesError } = await supabase
           .from('services')
           .insert(serviceRows);

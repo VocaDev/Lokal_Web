@@ -146,7 +146,7 @@ export interface AiServicesSection {
   showDuration: boolean;
   divider: 'none' | 'line' | 'number';
   intro?: string;
-  items: Array<{ name: string; description?: string; price?: number; durationMinutes?: number }>;
+  items: Array<{ name: string; description?: string; price?: number; durationMinutes?: number; durationLabel?: string }>;
 }
 
 export interface AiStorySection {

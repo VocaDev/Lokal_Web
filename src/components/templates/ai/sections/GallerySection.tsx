@@ -104,7 +104,7 @@ function Showcase({ images, section, payload }: { images: string[]; section: AiG
               /* eslint-disable-next-line @next/next/no-img-element */
               <img src={hero} alt="" className="w-full h-72 md:h-[480px] object-cover" />
             ) : (
-              <div className="w-full h-72 md:h-[480px]">
+              <div className="relative w-full h-72 md:h-[480px]">
                 <PhotoPlaceholder payload={payload} shape="gallery" label="HERO PHOTO" fill />
               </div>
             )}
@@ -137,7 +137,7 @@ function Strip({ images, section, payload }: { images: string[]; section: AiGall
       <div className="overflow-x-auto pb-4">
         <div className={`${SECTION_PADDING_X} flex gap-3 min-w-max`}>
           {slots.map((src, i) => (
-            <div key={i} className="w-72 h-48 md:w-96 md:h-64 rounded-lg overflow-hidden shrink-0" style={{ background: payload.surfaceColor }}>
+            <div key={i} className="relative w-72 h-48 md:w-96 md:h-64 rounded-lg overflow-hidden shrink-0" style={{ background: payload.surfaceColor }}>
               {src ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />

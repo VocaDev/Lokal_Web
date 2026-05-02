@@ -12,7 +12,7 @@ export default async function RegisterWebsiteBuilderPage() {
 
   const { data: business } = await supabase
     .from('businesses')
-    .select('id, subdomain')
+    .select('id, subdomain, name, booking_enabled')
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -22,5 +22,12 @@ export default async function RegisterWebsiteBuilderPage() {
     redirect('/register')
   }
 
-  return <WizardV2 businessId={business.id} subdomain={business.subdomain} />
+  return (
+    <WizardV2
+      businessId={business.id}
+      subdomain={business.subdomain}
+      businessName={business.name}
+      bookingEnabled={business.booking_enabled !== false}
+    />
+  )
 }

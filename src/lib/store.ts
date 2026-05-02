@@ -23,6 +23,10 @@ function fromSnakeBusiness(data: any): Business {
     timezone: data.timezone ?? 'Europe/Belgrade',
     aiSetupData: data.ai_setup_data,
     websiteBuilderCompleted: data.website_builder_completed ?? false,
+    // migration 019 — defaults to true server-side; preserve undefined when
+    // the column is missing locally (older row) so callers keep the
+    // permissive `bookingEnabled !== false` semantic.
+    bookingEnabled: typeof data.booking_enabled === 'boolean' ? data.booking_enabled : undefined,
   };
 }
 
@@ -274,18 +278,25 @@ export async function saveBusinessHours(hours: BusinessHours[]): Promise<void> {
 // ✅ Save Business Profile
 export async function saveBusiness(business: Business): Promise<void> {
   const supabase = createClient();
+  // Build the update payload — booking_enabled is only included when the
+  // caller actually set it on the Business object, so legacy callers that
+  // don't know about migration 019 don't accidentally null it.
+  const update: Record<string, unknown> = {
+    name: business.name,
+    phone: business.phone,
+    address: business.address,
+    description: business.description,
+    social_links: business.socialLinks,
+    logo_url: business.logoUrl,
+    accent_color: business.accentColor,
+    template: business.template,
+  };
+  if (typeof business.bookingEnabled === 'boolean') {
+    update.booking_enabled = business.bookingEnabled;
+  }
   const { error } = await supabase
     .from("businesses")
-    .update({
-      name: business.name,
-      phone: business.phone,
-      address: business.address,
-      description: business.description,
-      social_links: business.socialLinks,
-      logo_url: business.logoUrl,
-      accent_color: business.accentColor,
-      template: business.template,
-    })
+    .update(update)
     .eq("id", business.id);
   if (error) throw error;
 }

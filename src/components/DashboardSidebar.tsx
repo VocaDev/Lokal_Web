@@ -26,14 +26,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const items = [
-  { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Bookings", url: "/dashboard/bookings", icon: Calendar },
-  { title: "Services", url: "/dashboard/services", icon: Scissors },
-  { title: "Business Hours", url: "/dashboard/hours", icon: Clock },
-  { title: "Customization", url: "/dashboard/customization", icon: Palette },
-  { title: "Profile", url: "/dashboard/profile", icon: User },
-];
+// Bookings link is conditional per `business.bookingEnabled`. When the
+// owner opted out at registration (or later via /dashboard/profile), we
+// hide the menu item rather than show a useless empty page.
+function buildMenuItems(bookingEnabled: boolean) {
+  const items: Array<{ title: string; url: string; icon: typeof LayoutDashboard }> = [
+    { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
+  ];
+  if (bookingEnabled) {
+    items.push({ title: "Bookings", url: "/dashboard/bookings", icon: Calendar });
+  }
+  items.push(
+    { title: "Services", url: "/dashboard/services", icon: Scissors },
+    { title: "Business Hours", url: "/dashboard/hours", icon: Clock },
+    { title: "Customization", url: "/dashboard/customization", icon: Palette },
+    { title: "Profile", url: "/dashboard/profile", icon: User },
+  );
+  return items;
+}
 
 export function DashboardSidebar({ business }: { business: Business }) {
   const { state } = useSidebar();
@@ -41,6 +51,9 @@ export function DashboardSidebar({ business }: { business: Business }) {
   const router = useRouter();
   const supabase = createClient();
   const subdomain = business?.subdomain || null;
+  // !== false so undefined (legacy rows pre-migration-019) falls through to
+  // showing Bookings — matches the server-side default of true.
+  const items = buildMenuItems(business?.bookingEnabled !== false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [allBusinesses, setAllBusinesses] = useState<Business[]>([]);
 

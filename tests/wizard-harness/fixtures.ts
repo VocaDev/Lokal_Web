@@ -9,7 +9,6 @@
 
 export interface WizardFixture {
   name: string;
-  businessName: string;
   industryChip?: 'barbershop' | 'restaurant' | 'clinic' | 'beauty_salon' | 'gym' | 'other';
   industryText?: string;
   city: string;
@@ -30,7 +29,6 @@ export const FIXTURES: WizardFixture[] = [
   // 1. Fully locked — every section uses a specific layout.
   {
     name: 'barbershop-traditional',
-    businessName: 'Berberi i Babës',
     industryChip: 'barbershop',
     city: 'Prizren, Shadërvan',
     uniqueness: 'Tre karrige. Dyzet vjet. Prerja e babait tim është e njëjta sot si në vitin 1985.',
@@ -52,7 +50,6 @@ export const FIXTURES: WizardFixture[] = [
   // 2. All AI — nothing locked, full creative latitude.
   {
     name: 'coffee-modern',
-    businessName: 'Hana Coffee Lab',
     industryChip: 'other',
     industryText: 'Kafene specialiteti',
     city: 'Prishtinë, Sunny Hill',
@@ -75,7 +72,6 @@ export const FIXTURES: WizardFixture[] = [
   // 3. Fully locked, bold direction.
   {
     name: 'gym-bold',
-    businessName: 'Forca Studio',
     industryChip: 'gym',
     city: 'Pejë, Qendër',
     uniqueness: 'Maksimumi 8 njerëz në një orë. Çdo seancë ka trajner. Pa pasqyra dramatike.',
@@ -97,7 +93,6 @@ export const FIXTURES: WizardFixture[] = [
   // 4. All AI, elegant direction.
   {
     name: 'salon-elegant',
-    businessName: 'Studio Adelina',
     industryChip: 'beauty_salon',
     city: 'Prishtinë, Dardania',
     uniqueness: 'Çdo klient takim 90 minuta. Pa dy klientë në të njëjtën kohë. Stilistja dëgjon para se prek flokët.',
@@ -120,7 +115,6 @@ export const FIXTURES: WizardFixture[] = [
   //    "some locked, some AI" path the post-processor must handle cleanly.
   {
     name: 'clinic-trust',
-    businessName: 'Klinika Familjare Dr. Krasniqi',
     industryChip: 'clinic',
     city: 'Mitrovicë',
     uniqueness: 'Pritja mesatare 8 minuta. Mjekët tanë trajnohen në Vjenë çdo dy vjet. Familja juaj është familja jonë.',

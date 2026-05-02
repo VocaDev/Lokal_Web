@@ -44,8 +44,12 @@ export function HeroSection({ section, business, payload, bookingMethod }: Props
 
   const contactClick = buildContactHandler(business);
   const method = bookingMethod ?? 'appointments';
-  const onPrimaryCta =
-    method === 'appointments' || method === 'both' ? openBooking : contactClick;
+  // Owner-level opt-in (migration 019). When false, even an
+  // 'appointments'/'both' bookingMethod must fall through to the contact
+  // handler — the BookingDrawer isn't in the DOM and openBooking() is a no-op.
+  const ownerOptedIn = business.bookingEnabled !== false;
+  const methodAllows = method === 'appointments' || method === 'both';
+  const onPrimaryCta = ownerOptedIn && methodAllows ? openBooking : contactClick;
   const onSecondaryCta = contactClick;
 
   const layoutProps: LayoutProps = {

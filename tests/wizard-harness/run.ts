@@ -173,9 +173,9 @@ async function startFreshWizard(page: Page): Promise<void> {
 }
 
 async function fillWizard(page: Page, f: WizardFixture): Promise<void> {
-  // ----- Step 1 -----
-  await page.getByPlaceholder('p.sh., Berberi Albi').fill(f.businessName);
-
+  // ----- Step 1 — businessName is no longer asked here (set at registration);
+  //              the wizard shows it as a confirmed header for the test
+  //              account. industry / city / uniqueness only.
   if (f.industryChip) {
     await page.getByRole('button', { name: INDUSTRY_CHIP_LABEL[f.industryChip] }).click();
   }

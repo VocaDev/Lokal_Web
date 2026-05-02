@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Phone, Globe, Building, MapPin, Instagram, Facebook, MessageCircle, Palette } from "lucide-react";
+import { Phone, Globe, Building, MapPin, Instagram, Facebook, MessageCircle, Palette, Calendar } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { publicSiteLabel } from "@/lib/utils";
 
@@ -31,6 +32,7 @@ export default function ProfilePage() {
     address: "",
     description: "",
     socialLinks: { instagram: "", facebook: "", whatsapp: "" },
+    bookingEnabled: true,
   });
 
   useEffect(() => {
@@ -45,6 +47,7 @@ export default function ProfilePage() {
             address: biz.address,
             description: biz.description,
             socialLinks: { ...biz.socialLinks },
+            bookingEnabled: biz.bookingEnabled !== false,
           });
         }
       })
@@ -117,6 +120,27 @@ export default function ProfilePage() {
                 <p className="text-[10px] text-muted-foreground">Changes apply immediately to your public website.</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Calendar className="h-4 w-4" /> Sistem rezervimesh</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <Label className="text-sm font-medium">I aktivizuar</Label>
+                <p className="text-xs text-muted-foreground">
+                  Klientët mund të rezervojnë takim direkt nga faqja jote.
+                </p>
+              </div>
+              <Switch
+                checked={form.bookingEnabled}
+                onCheckedChange={(v) => setForm(f => ({ ...f, bookingEnabled: v }))}
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground border-t pt-3">
+              Nëse e çaktivizon, faqja jote do të shfaqet pa butonin e rezervimit. Rezervimet ekzistuese nuk preken.
+            </p>
           </CardContent>
         </Card>
 

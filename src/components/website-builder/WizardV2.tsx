@@ -23,6 +23,12 @@ type Theme = AiSitePayload;
 type Props = {
   businessId: string;
   subdomain: string;
+  // Pre-loaded from the businesses row by the route's server component, so
+  // the wizard never has to re-ask the user for these. businessName comes
+  // from registration; bookingEnabled comes from the registration toggle
+  // (or a later /dashboard/profile change). undefined → treat as enabled.
+  businessName: string;
+  bookingEnabled: boolean;
 };
 
 const TOTAL_STEPS = 5;
@@ -130,9 +136,8 @@ const FALLBACK_ADVANCE_MS = 8000;
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 const isHex = (v?: string) => !!v && HEX_RE.test(v.trim());
 
-function defaultInput(): WizardInput {
+function defaultInput(bookingEnabled: boolean): WizardInput {
   return {
-    businessName: '',
     industry: '',
     industryChip: undefined,
     city: '',
@@ -141,7 +146,10 @@ function defaultInput(): WizardInput {
       { name: '', price: '', durationMinutes: undefined },
       { name: '', price: '', durationMinutes: undefined },
     ],
-    bookingMethod: 'appointments',
+    // When the user opted out of booking at registration, force 'none' so
+    // the AI doesn't generate booking-themed copy/CTAs and the wizard's
+    // Step 2 chip group is hidden.
+    bookingMethod: bookingEnabled ? 'appointments' : 'none',
     heroLayout: 'ai',
     storyLayout: 'ai',
     servicesLayout: 'ai',
@@ -155,9 +163,9 @@ function defaultInput(): WizardInput {
   };
 }
 
-export default function WizardV2({ businessId, subdomain }: Props) {
+export default function WizardV2({ businessId, subdomain, businessName, bookingEnabled }: Props) {
   const [step, setStep] = useState(1);
-  const [input, setInput] = useState<WizardInput>(defaultInput);
+  const [input, setInput] = useState<WizardInput>(() => defaultInput(bookingEnabled));
   const [brief, setBrief] = useState<Brief | null>(null);
   const [theme, setTheme] = useState<Theme | null>(null);
 
@@ -240,8 +248,9 @@ export default function WizardV2({ businessId, subdomain }: Props) {
   // -------- step validation --------
   const validateStep = (s: number): boolean => {
     if (s === 1) {
-      return input.businessName.trim().length >= 2 &&
-             input.industry.trim().length >= 2 &&
+      // businessName is no longer asked here — it's set at registration and
+      // shown as a confirmed header. Only industry + city are required.
+      return input.industry.trim().length >= 2 &&
              input.city.trim().length >= 2;
     }
     if (s === 2) return true;
@@ -288,7 +297,7 @@ export default function WizardV2({ businessId, subdomain }: Props) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            businessName: input.businessName,
+            businessName,
             industry: input.industry,
             industryChip: input.industryChip,
             city: input.city,
@@ -321,7 +330,7 @@ export default function WizardV2({ businessId, subdomain }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           brief: currentBrief,
-          businessName: input.businessName,
+          businessName,
           industry: input.industry,
           city: input.city,
           uniqueness: input.uniqueness,
@@ -454,7 +463,7 @@ export default function WizardV2({ businessId, subdomain }: Props) {
             heading="Tregona për biznesin tënd"
             subtitle="Pesë detaje të shpejta. Sa më specifike, aq më i mirë rezultati përfundimtar."
           >
-            <Step1 input={input} update={update} />
+            <Step1 input={input} update={update} businessName={businessName} />
           </StepShell>
         )}
         {step === 2 && (
@@ -462,7 +471,7 @@ export default function WizardV2({ businessId, subdomain }: Props) {
             heading="Çfarë ofron?"
             subtitle="Shkruaj 2 ose 3 shërbime kryesore — kjo i tregon AI-së se çfarë ti bën. Të tjerat i shton më vonë në panelin e kontrollit."
           >
-            <Step2 input={input} update={update} />
+            <Step2 input={input} update={update} bookingEnabled={bookingEnabled} />
           </StepShell>
         )}
         {step === 3 && (
@@ -486,7 +495,7 @@ export default function WizardV2({ businessId, subdomain }: Props) {
             heading="Zëri dhe gjuha"
             subtitle="Hapi i fundit. Pastaj ndërtojmë faqen."
           >
-            <Step5 input={input} update={update} />
+            <Step5 input={input} update={update} businessName={businessName} />
           </StepShell>
         )}
 
@@ -504,7 +513,7 @@ export default function WizardV2({ businessId, subdomain }: Props) {
           <PreviewScreen
             theme={theme}
             subdomain={subdomain}
-            businessName={input.businessName}
+            businessName={businessName}
             city={input.city}
             applying={applying}
             applyError={applyError}
@@ -637,18 +646,20 @@ function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
 
 // ---------- Step 1 ----------
 function Step1({
-  input, update,
-}: { input: WizardInput; update: (p: Partial<WizardInput>) => void }) {
+  input, update, businessName,
+}: {
+  input: WizardInput;
+  update: (p: Partial<WizardInput>) => void;
+  businessName: string;
+}) {
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <FieldLabel>Emri i biznesit</FieldLabel>
-        <TextInput
-          value={input.businessName}
-          onChange={(e) => update({ businessName: e.target.value })}
-          placeholder="p.sh., Berberi Albi"
-          maxLength={60}
-        />
+      {/* Confirmed business name from registration — no longer asked here. */}
+      <div className="rounded-lg border border-border bg-card p-4">
+        <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+          Po krijojmë faqen për
+        </div>
+        <div className="text-lg font-semibold text-foreground">{businessName}</div>
       </div>
 
       <div className="space-y-3">
@@ -698,8 +709,12 @@ function Step1({
 
 // ---------- Step 2 ----------
 function Step2({
-  input, update,
-}: { input: WizardInput; update: (p: Partial<WizardInput>) => void }) {
+  input, update, bookingEnabled,
+}: {
+  input: WizardInput;
+  update: (p: Partial<WizardInput>) => void;
+  bookingEnabled: boolean;
+}) {
   const updateService = (idx: number, patch: Partial<WizardInput['services'][number]>) => {
     const next = input.services.map((s, i) => i === idx ? { ...s, ...patch } : s);
     update({ services: next });
@@ -781,20 +796,22 @@ function Step2({
         </p>
       </div>
 
-      <div className="space-y-3">
-        <FieldLabel>Si i kontaktojnë klientët?</FieldLabel>
-        <div className="flex flex-wrap gap-2">
-          {BOOKING_CHIPS.map(c => (
-            <Chip
-              key={c.value}
-              active={input.bookingMethod === c.value}
-              onClick={() => update({ bookingMethod: c.value })}
-            >
-              {c.label}
-            </Chip>
-          ))}
+      {bookingEnabled && (
+        <div className="space-y-3">
+          <FieldLabel>Si i kontaktojnë klientët?</FieldLabel>
+          <div className="flex flex-wrap gap-2">
+            {BOOKING_CHIPS.map(c => (
+              <Chip
+                key={c.value}
+                active={input.bookingMethod === c.value}
+                onClick={() => update({ bookingMethod: c.value })}
+              >
+                {c.label}
+              </Chip>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -1270,8 +1287,12 @@ function CustomColorInput({
 
 // ---------- Step 5 ----------
 function Step5({
-  input, update,
-}: { input: WizardInput; update: (p: Partial<WizardInput>) => void }) {
+  input, update, businessName,
+}: {
+  input: WizardInput;
+  update: (p: Partial<WizardInput>) => void;
+  businessName: string;
+}) {
   return (
     <div className="space-y-7">
       <div className="space-y-3">
@@ -1304,12 +1325,12 @@ function Step5({
         </div>
       </div>
 
-      <RecapCard input={input} />
+      <RecapCard input={input} businessName={businessName} />
     </div>
   );
 }
 
-function RecapCard({ input }: { input: WizardInput }) {
+function RecapCard({ input, businessName }: { input: WizardInput; businessName: string }) {
   const moodLabel = MOOD_OPTIONS.find(m => m.id === input.mood)?.label ?? input.mood;
   const fontLabel = FONT_PERSONALITY_CHIPS.find(c => c.value === input.fontPersonality)?.label ?? input.fontPersonality;
   const bookingLabel = BOOKING_CHIPS.find(c => c.value === input.bookingMethod)?.label ?? input.bookingMethod;
@@ -1321,7 +1342,7 @@ function RecapCard({ input }: { input: WizardInput }) {
   const galleryLayoutLabel = GALLERY_LAYOUTS.find(o => o.id === input.galleryLayout)?.label ?? input.galleryLayout;
 
   const rows: Array<[string, string]> = [
-    ['Biznesi', input.businessName || '—'],
+    ['Biznesi', businessName || '—'],
     ['Lloji', input.industry || '—'],
     ['Vendndodhja', input.city || '—'],
     ['Shërbime', `${namedServices} shtuar · ${bookingLabel}`],

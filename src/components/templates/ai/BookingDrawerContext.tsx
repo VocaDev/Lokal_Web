@@ -23,6 +23,10 @@ interface ProviderProps {
   services: Service[];
   hours: BusinessHours[];
   bookingMethod?: string;
+  // Owner-level opt-in (migration 019). When false, the drawer never mounts
+  // regardless of bookingMethod — the owner has globally disabled bookings.
+  // Defaults to true so legacy callers stay permissive.
+  bookingEnabled?: boolean;
   children: ReactNode;
 }
 
@@ -31,24 +35,28 @@ export function BookingDrawerProvider({
   services,
   hours,
   bookingMethod,
+  bookingEnabled,
   children,
 }: ProviderProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const bookingEnabled = bookingMethod === 'appointments' || bookingMethod === 'both';
+  const ownerOptedIn = bookingEnabled !== false;
+  const methodAllows = bookingMethod === 'appointments' || bookingMethod === 'both';
+  const bookingActive = ownerOptedIn && methodAllows;
 
-  // For walkin/none sites the drawer is not in the DOM at all — open() is a
-  // no-op and the hero's contact-redirect handler takes over (WhatsApp / tel).
-  // We still provide a context value so consumers don't need to null-check.
+  // For walkin/none/owner-opted-out sites the drawer is not in the DOM at
+  // all — open() is a no-op and the hero's contact-redirect handler takes
+  // over (WhatsApp / tel). We still provide a context value so consumers
+  // don't need to null-check.
   return (
     <Ctx.Provider
       value={{
-        open: bookingEnabled ? () => setIsOpen(true) : () => {},
+        open: bookingActive ? () => setIsOpen(true) : () => {},
         close: () => setIsOpen(false),
         isOpen,
       }}
     >
       {children}
-      {bookingEnabled && (
+      {bookingActive && (
         <BookingDrawer
           business={business}
           services={services}

@@ -68,8 +68,17 @@ export default function RegisterPage() {
     password: "",
   });
 
-  const [form, setForm] = useState({
+  // bookingEnabled is null until the user picks one of the two cards.
+  // Submit is gated on a pick — the user MUST decide whether to accept
+  // bookings as part of signing up. The flag persists on businesses.
+  const [form, setForm] = useState<{
+    businessName: string;
+    subdomain: string;
+    bookingEnabled: boolean | null;
+  }>({
+    businessName: "",
     subdomain: "",
+    bookingEnabled: null,
   });
 
   // Debounced subdomain check
@@ -107,12 +116,20 @@ export default function RegisterPage() {
       setError("Fjalë" + "kalimi duhet të ketë së paku 8 karaktere.");
       return;
     }
+    if (!form.businessName || form.businessName.trim().length < 2) {
+      setError("Ju lutem shënoni emrin e biznesit.");
+      return;
+    }
     if (!form.subdomain) {
       setError("Ju lutem shënoni një subdomain.");
       return;
     }
     if (subdomainAvailable === false) {
       setError("Ky subdomain është i zënë.");
+      return;
+    }
+    if (form.bookingEnabled === null) {
+      setError("Ju lutem zgjidhni nëse do të pranosh rezervime.");
       return;
     }
 
@@ -128,21 +145,24 @@ export default function RegisterPage() {
       });
 
       if (signUpError) throw signUpError;
-      
+
       if (data.user) {
-        // 2. Create business record with placeholders
+        // 2. Create business record. Real name + booking-enabled flag are
+        //    captured here at signup; industry stays a placeholder until the
+        //    wizard runs (the wizard asks for it).
         const { error: bizError } = await supabase
           .from("businesses")
           .insert({
             owner_id: data.user.id,
             subdomain: form.subdomain,
-            name: form.subdomain, // temp placeholder
-            industry: 'other', // canonical placeholder — user picks real industry in wizard/profile
-            website_builder_completed: false
+            name: form.businessName.trim(),
+            industry: 'other',
+            booking_enabled: form.bookingEnabled,
+            website_builder_completed: false,
           });
 
         if (bizError) throw bizError;
-        
+
         setStep(2); // Go to verification message
       }
     } catch (err: any) {
@@ -245,13 +265,25 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-2 pt-2">
+                  <Label htmlFor="businessName">Emri i biznesit</Label>
+                  <Input
+                    id="businessName"
+                    value={form.businessName}
+                    onChange={e => setForm(f => ({ ...f, businessName: e.target.value }))}
+                    placeholder="p.sh., Berberi Albi"
+                    maxLength={60}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2 pt-2">
                   <Label htmlFor="subdomain">Subdomain i website-it</Label>
                   <div className="relative">
                     <div className="flex items-center gap-2">
                       <Input
                         id="subdomain"
                         value={form.subdomain}
-                        onChange={e => setForm({ subdomain: generateSubdomain(e.target.value) })}
+                        onChange={e => setForm(f => ({ ...f, subdomain: generateSubdomain(e.target.value) }))}
                         placeholder="emri-i-biznesit"
                         required
                       />
@@ -273,12 +305,55 @@ export default function RegisterPage() {
                     </div>
                   </div>
                 </div>
+
+                <div className="space-y-2 pt-2">
+                  <Label>A do të pranosh rezervime?</Label>
+                  <div className="grid gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, bookingEnabled: true }))}
+                      className={`text-left rounded-lg border p-3 transition-all ${
+                        form.bookingEnabled === true
+                          ? 'border-primary ring-2 ring-primary/30 bg-primary/5'
+                          : 'border-border hover:border-foreground/30'
+                      }`}
+                    >
+                      <div className="text-sm font-semibold text-foreground">Po, dua sistem rezervimesh</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        Berbere, klinika, sallone, palestra, restorante
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, bookingEnabled: false }))}
+                      className={`text-left rounded-lg border p-3 transition-all ${
+                        form.bookingEnabled === false
+                          ? 'border-primary ring-2 ring-primary/30 bg-primary/5'
+                          : 'border-border hover:border-foreground/30'
+                      }`}
+                    >
+                      <div className="text-sm font-semibold text-foreground">Jo, vetëm faqe prezantuese</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        Dyqane, biznese me lokal, shërbime pa termin
+                      </div>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <Button
                 className="w-full"
                 size="lg"
-                disabled={loading || !auth.email || !auth.password || !form.subdomain || subdomainAvailable === false || checkingSubdomain}
+                disabled={
+                  loading
+                  || !auth.email
+                  || !auth.password
+                  || !form.businessName.trim()
+                  || !form.subdomain
+                  || subdomainAvailable === false
+                  || checkingSubdomain
+                  || form.bookingEnabled === null
+                }
                 onClick={handleSubmit}
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}

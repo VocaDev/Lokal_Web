@@ -80,6 +80,10 @@ export interface Business {
   websiteCreationMethod?: string;
   aiSetupData?: Record<string, unknown>;
   websiteBuilderCompleted?: boolean;
+  // Opt-in booking (migration 019). Defaults to true server-side; undefined
+  // here means "not yet loaded from DB" — callers should treat undefined as
+  // permissive (`bookingEnabled !== false`) until the row is hydrated.
+  bookingEnabled?: boolean;
 }
 
 export * from './customization';

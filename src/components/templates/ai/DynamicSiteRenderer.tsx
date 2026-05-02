@@ -37,6 +37,7 @@ export function DynamicSiteRenderer({ business, services, hours, payload }: Prop
         services={services}
         hours={hours}
         bookingMethod={payload.bookingMethod}
+        bookingEnabled={business.bookingEnabled !== false}
       >
         {payload.sections.map((section, i) => (
           <SectionRouter

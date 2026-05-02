@@ -89,7 +89,8 @@ export interface ThemeVariables {
 }
 
 export interface WizardInput {
-  businessName: string;
+  // businessName is no longer asked in the wizard — it's set at registration
+  // and pre-loaded into the wizard via props. Keep it OUT of WizardInput.
   industry: string;
   industryChip?: string;
   city: string;

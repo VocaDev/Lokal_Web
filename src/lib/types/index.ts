@@ -9,6 +9,8 @@ export interface SocialLinks {
   instagram: string;
   facebook: string;
   whatsapp: string;
+  tiktok?: string;
+  city?: string;
 }
 
 export interface Service {

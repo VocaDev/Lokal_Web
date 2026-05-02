@@ -1,182 +1,387 @@
 'use client'
+
 import { useEffect, useState } from "react";
-import { Business, IndustryType } from "@/lib/types";
-import { normalizeIndustry } from "@/lib/industries";
-import { saveBusiness, getCurrentBusiness } from "@/lib/store";
+import {
+  Building2,
+  Calendar,
+  Facebook,
+  Globe2,
+  Instagram,
+  MapPin,
+  MessageCircle,
+  Music2,
+  Phone,
+  Trash2,
+} from "lucide-react";
+import { Business } from "@/lib/types";
+import { getCurrentBusiness } from "@/lib/store";
+import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Phone, Globe, Building, MapPin, Instagram, Facebook, MessageCircle, Palette, Calendar } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { publicSiteLabel } from "@/lib/utils";
 
-const templates = [
-  { id: "classic", name: "Classic Barbershop", industry: "barbershop" },
-  { id: "bold", name: "Barbershop Bold", industry: "barbershop" },
-  { id: "clinic", name: "Modern Clinic", industry: "clinic" },
-  { id: "salon", name: "Elegant Salon", industry: "beauty_salon" },
-  { id: "restaurant", name: "Minimal Restaurant", industry: "restaurant" },
-];
+type ProfileForm = {
+  name: string;
+  phone: string;
+  address: string;
+  city: string;
+  instagram: string;
+  facebook: string;
+  whatsapp: string;
+  tiktok: string;
+};
+
+const emptyForm: ProfileForm = {
+  name: "",
+  phone: "",
+  address: "",
+  city: "",
+  instagram: "",
+  facebook: "",
+  whatsapp: "",
+  tiktok: "",
+};
+
+const cardClass = "bg-[#151522] border-[rgba(120,120,255,0.12)]";
+const inputClass = "mt-1 bg-[#1e1e35] border-[rgba(120,120,255,0.12)]";
+const labelClass = "text-xs text-[#8888aa]";
 
 export default function ProfilePage() {
   const [business, setBusiness] = useState<Business | null>(null);
+  const [form, setForm] = useState<ProfileForm>(emptyForm);
+  const [bookingEnabled, setBookingEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [savingBooking, setSavingBooking] = useState(false);
   const { toast } = useToast();
-  const [form, setForm] = useState({
-    industry: "barbershop" as IndustryType,
-    template: "classic",
-    phone: "",
-    address: "",
-    description: "",
-    socialLinks: { instagram: "", facebook: "", whatsapp: "" },
-    bookingEnabled: true,
-  });
 
   useEffect(() => {
     getCurrentBusiness()
       .then(biz => {
-        if (biz) {
-          setBusiness(biz);
-          setForm({
-            industry: normalizeIndustry(biz.industry),
-            template: biz.template || "classic",
-            phone: biz.phone,
-            address: biz.address,
-            description: biz.description,
-            socialLinks: { ...biz.socialLinks },
-            bookingEnabled: biz.bookingEnabled !== false,
-          });
-        }
+        if (!biz) return;
+
+        setBusiness(biz);
+        setBookingEnabled(biz.bookingEnabled !== false);
+        setForm({
+          name: biz.name || "",
+          phone: biz.phone || "",
+          address: biz.address || "",
+          city: biz.socialLinks?.city || "",
+          instagram: biz.socialLinks?.instagram || "",
+          facebook: biz.socialLinks?.facebook || "",
+          whatsapp: biz.socialLinks?.whatsapp || "",
+          tiktok: biz.socialLinks?.tiktok || "",
+        });
       })
       .finally(() => setLoading(false));
   }, []);
 
+  const updateField = (field: keyof ProfileForm, value: string) => {
+    setForm(current => ({ ...current, [field]: value }));
+  };
+
   const handleSave = async () => {
     if (!business) return;
-    const updated = { ...business, ...form };
+
+    setSaving(true);
     try {
-      await saveBusiness(updated);
-      setBusiness(updated);
-      toast({ title: "Profile updated" });
+      const socialLinks = {
+        instagram: form.instagram,
+        facebook: form.facebook,
+        whatsapp: form.whatsapp,
+        tiktok: form.tiktok,
+        city: form.city,
+      };
+
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("businesses")
+        .update({
+          name: form.name,
+          phone: form.phone,
+          address: form.address,
+          social_links: socialLinks,
+        })
+        .eq("id", business.id);
+
+      if (error) throw error;
+
+      setBusiness({
+        ...business,
+        name: form.name,
+        phone: form.phone,
+        address: form.address,
+        socialLinks,
+      });
+      toast({ title: "Ndryshimet u ruajtën" });
     } catch (err) {
       console.error("Failed to save business profile", err);
-      toast({ title: "Failed to update profile", variant: "destructive" });
+      toast({ title: "Nuk u ruajt profili", variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
+  };
+
+  const handleBookingToggle = async (checked: boolean) => {
+    if (!business) return;
+
+    const previous = bookingEnabled;
+    setBookingEnabled(checked);
+    setSavingBooking(true);
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("businesses")
+        .update({ booking_enabled: checked })
+        .eq("id", business.id);
+
+      if (error) throw error;
+
+      setBusiness({ ...business, bookingEnabled: checked });
+      toast({ title: checked ? "Rezervimet u aktivizuan" : "Rezervimet u çaktivizuan" });
+    } catch (err) {
+      console.error("Failed to update booking setting", err);
+      setBookingEnabled(previous);
+      toast({ title: "Nuk u përditësua sistemi i rezervimeve", variant: "destructive" });
+    } finally {
+      setSavingBooking(false);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    toast({
+      title: "Na kontaktoni në support@lokalweb.com",
+      description: "Fshirja e llogarisë kërkon verifikim nga ekipi ynë.",
+    });
   };
 
   if (loading || !business) {
     return (
       <div className="min-h-[200px] flex items-center justify-center text-muted-foreground text-sm">
-        Loading profile...
+        Duke ngarkuar profilin...
       </div>
     );
   }
 
   return (
     <div className="pb-12">
-      <h1 className="text-2xl font-bold text-foreground mb-6">Business Profile</h1>
-      <div className="grid gap-6 max-w-lg">
-        <Card>
+      <h1 className="text-2xl font-bold text-foreground mb-6">Profili i Biznesit</h1>
+
+      <div className="grid gap-6 max-w-2xl">
+        <Card className={cardClass}>
           <CardHeader>
-            <CardTitle className="text-lg">{business.name}</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Biznesi yt
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Globe className="h-4 w-4 text-muted-foreground" />
-              <span className="text-primary">{publicSiteLabel(business.subdomain)}</span>
+            <div>
+              <Label className={labelClass}>Emri i biznesit</Label>
+              <Input
+                value={form.name}
+                onChange={e => updateField("name", e.target.value)}
+                placeholder="Emri i biznesit"
+                className={inputClass}
+              />
             </div>
-            <div className="pt-2 space-y-4 border-t">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Building className="h-3.5 w-3.5" /> Industry</Label>
-                <Select value={form.industry} onValueChange={v => setForm(f => ({ ...f, industry: v as IndustryType }))}>
-                  <SelectTrigger className="capitalize"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="barbershop">Barbershop</SelectItem>
-                    <SelectItem value="restaurant">Restaurant</SelectItem>
-                    <SelectItem value="clinic">Clinic</SelectItem>
-                    <SelectItem value="beauty_salon">Beauty Salon</SelectItem>
-                    <SelectItem value="gym">Gym</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Palette className="h-3.5 w-3.5" /> Website Template</Label>
-                <Select value={form.template} onValueChange={v => setForm(f => ({ ...f, template: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {templates.filter(t => t.industry === form.industry).map(t => (
-                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                    ))}
-                    {form.industry === 'other' && (
-                      <SelectItem value="bold">Test Template (Generic)</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                <p className="text-[10px] text-muted-foreground">Changes apply immediately to your public website.</p>
+            <div>
+              <Label className={labelClass}>Nën-domeni</Label>
+              <div className="mt-1 flex items-center gap-3 rounded-md border border-[rgba(120,120,255,0.12)] bg-[#1e1e35] px-3 py-2 text-sm text-primary">
+                <Globe2 className="h-4 w-4 text-muted-foreground" />
+                {publicSiteLabel(business.subdomain)}
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Calendar className="h-4 w-4" /> Sistem rezervimesh</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start justify-between gap-4 rounded-md border border-[rgba(120,120,255,0.12)] bg-[#1e1e35] p-3">
               <div className="space-y-1">
-                <Label className="text-sm font-medium">I aktivizuar</Label>
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Sistem rezervimesh
+                </Label>
                 <p className="text-xs text-muted-foreground">
                   Klientët mund të rezervojnë takim direkt nga faqja jote.
                 </p>
               </div>
               <Switch
-                checked={form.bookingEnabled}
-                onCheckedChange={(v) => setForm(f => ({ ...f, bookingEnabled: v }))}
+                checked={bookingEnabled}
+                disabled={savingBooking}
+                onCheckedChange={handleBookingToggle}
               />
             </div>
-            <p className="text-[11px] text-muted-foreground border-t pt-3">
-              Nëse e çaktivizon, faqja jote do të shfaqet pa butonin e rezervimit. Rezervimet ekzistuese nuk preken.
+          </CardContent>
+        </Card>
+
+        <Card className={cardClass}>
+          <CardHeader>
+            <CardTitle className="text-lg">Kontakti</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label className="text-xs text-[#8888aa] flex items-center gap-2">
+                <Phone className="h-3.5 w-3.5" />
+                Telefoni
+              </Label>
+              <Input
+                value={form.phone}
+                onChange={e => updateField("phone", e.target.value)}
+                placeholder="+383 44 000 000"
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs text-[#8888aa] flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5" />
+                Adresa
+              </Label>
+              <Input
+                value={form.address}
+                onChange={e => updateField("address", e.target.value)}
+                placeholder="Rr. Agim Ramadani"
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <Label className={labelClass}>Qyteti</Label>
+              <Input
+                value={form.city}
+                onChange={e => updateField("city", e.target.value)}
+                placeholder="Prishtinë"
+                className={inputClass}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={cardClass}>
+          <CardHeader>
+            <CardTitle className="text-lg">Rrjetet sociale</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label className="text-xs text-[#8888aa] flex items-center gap-2">
+                <Instagram className="h-3.5 w-3.5" />
+                Instagram
+              </Label>
+              <Input
+                value={form.instagram}
+                onChange={e => updateField("instagram", e.target.value)}
+                placeholder="https://instagram.com/..."
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs text-[#8888aa] flex items-center gap-2">
+                <Facebook className="h-3.5 w-3.5" />
+                Facebook
+              </Label>
+              <Input
+                value={form.facebook}
+                onChange={e => updateField("facebook", e.target.value)}
+                placeholder="https://facebook.com/..."
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs text-[#8888aa] flex items-center gap-2">
+                <MessageCircle className="h-3.5 w-3.5" />
+                WhatsApp
+              </Label>
+              <Input
+                value={form.whatsapp}
+                onChange={e => updateField("whatsapp", e.target.value)}
+                placeholder="+383 44 000 000"
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs text-[#8888aa] flex items-center gap-2">
+                <Music2 className="h-3.5 w-3.5" />
+                TikTok
+              </Label>
+              <Input
+                value={form.tiktok}
+                onChange={e => updateField("tiktok", e.target.value)}
+                placeholder="https://tiktok.com/@..."
+                className={inputClass}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[#151522] border-[rgba(239,68,68,0.3)]">
+          <CardHeader>
+            <CardTitle className="text-lg text-red-400 flex items-center gap-2">
+              <Trash2 className="h-4 w-4" />
+              Zona e rrezikshme
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              Për fshirjen e llogarisë duhet verifikim nga ekipi i LokalWeb.
             </p>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 hover:text-red-300"
+                >
+                  Fshij llogarinë
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Konfirmo kërkesën</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Fshirja e llogarisë nuk bëhet direkt nga kjo faqe. Pas konfirmimit do të shfaqet kontakti për support.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Anulo</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20"
+                    onClick={handleDeleteAccount}
+                  >
+                    Konfirmo
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader><CardTitle className="text-lg">Contact Info</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" /> Phone</Label>
-              <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+383 44 000 000" className="mt-1" />
-            </div>
-            <div>
-              <Label className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5" /> Address</Label>
-              <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="Rr. Agim Ramadani, Prishtina" className="mt-1" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle className="text-lg">Social Media</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="flex items-center gap-2"><Instagram className="h-3.5 w-3.5" /> Instagram</Label>
-              <Input value={form.socialLinks.instagram} onChange={e => setForm(f => ({ ...f, socialLinks: { ...f.socialLinks, instagram: e.target.value } }))} placeholder="https://instagram.com/..." className="mt-1" />
-            </div>
-            <div>
-              <Label className="flex items-center gap-2"><Facebook className="h-3.5 w-3.5" /> Facebook</Label>
-              <Input value={form.socialLinks.facebook} onChange={e => setForm(f => ({ ...f, socialLinks: { ...f.socialLinks, facebook: e.target.value } }))} placeholder="https://facebook.com/..." className="mt-1" />
-            </div>
-            <div>
-              <Label className="flex items-center gap-2"><MessageCircle className="h-3.5 w-3.5" /> WhatsApp</Label>
-              <Input value={form.socialLinks.whatsapp} onChange={e => setForm(f => ({ ...f, socialLinks: { ...f.socialLinks, whatsapp: e.target.value } }))} placeholder="+383 44 000 000" className="mt-1" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Button onClick={handleSave} size="lg" className="w-full">Save Changes</Button>
+        <Button
+          onClick={handleSave}
+          size="lg"
+          disabled={saving}
+          className="w-full bg-gradient-to-r from-blue-600 to-violet-500 text-white hover:from-blue-500 hover:to-violet-400"
+        >
+          {saving ? "Duke ruajtur..." : "Ruaj ndryshimet"}
+        </Button>
       </div>
     </div>
   );

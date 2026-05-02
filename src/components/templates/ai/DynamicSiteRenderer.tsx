@@ -14,9 +14,10 @@ interface Props {
   services: Service[];
   hours: BusinessHours[];
   payload: AiSitePayload;
+  previewMode?: boolean;
 }
 
-export function DynamicSiteRenderer({ business, services, hours, payload }: Props) {
+export function DynamicSiteRenderer({ business, services, hours, payload, previewMode }: Props) {
   const themeStyle: React.CSSProperties = {
     ['--ai-primary' as any]: payload.primaryColor,
     ['--ai-accent' as any]: payload.accentColor,
@@ -31,7 +32,7 @@ export function DynamicSiteRenderer({ business, services, hours, payload }: Prop
   };
 
   return (
-    <div style={themeStyle} className="min-h-screen">
+    <div style={themeStyle} className={previewMode ? "min-h-0" : "min-h-screen"}>
       <BookingDrawerProvider
         business={business}
         services={services}
@@ -47,6 +48,7 @@ export function DynamicSiteRenderer({ business, services, hours, payload }: Prop
             services={services}
             hours={hours}
             payload={payload}
+            previewMode={previewMode}
           />
         ))}
       </BookingDrawerProvider>
@@ -55,17 +57,18 @@ export function DynamicSiteRenderer({ business, services, hours, payload }: Prop
 }
 
 function SectionRouter({
-  section, business, services, hours, payload,
+  section, business, services, hours, payload, previewMode,
 }: {
   section: AiSection;
   business: Business;
   services: Service[];
   hours: BusinessHours[];
   payload: AiSitePayload;
+  previewMode?: boolean;
 }) {
   switch (section.kind) {
     case 'hero':
-      return <HeroSection section={section} business={business} payload={payload} bookingMethod={payload.bookingMethod} />;
+      return <HeroSection section={section} business={business} payload={payload} bookingMethod={payload.bookingMethod} previewMode={previewMode} />;
     case 'services':
       return <ServicesSection section={section} business={business} services={services} payload={payload} />;
     case 'story':

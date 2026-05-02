@@ -1545,7 +1545,7 @@ function PreviewScreen({
   return (
     <div className="flex-1 px-6 py-8">
       <div className="max-w-5xl mx-auto space-y-5">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="sticky top-0 z-30 -mx-2 flex items-center justify-between gap-4 flex-wrap rounded-xl bg-background/95 px-2 py-2 backdrop-blur">
           <h1 className="text-[26px] md:text-[30px] font-bold tracking-tight">Faqja jote është gati</h1>
           <div className="flex items-center gap-2">
             <button
@@ -1590,7 +1590,7 @@ function PreviewScreen({
           </div>
         )}
 
-        <div className="bg-card border border-border rounded-2xl p-3">
+        <div className="relative z-0 bg-card border border-border rounded-2xl p-3">
           <div className="flex items-center gap-2 px-2 py-1.5 mb-3">
             <div className="flex gap-1.5">
               <span className="h-3 w-3 rounded-full bg-muted-foreground/40" />
@@ -1601,13 +1601,14 @@ function PreviewScreen({
               {publicSiteLabel(subdomain)}
             </div>
           </div>
-          <div className="rounded-xl border border-border overflow-hidden bg-card">
-            <div className="max-h-[600px] md:max-h-[70vh] overflow-y-auto">
+          <div className="relative isolate rounded-xl border border-border overflow-hidden bg-card">
+            <div className="relative max-h-[600px] md:max-h-[70vh] overflow-y-auto overscroll-contain">
               <DynamicSiteRenderer
                 business={previewBusiness(businessName, city)}
                 services={previewServicesFromTheme(theme)}
                 hours={[]}
                 payload={theme}
+                previewMode
               />
             </div>
           </div>

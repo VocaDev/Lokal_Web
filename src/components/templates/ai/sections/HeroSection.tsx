@@ -11,6 +11,7 @@ interface Props {
   business: Business;
   payload: AiSitePayload;
   bookingMethod?: string;
+  previewMode?: boolean;
 }
 
 interface LayoutProps extends Props {
@@ -191,7 +192,7 @@ function shouldShowHeroPlaceholder(section: AiHeroSection, heroImageUrl?: string
 // Centered hero — minimal, all-text. No image area, lots of whitespace.
 // ----------------------------------------------------------------
 
-function CenteredHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
+function CenteredHero({ section, business, payload, heroImageUrl, previewMode, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const singleCtaSection: AiHeroSection = section.ctaCount
     ? { ...section, ctaCount: 1 }
     : section;
@@ -200,7 +201,7 @@ function CenteredHero({ section, business, payload, heroImageUrl, onPrimaryCta, 
   const mutedColor = hasHeroPhoto ? '#ffffff' : payload.mutedTextColor;
   return (
     <section
-      className={`${SECTION_PADDING_X} relative flex items-center justify-center text-center min-h-[600px] py-28 md:py-44`}
+      className={`${SECTION_PADDING_X} relative flex items-center justify-center text-center ${previewMode ? 'min-h-[420px] py-20' : 'min-h-[600px] py-28 md:py-44'}`}
       style={hasHeroPhoto ? backgroundStyle(payload, 'photo', heroImageUrl) : { background: payload.bgColor }}
     >
       {hasHeroPhoto && (
@@ -241,11 +242,11 @@ function CenteredHero({ section, business, payload, heroImageUrl, onPrimaryCta, 
 // Split hero
 // ----------------------------------------------------------------
 
-function SplitHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
+function SplitHero({ section, business, payload, heroImageUrl, previewMode, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
   const imageStyle = heroImageUrl ? 'photo' : section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
   return (
-    <section className="grid grid-cols-1 md:grid-cols-2 min-h-[520px] md:min-h-[640px] relative overflow-hidden">
+    <section className={`grid grid-cols-1 md:grid-cols-2 ${previewMode ? 'min-h-[420px]' : 'min-h-[520px] md:min-h-[640px]'} relative overflow-hidden`}>
       <div
         className="relative min-h-[260px] md:min-h-full"
         style={backgroundStyle(payload, imageStyle, heroImageUrl)}
@@ -290,7 +291,7 @@ function SplitHero({ section, business, payload, heroImageUrl, onPrimaryCta, onS
 // Fullbleed hero (text overlaid on background, position-aware)
 // ----------------------------------------------------------------
 
-function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
+function FullbleedHero({ section, business, payload, heroImageUrl, previewMode, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const imageStyle = heroImageUrl ? 'photo' : section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
   const position = section.headlinePosition ?? 'bottom-left';
   // When there's no real photo + the section is filled by a light-colored
@@ -332,7 +333,7 @@ function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta,
 
   return (
     <section
-      className={`${SECTION_PADDING_X} min-h-[700px] relative overflow-hidden flex ${positionClasses}`}
+      className={`${SECTION_PADDING_X} ${previewMode ? 'min-h-[460px]' : 'min-h-[700px]'} relative overflow-hidden flex ${positionClasses}`}
       style={backgroundStyle(payload, imageStyle, heroImageUrl)}
     >
       <div className="absolute inset-0 pointer-events-none" style={{ background: scrim }} />
@@ -341,7 +342,7 @@ function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta,
           {business.name}
         </div>
         <h1
-          className="text-5xl md:text-7xl lg:text-[5.5rem] font-bold leading-[1.0] mb-5"
+          className={`${previewMode ? 'text-4xl md:text-6xl' : 'text-5xl md:text-7xl lg:text-[5.5rem]'} font-bold leading-[1.0] mb-5`}
           style={{ fontFamily: headingFontFamily(payload.headingFont), color: textColor }}
         >
           {section.headline}
@@ -370,14 +371,14 @@ function FullbleedHero({ section, business, payload, heroImageUrl, onPrimaryCta,
 // Editorial hero (magazine-style)
 // ----------------------------------------------------------------
 
-function EditorialHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
+function EditorialHero({ section, business, payload, heroImageUrl, previewMode, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const hasHeroPhoto = !!heroImageUrl;
   const textColor = hasHeroPhoto ? '#ffffff' : payload.textColor;
   const mutedColor = hasHeroPhoto ? '#ffffff' : payload.mutedTextColor;
   const borderColor = hasHeroPhoto ? 'rgba(255,255,255,0.28)' : payload.borderColor;
   return (
     <section
-      className={`${SECTION_PADDING_X} relative flex flex-col min-h-[600px] py-10 md:py-16`}
+      className={`${SECTION_PADDING_X} relative flex flex-col ${previewMode ? 'min-h-[420px] py-8' : 'min-h-[600px] py-10 md:py-16'}`}
       style={hasHeroPhoto ? backgroundStyle(payload, 'photo', heroImageUrl) : { background: payload.surfaceColor }}
     >
       {hasHeroPhoto && (
@@ -394,7 +395,7 @@ function EditorialHero({ section, business, payload, heroImageUrl, onPrimaryCta,
       <div className="relative z-10 flex-1 flex flex-col justify-center py-12 md:py-16">
         <div className="max-w-5xl">
           <h1
-            className="text-5xl md:text-7xl lg:text-[7.5rem] font-bold leading-[0.98] mb-10"
+            className={`${previewMode ? 'text-4xl md:text-6xl' : 'text-5xl md:text-7xl lg:text-[7.5rem]'} font-bold leading-[0.98] mb-10`}
             style={{
               fontFamily: headingFontFamily(payload.headingFont),
               color: textColor,
@@ -431,11 +432,11 @@ function EditorialHero({ section, business, payload, heroImageUrl, onPrimaryCta,
 // Asymmetric hero — deliberately off-grid
 // ----------------------------------------------------------------
 
-function AsymmetricHero({ section, business, payload, heroImageUrl, onPrimaryCta, onSecondaryCta }: LayoutProps) {
+function AsymmetricHero({ section, business, payload, heroImageUrl, previewMode, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const imageStyle = heroImageUrl ? 'photo' : section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
   return (
     <section
-      className="relative overflow-hidden min-h-[600px] md:min-h-[640px]"
+      className={`relative overflow-hidden ${previewMode ? 'min-h-[460px]' : 'min-h-[600px] md:min-h-[640px]'}`}
       style={{ background: payload.bgColor }}
     >
       <div
@@ -461,7 +462,7 @@ function AsymmetricHero({ section, business, payload, heroImageUrl, onPrimaryCta
         style={{ background: payload.accentColor }}
       />
 
-      <div className={`relative ${SECTION_PADDING_X} flex flex-col h-full min-h-[600px] justify-end pb-16 md:pb-24 pt-28 md:pt-40 max-w-6xl`}>
+      <div className={`relative ${SECTION_PADDING_X} flex flex-col h-full ${previewMode ? 'min-h-[460px] pb-12 pt-24' : 'min-h-[600px] pb-16 md:pb-24 pt-28 md:pt-40'} justify-end max-w-6xl`}>
         <div
           className="text-[10px] uppercase tracking-[0.4em] mb-6"
           style={{ color: payload.mutedTextColor }}
@@ -469,7 +470,7 @@ function AsymmetricHero({ section, business, payload, heroImageUrl, onPrimaryCta
           {business.name}
         </div>
         <h1
-          className="text-5xl md:text-7xl lg:text-[6.5rem] font-bold leading-[0.95] mb-6 max-w-3xl"
+          className={`${previewMode ? 'text-4xl md:text-6xl' : 'text-5xl md:text-7xl lg:text-[6.5rem]'} font-bold leading-[0.95] mb-6 max-w-3xl`}
           style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
         >
           {section.headline}

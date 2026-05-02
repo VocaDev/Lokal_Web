@@ -7,7 +7,7 @@ interface Props {
   label?: string;
   className?: string;
   /**
-   * When true, the placeholder fills its parent (absolute inset-0). Used for
+   * When true, the placeholder fills its parent image area. Used for
    * fullbleed/asymmetric heroes where the placeholder sits behind text.
    */
   fill?: boolean;
@@ -23,7 +23,7 @@ const ASPECT: Record<string, string> = {
 // Upper bound on placeholder height per shape — applied in BOTH modes.
 // In aspect-mode (fill=false) it caps the height when a wide container
 // would otherwise multiply the aspect ratio into something huge.
-// In fill-mode (absolute inset-0) it caps the height when a tall parent
+// In fill-mode it caps the height when a tall parent
 // (e.g. a min-h-[700px] hero section) would otherwise stretch the
 // placeholder to the full viewport. This is the systemic guard — every
 // section that uses PhotoPlaceholder inherits the cap automatically, so
@@ -47,7 +47,7 @@ export function PhotoPlaceholder({
   fill,
 }: Props) {
   const aspect = fill ? '' : ASPECT[shape];
-  const positioning = fill ? 'absolute inset-0' : 'w-full';
+  const positioning = fill ? 'absolute inset-x-0 top-0 h-full pointer-events-none' : 'w-full';
 
   return (
     <div
@@ -58,7 +58,7 @@ export function PhotoPlaceholder({
         background: payload.surfaceColor,
         border: `2px dashed ${payload.borderColor}`,
         // max-height alone — when parent is shorter than the cap, the
-        // absolute inset-0 sizing wins and the placeholder stays small.
+        // parent sizing wins and the placeholder stays small.
         // When parent is taller (e.g. 700px hero), the cap clamps to a
         // reasonable size and the section bg shows below.
         maxHeight: `${MAX_HEIGHT_PX[shape]}px`,

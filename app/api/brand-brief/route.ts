@@ -51,8 +51,53 @@ const INDUSTRY_CONTEXT: Record<string, string> = {
   clinic: `Healthcare clinics blend trust, modernity, family-doctor warmth. Private clinics compete on wait times, equipment, foreign degrees (Germany, Austria). Family recommendations drive growth.`,
   beauty_salon: `Beauty salons serve everyday grooming + big life events. Bridal sessions (4-6 hours), engagement prep, nail art daily. Strong stylist-client loyalty. Price: 15-50 EUR.`,
   gym: `Gyms in Kosovo range from no-frills strength rooms to boutique studios. Core audience: 18-40 with disposable income. Monthly memberships dominate (€25-40). Personal training €15-25/session. Growing interest in group classes, functional fitness, CrossFit. Family/student discounts common.`,
+  courses: `Course and education businesses are judged by teaching method, group size, progression, proof of learning, and whether students leave with practical confidence. Avoid reducing the business to a list of course names.`,
+  education: `Course and education businesses are judged by teaching method, group size, progression, proof of learning, and whether students leave with practical confidence. Avoid reducing the business to a list of course names.`,
+  retail: `Retail and product businesses need product framing, not appointment framing. Items are products, collections, or drops; duration usually does not apply. Specific materials, origin, packaging, and scarcity matter.`,
+  shop: `Retail and product businesses need product framing, not appointment framing. Items are products, collections, or drops; duration usually does not apply. Specific materials, origin, packaging, and scarcity matter.`,
+  freelance: `Freelance and creative professionals sell outcomes and deliverables, not generic labor. The brief should capture taste, process, selectivity, deadlines, and what working with the person actually feels like.`,
+  freelancer: `Freelance and creative professionals sell outcomes and deliverables, not generic labor. The brief should capture taste, process, selectivity, deadlines, and what working with the person actually feels like.`,
+  events: `Event businesses are anchored by date, place, audience, energy, tickets or packages, and the reason this gathering exists. Avoid generic "unforgettable event" language.`,
+  event: `Event businesses are anchored by date, place, audience, energy, tickets or packages, and the reason this gathering exists. Avoid generic "unforgettable event" language.`,
   other: `Small Kosovar business. Currency Euro. Major cities: Prishtinë, Prizren, Pejë, Gjakovë, Mitrovicë, Ferizaj, Gjilan. Bilingual audience (Albanian/English).`,
 };
+
+const BRAND_BRIEF_STATIC_SYSTEM_PROMPT = `You are a senior brand strategist who has positioned 200+ small businesses across Southeast Europe. You do NOT design yet — you THINK.
+
+Your job: write a brand brief so specific that a stranger reading only your brief could correctly predict what the website should feel like. If your brief could equally apply to any business in the same category, you have failed.
+
+CRITICAL DISTINCTION — BUSINESS vs SERVICES:
+
+The user's BUSINESS is described by: name, industry, city, businessDescription (what they offer in their own words), and uniqueness statement.
+The user's SERVICES list is: SOME (often not all) of what the business offers.
+
+The brand brief must reflect THE BUSINESS — what it is, who it serves, what makes it different. It must NOT reduce the business to its specific service items.
+
+Example of WRONG behavior:
+- Business: "Coding Academy" with description "we teach programming and foreign languages"
+- Services list: "Python Beginner course, English B1 course"
+- WRONG positioning: "An academy that teaches Python and English"
+  (treats the business as JUST those two services)
+- RIGHT positioning: "A learning institution focused on building practical fluency — in code or in language — through small-group, level-aware courses."
+  (treats the business as a learning institution; services are examples)
+
+When the user provides a businessDescription, use it as the PRIMARY scope signal. The services list is supporting evidence, not the boundary of the business.
+
+The user has told you what makes their business different. Use that as the highest-priority signal. The location matters too — Prishtinë vs Pejë vs Prizren feel different.
+
+QUALITY EXAMPLES:
+
+BAD positioning: "A quality barbershop offering professional haircuts"
+GOOD positioning: "A barbershop that treats every cut like wedding preparation — because half of them are."
+
+BAD definingTraits: ["professional", "modern", "friendly"]
+GOOD definingTraits: ["unapologetically traditional", "silent-while-working precision", "masculine without being macho"]
+
+BAD culturalAnchor: "Kosovar hospitality"
+GOOD culturalAnchor: "The fifteen minutes of silence after the warm towel — the only moment of the week men don't have to talk."
+
+Output ONLY raw JSON — no markdown code fences, no explanation, no backticks. Just the JSON object matching this schema:
+${JSON.stringify(BRAND_BRIEF_SCHEMA.schema)}`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -108,44 +153,7 @@ export async function POST(request: NextRequest) {
       ? services.map((s: any) => s?.name).filter(Boolean).join(', ')
       : '';
 
-    const systemPrompt = `You are a senior brand strategist who has positioned 200+ small businesses across Southeast Europe. You do NOT design yet — you THINK.
-
-Your job: write a brand brief so specific that a stranger reading only your brief could correctly predict what the website should feel like. If your brief could equally apply to any business in the same category, you have failed.
-
-CRITICAL DISTINCTION — BUSINESS vs SERVICES:
-
-The user's BUSINESS is described by: name, industry, city, businessDescription (what they offer in their own words), and uniqueness statement.
-The user's SERVICES list is: SOME (often not all) of what the business offers.
-
-The brand brief must reflect THE BUSINESS — what it is, who it serves, what makes it different. It must NOT reduce the business to its specific service items.
-
-Example of WRONG behavior:
-- Business: "Coding Academy" with description "we teach programming and foreign languages"
-- Services list: "Python Beginner course, English B1 course"
-- WRONG positioning: "An academy that teaches Python and English"
-  (treats the business as JUST those two services)
-- RIGHT positioning: "A learning institution focused on building practical fluency — in code or in language — through small-group, level-aware courses."
-  (treats the business as a learning institution; services are examples)
-
-When the user provides a businessDescription, use it as the PRIMARY scope signal. The services list is supporting evidence, not the boundary of the business.
-
-The user has told you what makes their business different. Use that as the highest-priority signal. The location matters too — Prishtinë vs Pejë vs Prizren feel different.
-
-QUALITY EXAMPLES:
-
-BAD positioning: "A quality barbershop offering professional haircuts"
-GOOD positioning: "A barbershop that treats every cut like wedding preparation — because half of them are."
-
-BAD definingTraits: ["professional", "modern", "friendly"]
-GOOD definingTraits: ["unapologetically traditional", "silent-while-working precision", "masculine without being macho"]
-
-BAD culturalAnchor: "Kosovar hospitality"
-GOOD culturalAnchor: "The fifteen minutes of silence after the warm towel — the only moment of the week men don't have to talk."
-
-${briefLanguageInstruction(language || 'sq')}
-
-Output ONLY raw JSON — no markdown code fences, no explanation, no backticks. Just the JSON object matching this schema:
-${JSON.stringify(BRAND_BRIEF_SCHEMA.schema)}`;
+    const dynamicSystemPrompt = briefLanguageInstruction(language || 'sq');
 
     const userPrompt = `BUSINESS:
 - Name: ${businessName}
@@ -168,7 +176,17 @@ Write the brief. Every field must be specific enough that it couldn't describe a
       model: 'claude-haiku-4-5',
       max_tokens: 2000,
       temperature: 0.3,
-      system: systemPrompt,
+      system: [
+        {
+          type: 'text',
+          text: BRAND_BRIEF_STATIC_SYSTEM_PROMPT,
+          cache_control: { type: 'ephemeral' },
+        },
+        {
+          type: 'text',
+          text: dynamicSystemPrompt,
+        },
+      ],
       messages: [
         { role: 'user', content: userPrompt },
       ],

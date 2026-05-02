@@ -7,6 +7,9 @@ import { hexToHsl, fontFamilyOf } from "@/lib/utils";
 import TemplateRouter from "@/components/templates";
 import { DynamicSiteRenderer } from "@/components/templates/ai/DynamicSiteRenderer";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function generateMetadata({ params }: { params: Promise<{ subdomain: string }> }) {
   const { subdomain } = await params;
   const supabase = await createClient();

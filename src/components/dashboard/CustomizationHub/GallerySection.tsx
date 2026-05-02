@@ -88,7 +88,7 @@ export default function GallerySection({ businessId }: GallerySectionProps) {
                 <div className="text-left">
                   <p className="font-semibold text-foreground flex items-center gap-2">
                     {label}
-                    {multiple && items.length > 0 && (
+                    {items.length > 0 && (
                       <span className="text-xs font-normal text-muted-foreground">
                         ({items.length})
                       </span>

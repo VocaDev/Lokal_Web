@@ -6,6 +6,10 @@
 // Mixed coverage in this list — half lock specific layouts (so we can verify
 // the post-process layout-lock pass works), half use 'ai' across the board
 // (so we exercise the AI free-choice + brief-driven decision tree).
+//
+// Services may be empty []. Some fixtures intentionally provide ONLY a
+// businessDescription with no service rows — those exercise the "infer
+// services from description" path on the theme prompt.
 
 export interface WizardFixture {
   name: string;
@@ -13,6 +17,7 @@ export interface WizardFixture {
   industryText?: string;
   city: string;
   uniqueness: string;
+  businessDescription: string;
   services: { name: string; price?: string; duration?: string }[];
   bookingMethod: 'appointments' | 'walkin' | 'both' | 'none';
   heroLayout: 'centered' | 'split' | 'fullbleed' | 'editorial' | 'ai';
@@ -26,12 +31,13 @@ export interface WizardFixture {
 }
 
 export const FIXTURES: WizardFixture[] = [
-  // 1. Fully locked — every section uses a specific layout.
+  // 1. Fully locked — every section uses a specific layout. With services.
   {
     name: 'barbershop-traditional',
     industryChip: 'barbershop',
     city: 'Prizren, Shadërvan',
     uniqueness: 'Tre karrige. Dyzet vjet. Prerja e babait tim është e njëjta sot si në vitin 1985.',
+    businessDescription: 'Berber tradicional që ofron qethje, brisk dhe paketa të plota për burra në Shadërvan, Prizren — i njëjti zanat prej dyzet vjetësh.',
     services: [
       { name: 'Qethje klasike', price: '8', duration: '30' },
       { name: 'Brisk i nxehtë', price: '12', duration: '40' },
@@ -47,19 +53,19 @@ export const FIXTURES: WizardFixture[] = [
     language: 'sq',
     tone: 'friendly',
   },
-  // 2. All AI — nothing locked, full creative latitude.
+  // 2. All AI — broad-business case. NO specific services rows: exercises
+  //    the "infer 3-5 representative services from the businessDescription"
+  //    path. The hero must NOT reduce to "Mëso Python dhe Anglisht" — it
+  //    must speak to the institution.
   {
-    name: 'coffee-modern',
+    name: 'coding-academy',
     industryChip: 'other',
-    industryText: 'Kafene specialiteti',
-    city: 'Prishtinë, Sunny Hill',
-    uniqueness: 'Kokrrat tona piqen çdo të hënë në mëngjes. Kafja që pi sot është pjekur më pak se 96 orë më parë.',
-    services: [
-      { name: 'Espresso', price: '2', duration: '3' },
-      { name: 'Latte', price: '3', duration: '5' },
-      { name: 'Filtër V60', price: '4', duration: '8' },
-    ],
-    bookingMethod: 'walkin',
+    industryText: 'Akademi mësimi',
+    city: 'Prishtinë, Qyteti i Ri',
+    uniqueness: 'Grupe të vogla. Mësues që përgjigjen te WhatsApp pas orarit. Të gjithë studentët dalin me një projekt që mund ta tregojnë.',
+    businessDescription: 'Mësoj programim dhe gjuhë të huaja për të rinj dhe profesionistë — kurse në grupe të vogla, niveli fillestar deri i avancuar, online dhe në klasë.',
+    services: [],
+    bookingMethod: 'appointments',
     heroLayout: 'ai',
     storyLayout: 'ai',
     servicesLayout: 'ai',
@@ -69,12 +75,13 @@ export const FIXTURES: WizardFixture[] = [
     language: 'sq',
     tone: 'professional',
   },
-  // 3. Fully locked, bold direction.
+  // 3. Fully locked, bold direction. With services.
   {
     name: 'gym-bold',
     industryChip: 'gym',
     city: 'Pejë, Qendër',
     uniqueness: 'Maksimumi 8 njerëz në një orë. Çdo seancë ka trajner. Pa pasqyra dramatike.',
+    businessDescription: 'Palestër me kapacitet të kufizuar dhe trajnim personal — funksional, fuqi, kondicion. Pa muzikë dramatike, pa pasqyra; vetëm hekur dhe trajnerë që të shohin formën.',
     services: [
       { name: 'Seancë e vetme', price: '20', duration: '60' },
       { name: 'Paket 10 seancash', price: '180', duration: '60' },
@@ -90,18 +97,18 @@ export const FIXTURES: WizardFixture[] = [
     language: 'sq',
     tone: 'bold',
   },
-  // 4. All AI, elegant direction.
+  // 4. All AI — freelance case. NO specific services rows: services come
+  //    from the description. Tests the empty-services path with a fully
+  //    AI-driven layout pass.
   {
-    name: 'salon-elegant',
-    industryChip: 'beauty_salon',
+    name: 'freelance-designer',
+    industryChip: 'other',
+    industryText: 'Dizajn dhe identitet vizual',
     city: 'Prishtinë, Dardania',
-    uniqueness: 'Çdo klient takim 90 minuta. Pa dy klientë në të njëjtën kohë. Stilistja dëgjon para se prek flokët.',
-    services: [
-      { name: 'Prerje + stil', price: '35', duration: '90' },
-      { name: 'Ngjyrosje e plotë', price: '60', duration: '120' },
-      { name: 'Paketa nuse', price: '150', duration: '240' },
-    ],
-    bookingMethod: 'appointments',
+    uniqueness: 'Punoj me një klient në një kohë. Pa agjenci, pa email-zinxhirë — vetëm WhatsApp dhe një takim në javë.',
+    businessDescription: 'Dizajnere e pavarur që ndërton identitete vizuale për biznese të vogla — logo, tipografi, sjellje në rrjete sociale, paketim. Procesi nis me bisedë, jo me brief.',
+    services: [],
+    bookingMethod: 'walkin',
     heroLayout: 'ai',
     storyLayout: 'ai',
     servicesLayout: 'ai',
@@ -118,6 +125,7 @@ export const FIXTURES: WizardFixture[] = [
     industryChip: 'clinic',
     city: 'Mitrovicë',
     uniqueness: 'Pritja mesatare 8 minuta. Mjekët tanë trajnohen në Vjenë çdo dy vjet. Familja juaj është familja jonë.',
+    businessDescription: 'Klinikë familjare që ofron konsulta të përgjithshme, specialistë dhe analiza në Mitrovicë — pritje të shkurtra, mjekë me trajnim ndërkombëtar dhe komunikim të qartë me familjen.',
     services: [
       { name: 'Konsultë e përgjithshme', price: '30', duration: '20' },
       { name: 'Specialist', price: '60', duration: '30' },

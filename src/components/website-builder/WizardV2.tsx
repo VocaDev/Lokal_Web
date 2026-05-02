@@ -142,6 +142,7 @@ function defaultInput(bookingEnabled: boolean): WizardInput {
     industryChip: undefined,
     city: '',
     uniqueness: '',
+    businessDescription: '',
     services: [
       { name: '', price: '', durationMinutes: undefined },
       { name: '', price: '', durationMinutes: undefined },
@@ -253,7 +254,12 @@ export default function WizardV2({ businessId, subdomain, businessName, bookingE
       return input.industry.trim().length >= 2 &&
              input.city.trim().length >= 2;
     }
-    if (s === 2) return true;
+    if (s === 2) {
+      // Free-text business description gates the whole step. Min 30 chars
+      // is enforced silently — no visible "required" label, just a disabled
+      // Continue button until the user has written something substantial.
+      return (input.businessDescription?.trim().length ?? 0) >= 30;
+    }
     // Step 3 always valid — every layout picker defaults to 'ai'.
     if (s === 3) return true;
     if (s === 4) {
@@ -302,6 +308,7 @@ export default function WizardV2({ businessId, subdomain, businessName, bookingE
             industryChip: input.industryChip,
             city: input.city,
             uniqueness: input.uniqueness,
+            businessDescription: input.businessDescription,
             services: input.services
               .filter(s => s.name.trim())
               .map(s => ({
@@ -334,6 +341,7 @@ export default function WizardV2({ businessId, subdomain, businessName, bookingE
           industry: input.industry,
           city: input.city,
           uniqueness: input.uniqueness,
+          businessDescription: input.businessDescription,
           heroLayout: input.heroLayout,
           storyLayout: input.storyLayout,
           servicesLayout: input.servicesLayout,
@@ -469,7 +477,7 @@ export default function WizardV2({ businessId, subdomain, businessName, bookingE
         {step === 2 && (
           <StepShell
             heading="Çfarë ofron?"
-            subtitle="Shkruaj 2 ose 3 shërbime kryesore — kjo i tregon AI-së se çfarë ti bën. Të tjerat i shton më vonë në panelin e kontrollit."
+            subtitle="Fillimi nga përshkrimi, pastaj shërbimet specifike nëse ke."
           >
             <Step2 input={input} update={update} bookingEnabled={bookingEnabled} />
           </StepShell>
@@ -708,6 +716,12 @@ function Step1({
 }
 
 // ---------- Step 2 ----------
+//
+// Two-part shape: a required free-text business description on top (the
+// strongest scope signal for the AI — the user's own framing of what they
+// do), and an optional structured services grid below it. Users without a
+// fixed service list can leave the grid empty; the AI generates a
+// representative 3-5 services from the description in that case.
 function Step2({
   input, update, bookingEnabled,
 }: {
@@ -724,59 +738,76 @@ function Step2({
     update({ services: [...input.services, { name: '', price: '', durationMinutes: undefined }] });
   };
   const removeService = (idx: number) => {
-    if (input.services.length <= 2) return;
     update({ services: input.services.filter((_, i) => i !== idx) });
   };
 
   return (
     <div className="space-y-6">
+      {/* A — Business description (required, silently gated) */}
+      <div className="space-y-2">
+        <FieldLabel hint="Mos e mendo si listë — thjesht përshkruaje me fjalët e tua. Çfarë ofron klientëve?">
+          Përshkrimi i biznesit
+        </FieldLabel>
+        <TextArea
+          value={input.businessDescription ?? ''}
+          onChange={(e) => update({ businessDescription: e.target.value })}
+          placeholder="p.sh. Mësoj programim dhe gjuhë të huaja, kurse të organizuara në grupe të vogla, niveli fillestar deri i avancuar."
+          maxLength={300}
+          className="min-h-[72px]"
+        />
+      </div>
+
+      {/* Visual divider between sections */}
+      <div className="border-t border-border" />
+
+      {/* B — Specific services (optional) */}
       <div className="space-y-3">
-        <FieldLabel hint="Të gjitha fushat janë opsionale — mund t'i shtosh edhe më vonë në panelin e kontrollit.">
-          Shërbimet kryesore <span className="text-muted-foreground font-normal">(opsionale)</span>
+        <FieldLabel hint="Opsionale. Nëse ke një listë specifike që do t'i shfaqësh në faqe, shtoji më poshtë. Mund ta lësh bosh — AI do të krijojë seksionin sipas përshkrimit më lart.">
+          Shërbime ose produkte specifike
         </FieldLabel>
 
-        <div className="space-y-2">
-          {input.services.map((s, idx) => (
-            <div
-              key={idx}
-              className="grid grid-cols-[1fr_88px_40px] md:grid-cols-[1fr_100px_120px_40px] gap-2 items-center"
-            >
-              <TextInput
-                value={s.name}
-                onChange={(e) => updateService(idx, { name: e.target.value })}
-                placeholder="Emri i shërbimit (p.sh. Qethje)"
-              />
-              <TextInput
-                value={s.price ?? ''}
-                onChange={(e) => updateService(idx, { price: e.target.value })}
-                placeholder="Çmimi €"
-              />
-              <TextInput
-                className="hidden md:block"
-                value={s.durationMinutes !== undefined ? String(s.durationMinutes) : ''}
-                onChange={(e) => {
-                  const raw = e.target.value.trim();
-                  const n = raw === '' ? undefined : Number(raw);
-                  updateService(idx, { durationMinutes: Number.isFinite(n) ? (n as number) : undefined });
-                }}
-                placeholder="Kohëzgjatja (min)"
-              />
-              <button
-                type="button"
-                onClick={() => removeService(idx)}
-                disabled={input.services.length <= 2}
-                className={cn(
-                  'h-10 w-10 rounded-lg border border-border text-muted-foreground',
-                  'hover:border-foreground/30 hover:text-foreground transition-colors',
-                  'disabled:opacity-30 disabled:cursor-not-allowed',
-                )}
-                aria-label="Hiq shërbimin"
+        {input.services.length > 0 && (
+          <div className="space-y-2">
+            {input.services.map((s, idx) => (
+              <div
+                key={idx}
+                className="grid grid-cols-[1fr_88px_40px] md:grid-cols-[1fr_100px_120px_40px] gap-2 items-center"
               >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
+                <TextInput
+                  value={s.name}
+                  onChange={(e) => updateService(idx, { name: e.target.value })}
+                  placeholder="Emri i shërbimit (p.sh. Kurs Python)"
+                />
+                <TextInput
+                  value={s.price ?? ''}
+                  onChange={(e) => updateService(idx, { price: e.target.value })}
+                  placeholder="Çmimi €"
+                />
+                <TextInput
+                  className="hidden md:block"
+                  value={s.durationMinutes !== undefined ? String(s.durationMinutes) : ''}
+                  onChange={(e) => {
+                    const raw = e.target.value.trim();
+                    const n = raw === '' ? undefined : Number(raw);
+                    updateService(idx, { durationMinutes: Number.isFinite(n) ? (n as number) : undefined });
+                  }}
+                  placeholder="Kohëzgjatja"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeService(idx)}
+                  className={cn(
+                    'h-10 w-10 rounded-lg border border-border text-muted-foreground',
+                    'hover:border-foreground/30 hover:text-foreground transition-colors',
+                  )}
+                  aria-label="Hiq shërbimin"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         <button
           type="button"
@@ -788,14 +819,17 @@ function Step2({
             'transition-colors disabled:opacity-30 disabled:cursor-not-allowed',
           )}
         >
-          + Shto një shërbim tjetër
+          + Shto një tjetër
         </button>
 
         <p className="text-[12px] text-muted-foreground">
-          {input.services.length} {input.services.length === 1 ? 'shërbim' : 'shërbime'} · maksimumi 6
+          {input.services.length === 0
+            ? 'Asnjë shërbim · AI do ta krijojë seksionin sipas përshkrimit'
+            : `${input.services.length} ${input.services.length === 1 ? 'shërbim' : 'shërbime'} · maksimumi 6`}
         </p>
       </div>
 
+      {/* C — Booking method (existing, conditional on registration toggle) */}
       {bookingEnabled && (
         <div className="space-y-3">
           <FieldLabel>Si i kontaktojnë klientët?</FieldLabel>
@@ -1341,10 +1375,18 @@ function RecapCard({ input, businessName }: { input: WizardInput; businessName: 
   const servicesLayoutLabel = SERVICES_LAYOUTS.find(o => o.id === input.servicesLayout)?.label ?? input.servicesLayout;
   const galleryLayoutLabel = GALLERY_LAYOUTS.find(o => o.id === input.galleryLayout)?.label ?? input.galleryLayout;
 
+  const description = (input.businessDescription ?? '').trim();
+  const descriptionLabel = description.length === 0
+    ? '—'
+    : description.length > 60
+      ? `${description.slice(0, 60).trimEnd()}…`
+      : description;
+
   const rows: Array<[string, string]> = [
     ['Biznesi', businessName || '—'],
     ['Lloji', input.industry || '—'],
     ['Vendndodhja', input.city || '—'],
+    ['Përshkrimi', descriptionLabel],
     ['Shërbime', `${namedServices} shtuar · ${bookingLabel}`],
     ['Hero', heroLayoutLabel],
     ['Historia', storyLayoutLabel],

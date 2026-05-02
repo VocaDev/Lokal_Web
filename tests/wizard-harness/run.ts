@@ -190,18 +190,27 @@ async function fillWizard(page: Page, f: WizardFixture): Promise<void> {
   // ----- Step 2 -----
   await page.getByText(/Hapi 2 nga 5/).waitFor({ timeout: 5000 });
 
+  // A) Required free-text business description. Min 30 chars enforced
+  //    silently — Continue stays disabled until the textarea has enough
+  //    content. Match by the placeholder's distinctive opening words.
+  await page.getByPlaceholder(/Mësoj programim/).fill(f.businessDescription);
+
+  // B) Optional services grid. With f.services empty, the loop is a no-op
+  //    and the two starter rows stay blank — they're filtered out before
+  //    the submit, so the AI sees zero services and infers from the
+  //    description.
   for (let i = 0; i < f.services.length; i++) {
     if (i >= 2) {
-      await page.getByRole('button', { name: '+ Shto një shërbim tjetër' }).click();
+      await page.getByRole('button', { name: '+ Shto një tjetër' }).click();
     }
-    await page.getByPlaceholder('Emri i shërbimit (p.sh. Qethje)').nth(i).fill(f.services[i].name);
+    await page.getByPlaceholder('Emri i shërbimit (p.sh. Kurs Python)').nth(i).fill(f.services[i].name);
     if (f.services[i].price) {
       await page.getByPlaceholder('Çmimi €').nth(i).fill(f.services[i].price!);
     }
     if (f.services[i].duration) {
       // Duration column is visible at md+ widths only. Harness viewport is
       // 1440px wide so it's always rendered.
-      await page.getByPlaceholder('Kohëzgjatja (min)').nth(i).fill(f.services[i].duration!);
+      await page.getByPlaceholder('Kohëzgjatja', { exact: true }).nth(i).fill(f.services[i].duration!);
     }
   }
 

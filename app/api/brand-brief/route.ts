@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
       industryChip,
       city,
       uniqueness,
+      businessDescription,
       services,
       bookingMethod,
       language,
@@ -111,6 +112,23 @@ export async function POST(request: NextRequest) {
 
 Your job: write a brand brief so specific that a stranger reading only your brief could correctly predict what the website should feel like. If your brief could equally apply to any business in the same category, you have failed.
 
+CRITICAL DISTINCTION — BUSINESS vs SERVICES:
+
+The user's BUSINESS is described by: name, industry, city, businessDescription (what they offer in their own words), and uniqueness statement.
+The user's SERVICES list is: SOME (often not all) of what the business offers.
+
+The brand brief must reflect THE BUSINESS — what it is, who it serves, what makes it different. It must NOT reduce the business to its specific service items.
+
+Example of WRONG behavior:
+- Business: "Coding Academy" with description "we teach programming and foreign languages"
+- Services list: "Python Beginner course, English B1 course"
+- WRONG positioning: "An academy that teaches Python and English"
+  (treats the business as JUST those two services)
+- RIGHT positioning: "A learning institution focused on building practical fluency — in code or in language — through small-group, level-aware courses."
+  (treats the business as a learning institution; services are examples)
+
+When the user provides a businessDescription, use it as the PRIMARY scope signal. The services list is supporting evidence, not the boundary of the business.
+
 The user has told you what makes their business different. Use that as the highest-priority signal. The location matters too — Prishtinë vs Pejë vs Prizren feel different.
 
 QUALITY EXAMPLES:
@@ -134,8 +152,9 @@ ${JSON.stringify(BRAND_BRIEF_SCHEMA.schema)}`;
 - Industry (user's words): ${industry}
 - Standard category: ${industryChip || 'none — treat as a custom industry'}
 - Location: ${city}
+- What the business offers (user's own words): ${businessDescription || '(not provided)'}
 - What makes it different (highest signal): ${uniqueness || '(not provided)'}
-- Services offered: ${serviceNames || '(not specified)'}
+- Specific services offered: ${serviceNames || '(none — infer from description)'}
 - Booking model: ${bookingMethod || 'unspecified'}
 - Site language: ${language || 'sq'}
 - Tone: ${tone || 'friendly'}

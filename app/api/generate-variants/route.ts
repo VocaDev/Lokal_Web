@@ -353,6 +353,7 @@ type GenerateThemeArgs = {
   industry: string;
   city: string;
   uniqueness: string;
+  businessDescription: string;
   // Per-section layout picks. 'ai' = AI free choice; any other value forces
   // that exact layout in the post-processor.
   heroLayout: string;
@@ -374,7 +375,7 @@ type GenerateThemeArgs = {
 
 async function generateTheme(args: GenerateThemeArgs) {
   const {
-    brief, businessName, industry, city, uniqueness,
+    brief, businessName, industry, city, uniqueness, businessDescription,
     heroLayout, storyLayout, servicesLayout, galleryLayout,
     mood, brandPrimary, brandAccent,
     fontPersonality, language, tone, userProvidedServices,
@@ -484,6 +485,16 @@ ${industryVoiceFor(canonicalIndustry)}
 
 ${fewShotsFor(canonicalIndustry)}
 
+HERO AND STORY ARE ABOUT THE BUSINESS, NOT THE SERVICE LIST:
+
+The hero's headline, subheadline, and CTAs must be about THE BUSINESS — its category, its uniqueness, its position. They MUST NOT reduce the business to its specific service items.
+
+If the user's businessDescription says "I teach programming and languages" and the services list contains "Python course, English B1 course," the hero must NOT say "Mëso Python dhe Anglisht me ne." It must speak to the BUSINESS — a learning institution offering a curriculum, of which Python and English are examples.
+
+The SERVICES section is where specific services are listed. The HERO is where the business identity lives. Don't conflate them.
+
+If the user provided no specific services in the wizard, generate a representative 3-5 services for the services section based on the businessDescription. Do NOT omit the services section.
+
 ANTI-HALLUCINATION RULE — LITERAL TEXT FIELDS:
 
 The following fields MUST contain the user's literal inputs, not invented variants:
@@ -562,7 +573,13 @@ BUSINESS:
 - Name: ${businessName}
 - Industry: ${industry}
 - City: ${city}
+- Business description (user's own words, primary scope signal): ${businessDescription || '(not provided)'}
 ${mood === 'custom' ? `- BRAND COLORS (LOCKED): primary=${brandPrimary}, accent=${brandAccent}` : ''}
+
+USER-PROVIDED SERVICES (may be empty — that's fine):
+${userProvidedServices || '(none provided — infer 3-5 representative services from the business description)'}
+
+If services were provided, the services section MUST list them faithfully (don't change names or invent new ones). If none were provided, generate 3-5 representative services that fit the business description.
 
 USER HAS UPLOADED GALLERY PHOTOS: ${userHasGalleryPhotos ? 'YES — you MUST include a gallery section' : 'No — gallery section is optional'}
 USER HAS UPLOADED SERVICE PHOTOS: ${userHasServicePhotos ? 'YES — services should be designed knowing photos will appear' : 'No — services may be type-only'}
@@ -815,7 +832,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
-      brief, businessName, industry, city, uniqueness,
+      brief, businessName, industry, city, uniqueness, businessDescription,
       heroLayout, storyLayout, servicesLayout, galleryLayout,
       mood,
       brandPrimary, brandAccent, fontPersonality,
@@ -856,6 +873,7 @@ export async function POST(request: NextRequest) {
       industry,
       city: city || '',
       uniqueness: typeof uniqueness === 'string' ? uniqueness : '',
+      businessDescription: typeof businessDescription === 'string' ? businessDescription : '',
       heroLayout: typeof heroLayout === 'string' && heroLayout ? heroLayout : 'ai',
       storyLayout: typeof storyLayout === 'string' && storyLayout ? storyLayout : 'ai',
       servicesLayout: typeof servicesLayout === 'string' && servicesLayout ? servicesLayout : 'ai',

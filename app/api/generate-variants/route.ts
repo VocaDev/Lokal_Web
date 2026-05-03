@@ -697,7 +697,50 @@ function toneDirective(tone: string): string {
     case 'friendly': return 'Tone is warm and approachable. Direct, but not cold. Speaks to the customer like a neighbor.';
     case 'professional': return 'Tone is precise and competent. Confident without being formal. No casual asides.';
     case 'bold': return 'Tone is direct and provocative. Strong opinions. Short sentences. Owns the room.';
-    case 'casual': return `Tone is casual Kosovar — colloquial, spoken-feeling, like a text from a friend. When language includes 'sq', use Gheg-flavored elision with apostrophes naturally: "t'nxeht'" not "të nxehtë", "n'kafe" not "në kafe", "vijn'" not "vijnë", "qysh je" not "si jeni", "me shku" not "për të shkuar". Drop subject pronouns aggressively. Reference real Kosovar places and everyday situations. Avoid formal Tosk constructions, brochure phrasing, or anything that sounds translated. The copy should sound like it was spoken first and written down second.`;
+    case 'casual': return `Tone is casual Kosovar STREET-Gheg — the way a Kosovar friend texts you about their cousin's business, NOT polished marketing prose dressed in apostrophes.
+
+REAL ROAD GHEG — phrasings that sound like actual Kosovo speech:
+- "Hajde te ne." (come to us — universal walk-in welcome)
+- "Pa termin, direkt." (no appointment, just walk in)
+- "Ban telefon për t'a ditë sa po pritet." (call to know the wait)
+- "Brenda 30 minutash e ke gati." (time promise, wait model)
+- "Boll po t'thom." (just telling you — conversational filler)
+- "T'kushton €5, jo €15." (price-honesty, direct numbers)
+- "Pa marrëveshje t'gjata, pa zhurmë." (no long contracts, no fuss)
+- "Ki problem? Telefono." (got a problem? call)
+- "Sa po pritet sot? Pak." (how long's the wait? not much)
+NOTE: only use mobile-service phrasings ("vijm te ti", "n'oborr tënd")
+when the business is genuinely mobile (in-home cleaning, home barber).
+Do NOT default to mobile framing — most Kosovo SMBs are static, the
+customer comes to the business.
+
+GRAMMAR DETAILS THAT ANCHOR REAL GHEG:
+- "n'" instead of "në": n'lagje, n'shpi, n'oborr, n'punë (always)
+- "po t'" / "t'po" for "we [do] for you": po t'lajm, t'po vij, po t'thom
+- "ki" instead of "ke" (informal possession): ki problem, ki kohë
+- "ban" instead of "bën": ban telefon, ban porosi
+- "boll" / "boll po" as filler: boll po t'them, boll qysh je
+- "kallu / kallesh / s'kallesh" (don't bother / no need / no problem)
+- "vijm" / "lajm" / "bajm" — drop subject pronouns, drop the 'ë' in 1pl
+- "nji" instead of "një" (Gheg numeral)
+- "me" + verb: me ardh, me shku, me ble, me lan
+
+BANNED CASUAL FILLER (these turn casual into try-hard marketing):
+- "siç duhet" used more than ONCE across the whole site — that's a template phrase, not speech. Pick a different way to say "right" each time, or don't say it.
+- "ngadalë, me dorë, pa nxitim" — reads like a brochure pretending to be chill
+- "është ajo me çka X, Y, Z" — too literary, too written
+- Long em-dash lists (3+ items) — Gheg speech is short and choppy, not elegantly punctuated
+- "punojmë" / "ofrojmë" / "kujdesemi" — formal Albanian verbs that don't belong in road context. Use "lajm", "bajm", "kemi", "vijm", "rrojm"
+- "udhëtim" of any kind in a service context
+- "personalizuar" — calque from English, never Kosovar
+
+THE ROAD TEST:
+Could you imagine this on a hand-painted shop sign, on a Viber broadcast,
+on a WhatsApp business profile, or as a sticker on a transit van?
+- If yes → keep.
+- If it reads like an agency wrote it and tried to sprinkle Gheg apostrophes on top → REWRITE in actual road Gheg.
+
+Drop subject pronouns aggressively. Sentence fragments are not just allowed — they are the default. Two short sentences beat one elegant one. Reference real Kosovar places and everyday situations naturally, not as decoration.`;
     default: return '';
   }
 }
@@ -998,6 +1041,33 @@ Real copy beats:
 - "Nga zero te klienti i parë në 8 javë." (timeline specifics)
 - "Mëson me dikë që e ka bërë vetë." (practitioner credibility)
 - "Çka mëson sot, ta shtosh portofolin nesër." (Gheg-influenced, modern)
+
+AUTO / CAR WASH / MEKANIK (lavazh / servis):
+CRITICAL — Kosovo lavazhe are STATIC. Customers DRIVE TO the lavazh,
+they never expect the lavazh to come to them. There is no "we come to
+you" service model. The customer arrives, drops off the car (or waits),
+gets the car back washed — that's the entire flow. Never imply mobile,
+home-pickup, or "vijm te ti" service.
+This vertical lives in the most road-Gheg register on the whole list.
+Copy here should sound like a hand-painted sign at the wash, a chalk
+board with prices, or a Viber broadcast — never like a brochure.
+Avoid "siç duhet" repetition, avoid "ngadalë, me dorë, pa nxitim" type
+elegance, avoid abstract nouns.
+Real service names: larje, larje mrena, larje jashtme, larje komplet,
+  pastrim aspirator, polirim, vakum, ndërrim vaji, balancim, gomalle,
+  dezinfektim
+Real copy beats (all assume customer comes to the lavazh):
+- "Hajde te ne, t'lajm makinen." (drive here, we wash it)
+- "Pa termin, direkt — hajde." (walk-in, no appointment needed)
+- "Brenda 30 minutash e ke gati." (time promise based on a wait model)
+- "Lajm me dorë." (handwash, ONE-line claim — never bundled with extras)
+- "T'kushton €5, asgjë më shumë." (fixed price, no surprises)
+- "Kafe falas sa pritesh." (free coffee while waiting — classic Kosovo SMB)
+- "Mrena e jasht, t'gjitha." (full service, simple)
+- "Boll t'sjellësh, ne e bajmë t'tjerën." (you bring it, we do the rest)
+CTA: "Telefono — sa po pritet sot?" / "Hajde te ne" / "Cakto orarin"
+NEVER write "vijm te ti", "te ti n'lagje", "n'oborrin tënd", or anything
+suggesting the wash comes to the customer's home or street.
 
 ═══════════════════════════════════════════
 THE BUSINESS OWNER CHECK

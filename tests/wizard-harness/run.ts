@@ -180,7 +180,9 @@ async function fillWizard(page: Page, f: WizardFixture): Promise<void> {
   }
 
   await page.getByPlaceholder(/Prishtinë, Sunny Hill/).fill(f.city);
-  await page.getByPlaceholder(/Pa takim/).fill(f.uniqueness);
+  // Uniqueness placeholder rewritten to Kosovar register: "p.sh. Vetmi n'lagje
+  // që e mbaj emrin e klientit pa pyt'. Babai im e ka hap dyqanin n'87."
+  await page.getByPlaceholder(/Vetmi n'lagje/).fill(f.uniqueness);
   await page.getByRole('button', { name: 'Vazhdo →' }).click();
 
   // ----- Step 2 -----
@@ -189,7 +191,10 @@ async function fillWizard(page: Page, f: WizardFixture): Promise<void> {
   // A) Required free-text business description. Min 30 chars enforced
   //    silently — Continue stays disabled until the textarea has enough
   //    content. Match by the placeholder's distinctive opening words.
-  await page.getByPlaceholder(/Mësoj programim/).fill(f.businessDescription);
+  // businessDescription placeholder rewritten: "p.sh. Berber prej '99 n'Çarshi.
+  // Tre karrige, prerje klasike, brisk dhe paketa për dasma. Klientët vijn' edhe
+  // prej Prishtinës."
+  await page.getByPlaceholder(/Berber prej '99/).fill(f.businessDescription);
 
   // B) Optional services grid. With f.services empty, the loop is a no-op
   //    and the two starter rows stay blank — they're filtered out before
@@ -256,7 +261,9 @@ async function fillWizard(page: Page, f: WizardFixture): Promise<void> {
   await page.getByText(/Hapi 5 nga 5/).waitFor({ timeout: 5000 });
 
   await page.getByRole('button', { name: LANGUAGE_LABEL[f.language], exact: true }).click();
-  await page.getByRole('button', { name: TONE_LABEL[f.tone], exact: true }).click();
+  // Tone picker is now a custom card with label + italic example inside —
+  // accessible name is "Miqësor \"Hyrni kur...\"". Drop exact match.
+  await page.getByRole('button', { name: new RegExp(`^${TONE_LABEL[f.tone]}\\b`) }).click();
   await page.getByRole('button', { name: 'Gjenero faqen ✨' }).click();
 
   // ----- Generation → Preview (can take 60–90s) -----

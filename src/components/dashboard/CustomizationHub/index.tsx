@@ -6,6 +6,7 @@ import { useCustomization, useGalleryItems } from '@/lib/customization/hooks';
 import { GalleryItem, GallerySectionKey, WebsiteCustomization } from '@/lib/types';
 import ColorSection from './ColorSection';
 import TypographySection from './TypographySection';
+import ContentSection from './ContentSection';
 import GallerySection from './GallerySection';
 import PreviewPane from './PreviewPane';
 import { Button } from '@/components/ui/button';
@@ -142,6 +143,19 @@ export default function CustomizationHub({ businessId }: CustomizationHubProps) 
               <div className="bg-card border border-border rounded-xl p-6">
                 <h2 className="text-xl font-bold text-foreground mb-6">Typography</h2>
                 <TypographySection formData={formData} onChange={handleChange} />
+              </div>
+
+              {/* Përmbajtja — direct edit of AI-generated hero/story copy.
+                  Saves independently (own button + endpoint) because the source
+                  of truth is the ai_sections JSONB blob, not the column-style
+                  fields the main Save button handles. */}
+              <div className="bg-card border border-border rounded-xl p-6">
+                <h2 className="text-xl font-bold text-foreground mb-6">Përmbajtja</h2>
+                <ContentSection
+                  businessId={businessId}
+                  aiSections={customization?.ai_sections}
+                  onSaved={refetch}
+                />
               </div>
 
             </div>

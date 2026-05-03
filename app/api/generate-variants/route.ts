@@ -309,6 +309,91 @@ If neither booking nor contact fits cleanly → ctaCount=0 (no buttons).
 ONE honest CTA beats TWO fake ones. Per-request bookingMethod context will
 narrow this further.
 
+FIELD QUALITY RULES — caps, registers, and wrong/right examples for fields
+that previously had no specific guidance. Apply these ON TOP of the section
+parameter rules and the Kosovar copy register.
+
+HERO SUBHEADLINE:
+- Hard cap: 12 words. Target 6-9.
+- Must add NEW information not in the headline. If it just rephrases →
+  cut it (set to empty string) or rewrite with a fresh angle: a number,
+  a place, a time, a named person, a tool, an outcome.
+
+SERVICES SECTION INTRO (the optional 'intro' field):
+- Optional. Default to OMITTING it (empty / unset).
+- If present: 1 sentence, max 12 words. Must say something the service
+  items themselves don't say.
+- Forbidden as intro (templates that say nothing):
+  "Ofrojmë shërbime të shumta."
+  "Zgjedh shërbimin që të përshtatet."
+  "Çka të duhet, e bëjmë."
+
+SERVICE ITEM DESCRIPTIONS (items[].description):
+- Hard cap: 16 words. Target 6-12.
+- Must name a tool, ingredient, technique, time, or specific deliverable.
+  Pure adjectives are forbidden.
+- WRONG: "Shërbim cilësor për ju." / "Përvojë e personalizuar." / "Përfshin gjithçka."
+- RIGHT (lavazh): "Trup, xhama, goma. Me dorë."
+- RIGHT (barbershop): "Brisk i nxeht', krem n'fund. 40 minuta."
+- RIGHT (clinic): "Konsultë e parë. Pyetje në fillim, jo recetë në fund."
+- RIGHT (course): "8 javë. Një projekt real në fund."
+
+GALLERY CAPTION:
+- Optional. Default to OMITTING it (empty / unset).
+- If present: 1 sentence, max 10 words. Names what the photos show
+  concretely.
+- Forbidden: "Galeria e punëve tona." / "Disa nga shërbimet që ofrojmë."
+- Right: "Nga ora e parë e mëngjesit deri pas drekës."
+
+FOOTER TAGLINE:
+- Hard cap: 6 words. Target 3-5.
+- Must be a single concrete claim — a year, a number, a place, a tool,
+  or one specific defining trait. Rephrasing the headline → REWRITE.
+- Right: "Tre karrige. Dyzet vjet." / "Te ne, n'Sunny Hill."
+  / "Prej '99 n'Çarshi." / "Ju bëftë mirë."
+
+metaDescription (top-level, SEO/preview text):
+- 120-160 characters. Sentence-form Kosovar voice (NOT headline form).
+- Must mention the city AND one specific concrete (number, year, place,
+  or named offering).
+- Forbidden: generic "shërbime cilësore për ju në [city]" patterns.
+- Right: "Berber n'Çarshi prej '99. Tre karrige, prerje klasike, brisk
+  dhe paketa për dasma. Hajde te ne ose ban telefon."
+
+ANTI-TELL PATTERNS — five rules targeting the "elegant AI" signatures
+that read polished but never natural. Apply to ALL copy (hero, services,
+story, footer, metaDescription).
+
+1. NO REPEATED FILLER. Any single phrase 3+ words long that appears in
+   2+ sections is a template-tell. REWRITE one of them. (This generalizes
+   the previous "siç duhet" rule from one phrase to all phrases.)
+
+2. NO TRICOLONS. Forbidden in headline / subheadline / tagline / hero
+   subheadline / story body / metaDescription: 3-item parallel lists like
+   "X, Y, dhe Z" or "X, Y, Z." Tricolons are an AI signature — elegant,
+   never natural Kosovar. Two short sentences beat one elegant comma list.
+   WRONG: "Punojmë me dorë, me kohë dhe me kujdes."
+   RIGHT: "Me dorë. Me kohë."
+
+3. EM-DASH BUDGET. Hero, story body, and footer tagline get max ONE
+   em-dash (—) each. Subheadline gets ZERO. More than one in any section
+   reads as elegant-AI, not Kosovar speech.
+
+4. NO PARALLEL STRUCTURE inside a section. When two consecutive sentences
+   share the same syntactic shape, REWRITE one with a different shape.
+   WRONG: "Punojmë me dorë. Lajm me dorë. Kujdesemi me dorë."
+   RIGHT: "Lajm me dorë. Pa makineri, pa nxitim — secila makinë e veta."
+
+5. NO ENGLISH-SHAPE SENTENCES. If translating the Albanian word-for-word
+   produces grammatical English, the Albanian is too literal. Real
+   Kosovar speech reorders, drops pronouns, uses fragments. REWRITE any
+   sentence that translates cleanly into English without rearranging.
+   WRONG: "Ne ofrojmë shërbim të personalizuar për çdo klient."
+     (translates to clean English: "We offer personalized service for every
+     customer.")
+   RIGHT: "Çdo klient — të vetin." (no clean English equivalent without
+     restructuring; sounds Kosovar.)
+
 Produce THE WEBSITE THIS BUSINESS WOULD HAVE IF THEY HIRED A DESIGNER WHO READ THE BRIEF — not a generic site for the category.
 
 REALISTIC PRICING (Kosovo market, EUR):
@@ -398,7 +483,33 @@ BEFORE OUTPUTTING — run these specific checks:
 8. FABRICATION TEST: Search your output for any specific number, date, or comparative claim (e.g. "45 minutes", "since 1987", "compared to others", "the only one in [city]").
    For each one: was this number/date/claim in the brief or user inputs? If you cannot point to where it came from → REMOVE it.
 
-Output JSON only after all 8 checks pass.
+9. CONCRETE DETAIL CHECK: Each rendered section (hero, services intro,
+   story, footer tagline, metaDescription) must contain at least ONE
+   concrete anchor:
+   - A specific NUMBER ("8 vite", "tri karrige", "30 minuta", "200 nuse")
+   - A YEAR ("prej 2008", "n'87", "viti 1967")
+   - A real PLACE name ("n'Sunny Hill", "te Shadërvani", "n'Çarshia e Madhe")
+   - A specific TIME ("të dielen", "pas pune", "ora 8 e mëngjesit")
+   - A named PERSON (only when provided as input — never invented)
+   - A concrete physical DETAIL ("karrigia e gjyshit", "brisk i nxehtë",
+     "furra që nga viti X")
+   Pure-adjective sections are FORBIDDEN. If a section is exclusively
+   abstractions ("kujdes", "cilësi", "përvojë", "atmosferë") → REWRITE
+   one sentence to anchor on a concrete drawn from the brief or user inputs.
+
+10. ANTI-TELL SCAN: Verify all 5 ANTI-TELL PATTERNS rules above:
+    - Same 3+ word phrase in 2+ sections? → REWRITE one.
+    - Tricolons ("X, Y, dhe Z" / "X, Y, Z") in headlines/taglines/
+      subheadline/story body/metaDescription? → REWRITE as fragments.
+    - More than one em-dash in any single section (hero/story/footer)?
+      → REWRITE.
+    - Two consecutive sentences with the same syntactic shape inside any
+      one section? → REWRITE one with a different shape.
+    - Any sentence that translates cleanly word-for-word into grammatical
+      English? → REWRITE in real Kosovar shape (drop pronoun, reorder,
+      fragment).
+
+Output JSON only after all 10 checks pass.
 
 Output valid JSON matching this schema:
 ${JSON.stringify(THEME_SCHEMA.schema)}`;

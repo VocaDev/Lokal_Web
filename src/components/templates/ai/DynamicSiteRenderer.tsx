@@ -8,6 +8,7 @@ import { StorySection } from './sections/StorySection';
 import { GallerySection } from './sections/GallerySection';
 import { FooterSection } from './sections/FooterSection';
 import { BookingDrawerProvider } from './BookingDrawerContext';
+import { SiteNavbar } from './SiteNavbar';
 
 interface Props {
   business: Business;
@@ -16,6 +17,16 @@ interface Props {
   payload: AiSitePayload;
   previewMode?: boolean;
 }
+
+// Stable anchor IDs per section kind. SiteNavbar's nav links target these.
+// Albanian-flavored slugs match the navbar's user-facing labels.
+const SECTION_ID: Record<string, string> = {
+  hero: 'hero',
+  services: 'sherbimet',
+  story: 'historia',
+  gallery: 'galeria',
+  footer: 'kontakti',
+};
 
 export function DynamicSiteRenderer({ business, services, hours, payload, previewMode }: Props) {
   const themeStyle: React.CSSProperties = {
@@ -40,16 +51,28 @@ export function DynamicSiteRenderer({ business, services, hours, payload, previe
         bookingMethod={payload.bookingMethod}
         bookingEnabled={business.bookingEnabled !== false}
       >
-        {payload.sections.map((section, i) => (
-          <SectionRouter
-            key={i}
-            section={section}
+        {/* Navbar lives inside the BookingDrawerProvider so the "Rezervo"
+            button can call useBookingDrawer().open() directly. Skipped in
+            previewMode (the wizard preview frame already has its own chrome). */}
+        {!previewMode && (
+          <SiteNavbar
             business={business}
-            services={services}
-            hours={hours}
             payload={payload}
-            previewMode={previewMode}
+            sections={payload.sections}
+            bookingEnabled={business.bookingEnabled}
           />
+        )}
+        {payload.sections.map((section, i) => (
+          <div key={i} id={SECTION_ID[section.kind] || section.kind} style={{ scrollMarginTop: '3.5rem' }}>
+            <SectionRouter
+              section={section}
+              business={business}
+              services={services}
+              hours={hours}
+              payload={payload}
+              previewMode={previewMode}
+            />
+          </div>
         ))}
       </BookingDrawerProvider>
     </div>

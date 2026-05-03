@@ -89,6 +89,38 @@ export default function OverviewPage() {
         ))}
       </div>
 
+      {/* Multipage tier — coming soon. Static announcement card; no link.
+          Sits between the stats grid and Recent Bookings so it reads as
+          "what's next" rather than competing with active dashboard data. */}
+      <div className="rounded-2xl border border-dashed border-primary/25 bg-card p-6 mb-8">
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-semibold tracking-widest uppercase text-primary">
+                Së shpejti
+              </span>
+              <span className="text-xs bg-primary/15 text-primary px-2 py-0.5 rounded-full font-medium">
+                Beta
+              </span>
+            </div>
+            <h3 className="text-base font-semibold text-foreground mb-1">
+              Faqe e Plotë — Shumëfaqëshe
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
+              Faqe të ndara për Shërbime, Historia, Galeria dhe Kontakt —
+              secila me URL të veçantë. Navigim i plotë. Prezentime profesionale.
+            </p>
+          </div>
+          <div className="text-3xl opacity-30 ml-4" aria-hidden="true">🔮</div>
+        </div>
+
+        <div className="mt-4 flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">Duke u ndërtuar</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Recent Bookings</CardTitle>

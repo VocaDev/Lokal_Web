@@ -119,7 +119,9 @@ export interface WizardInput {
   brandAccent?: string;   // only used when archetypeKey === 'custom'
   customFont?: 'playfair' | 'space-grotesk' | 'dm-sans' | 'poppins'; // only when custom
   language: 'sq' | 'en' | 'both';
-  tone: 'friendly' | 'professional' | 'bold';
+  // 'casual' renders as "Bisedor" in the UI — Gheg-flavored, dropped subject
+  // pronouns and apostrophes (n'kafe, t'qojm, vijn') in customer-facing copy.
+  tone: 'friendly' | 'professional' | 'bold' | 'casual';
 }
 
 // ----------------------------------------------------------------

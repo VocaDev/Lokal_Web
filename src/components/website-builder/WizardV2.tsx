@@ -104,6 +104,7 @@ const TONE_OPTIONS: Array<{ value: WizardInput['tone']; label: string; example: 
   { value: 'friendly',     label: 'Miqësor',     example: '"Hyrni kur të doni. Ju njohim me emër."' },
   { value: 'professional', label: 'Profesional', example: '"8 minuta pritje. Çdo herë."' },
   { value: 'bold',         label: 'I guximshëm', example: '"Prerja e fundit që do t\'ju duhet."' },
+  { value: 'casual',       label: 'Bisedor',     example: '"Vij sa t\'kesh kohë. T\'qojm n\'rregull."' },
 ];
 
 const SUBSTEPS: { step: ProgressStep; labelSq: string; labelEn: string }[] = [
@@ -238,10 +239,12 @@ export default function WizardV2({ businessId, subdomain, businessName, bookingE
              input.city.trim().length >= 2;
     }
     if (s === 2) {
-      // Free-text business description gates the whole step. Min 30 chars
+      // Free-text business description gates the whole step. Min 10 chars
       // is enforced silently — no visible "required" label, just a disabled
-      // Continue button until the user has written something substantial.
-      return (input.businessDescription?.trim().length ?? 0) >= 30;
+      // Continue button until the user has typed at least a short phrase.
+      // Lowered from 30 → 10: short, direct Kosovar-style answers like
+      // "Berber n'Çarshi" should pass; one-character junk should not.
+      return (input.businessDescription?.trim().length ?? 0) >= 10;
     }
     // Step 3 always valid — every layout picker defaults to 'ai'.
     if (s === 3) return true;
@@ -687,7 +690,7 @@ function Step1({
         <TextInput
           value={input.city}
           onChange={(e) => update({ city: e.target.value })}
-          placeholder="p.sh. Prishtinë, Lagjja Sunny Hill"
+          placeholder="p.sh. Prishtinë, Sunny Hill"
         />
         <p className="text-xs text-[#5a5a7a] mt-1">
           Shto lagjen nëse mundesh — ndihmon AI të kuptojë kontekstin lokal.
@@ -701,12 +704,12 @@ function Step1({
         <TextArea
           value={input.uniqueness ?? ''}
           onChange={(e) => update({ uniqueness: e.target.value })}
-          placeholder="p.sh. Jam i vetmi berberi në lagje që e di emrin e secilit klient dhe historinë e flokëve të tij."
+          placeholder="p.sh. Vetmi n'lagje që e mbaj emrin e klientit pa pyt'. Babai im e ka hap dyqanin n'87."
         />
         <div className="mt-2 p-3 rounded-lg bg-[#1e1e35] border border-[rgba(120,120,255,0.12)]">
           <p className="text-xs text-[#5a5a7a] mb-1">💡 Nëse nuk di nga të fillosh, provo:</p>
           <p className="text-xs text-[#8888aa] italic">
-            &quot;Klientët tanë vijnë tek ne sepse _______, jo sepse nuk kanë ku tjetër të shkojnë.&quot;
+            &quot;Vijn&apos; tek ne sepse _______, jo se s&apos;kanë ku tjetër me shku.&quot;
           </p>
         </div>
       </div>
@@ -750,7 +753,7 @@ function Step2({
         <TextArea
           value={input.businessDescription ?? ''}
           onChange={(e) => update({ businessDescription: e.target.value })}
-          placeholder="p.sh. Mësoj programim për fillestarë absolutë — njerëz që kurrë nuk kanë parë kod. Grupe prej 6 vetash maksimum, çdo kurs 8 javë, çdo student del me një projekt real."
+          placeholder="p.sh. Berber prej '99 n'Çarshi. Tre karrige, prerje klasike, brisk dhe paketa për dasma. Klientët vijn' edhe prej Prishtinës."
           maxLength={300}
           className="min-h-[72px]"
         />
@@ -805,14 +808,39 @@ function Step2({
                     ×
                   </button>
                 </div>
-                <input
-                  type="text"
-                  maxLength={80}
-                  value={s.description ?? ''}
-                  onChange={(e) => updateService(idx, { description: e.target.value })}
-                  placeholder="Përshkrim i shkurtër (opsionale) — p.sh. Me brisk të nxehtë, përfundon me krem."
-                  className="w-full text-xs bg-[#1e1e35] border border-[rgba(120,120,255,0.12)] rounded-md px-3 py-1.5 text-[#8888aa] placeholder:text-[#5a5a7a]"
-                />
+                {/* Description is collapsed by default — `description: undefined`
+                    means "hidden, not yet wanted." Click "+ shto përshkrim" to
+                    expand (sets to ''); click "−" to collapse back to undefined.
+                    Pre-existing descriptions on a regen render expanded. */}
+                {s.description === undefined ? (
+                  <button
+                    type="button"
+                    onClick={() => updateService(idx, { description: '' })}
+                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors px-1"
+                  >
+                    + shto përshkrim
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      maxLength={80}
+                      value={s.description}
+                      onChange={(e) => updateService(idx, { description: e.target.value })}
+                      placeholder="p.sh. Me brisk t'nxeht', krem n'fund."
+                      className="flex-1 text-xs bg-[#1e1e35] border border-[rgba(120,120,255,0.12)] rounded-md px-3 py-1.5 text-[#8888aa] placeholder:text-[#5a5a7a]"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => updateService(idx, { description: undefined })}
+                      className="text-[11px] text-muted-foreground hover:text-foreground transition-colors px-1"
+                      aria-label="Hiq përshkrimin"
+                    >
+                      −
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -1446,7 +1474,7 @@ function Step5({
 
       <div className="space-y-3">
         <FieldLabel>Toni</FieldLabel>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           {TONE_OPTIONS.map(tone => {
             const active = input.tone === tone.value;
             return (

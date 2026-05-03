@@ -146,6 +146,7 @@ const TONE_LABEL: Record<WizardFixture['tone'], string> = {
   friendly: 'Miqësor',
   professional: 'Profesional',
   bold: 'I guximshëm',
+  casual: 'Bisedor',
 };
 
 // ---------------------------------------------------------------------------

@@ -35,7 +35,7 @@ export interface WizardFixture {
   brandAccent?: string;    // only when archetypeKey === 'custom'
   customFont?: 'playfair' | 'space-grotesk' | 'dm-sans' | 'poppins';
   language: 'sq' | 'en';
-  tone: 'friendly' | 'professional' | 'bold';
+  tone: 'friendly' | 'professional' | 'bold' | 'casual';
 }
 
 export const FIXTURES: WizardFixture[] = [

@@ -644,6 +644,7 @@ function toneDirective(tone: string): string {
     case 'friendly': return 'Tone is warm and approachable. Direct, but not cold. Speaks to the customer like a neighbor.';
     case 'professional': return 'Tone is precise and competent. Confident without being formal. No casual asides.';
     case 'bold': return 'Tone is direct and provocative. Strong opinions. Short sentences. Owns the room.';
+    case 'casual': return `Tone is casual Kosovar — colloquial, spoken-feeling, like a text from a friend. When language includes 'sq', use Gheg-flavored elision with apostrophes naturally: "t'nxeht'" not "të nxehtë", "n'kafe" not "në kafe", "vijn'" not "vijnë", "qysh je" not "si jeni", "me shku" not "për të shkuar". Drop subject pronouns aggressively. Reference real Kosovar places and everyday situations. Avoid formal Tosk constructions, brochure phrasing, or anything that sounds translated. The copy should sound like it was spoken first and written down second.`;
     default: return '';
   }
 }

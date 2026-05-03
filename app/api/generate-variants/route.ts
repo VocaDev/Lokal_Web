@@ -910,7 +910,7 @@ function industryVoiceFor(canonicalIndustry: string): string {
   return voices[canonicalIndustry] || voices.other;
 }
 
-type GenerateThemeArgs = {
+export type GenerateThemeArgs = {
   brief: any;
   businessName: string;
   industry: string;
@@ -941,9 +941,13 @@ type GenerateThemeArgs = {
   userHasGalleryPhotos: boolean;
   userHasServicePhotos: boolean;
   regenSeed?: string;
+  // Per-call model override. Defaults to THEME_MODEL (process env). Used by
+  // the ad-hoc A/B testing script in scripts/ to compare Haiku vs Sonnet on
+  // the same fixture inputs. Production POST handler does not pass this.
+  modelOverride?: string;
 };
 
-async function generateTheme(args: GenerateThemeArgs) {
+export async function generateTheme(args: GenerateThemeArgs) {
   const {
     brief, businessName, industry, city, uniqueness, businessDescription,
     heroLayout, storyLayout, servicesLayout, galleryLayout,
@@ -1320,8 +1324,9 @@ ${regenSeed ? `REGENERATION ATTEMPT — produce a notably DIFFERENT direction th
 
 Generate the theme.`;
 
+  const effectiveModel = args.modelOverride || THEME_MODEL;
   const response = await anthropic.messages.create({
-    model: THEME_MODEL,
+    model: effectiveModel,
     max_tokens: 4500,
     temperature: 0.85,
     system: [
@@ -1341,7 +1346,18 @@ Generate the theme.`;
   });
 
   const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  return parseModelJson(text || '{}');
+  const parsed = parseModelJson(text || '{}');
+  // Log the RAW model output (before postProcess) so we can grade what
+  // Haiku vs Sonnet actually wrote — copy quality, archetype choice,
+  // section structure. postProcess overlays palette/fonts/prices/layouts
+  // so the public DB shape isn't representative of what the model emitted.
+  // Mirrors brand-brief/route.ts:197.
+  try {
+    console.log(`[generate-variants] model=${effectiveModel} raw output:`, JSON.stringify(parsed, null, 2));
+  } catch {
+    console.log(`[generate-variants] model=${effectiveModel} (raw output unstringifiable)`);
+  }
+  return parsed;
 }
 
 // Recursively scan section text fields for banned phrases.

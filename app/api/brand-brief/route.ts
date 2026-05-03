@@ -13,6 +13,24 @@ import { emitProgress } from '@/lib/ai-progress';
 
 export const maxDuration = 30;
 
+// Inputs the brief generator needs. Extracted as a separate type so the
+// callable runBrandBrief() can be invoked from outside this route (e.g. the
+// scripts/ A/B test that bypasses Next/Supabase). The POST handler still does
+// auth + rate-limiting before calling runBrandBrief.
+export type BrandBriefArgs = {
+  businessName: string;
+  industry: string;
+  industryChip?: string;
+  city: string;
+  uniqueness?: string;
+  businessDescription?: string;
+  services?: Array<{ name: string }>;
+  bookingMethod?: string;
+  language?: string;
+  tone?: string;
+  modelOverride?: string;
+};
+
 const BRAND_BRIEF_SCHEMA = {
   name: 'brand_brief',
   strict: true,
@@ -99,6 +117,67 @@ GOOD culturalAnchor: "The fifteen minutes of silence after the warm towel — th
 Output ONLY raw JSON — no markdown code fences, no explanation, no backticks. Just the JSON object matching this schema:
 ${JSON.stringify(BRAND_BRIEF_SCHEMA.schema)}`;
 
+// Pure brand-brief runner: takes wizard-style inputs, calls Anthropic, returns
+// the parsed brief JSON. No auth, no rate limiting, no progress events — those
+// live in the POST handler. Exposed so the scripts/ A/B test can bypass Next.
+export async function runBrandBrief(args: BrandBriefArgs) {
+  const {
+    businessName, industry, industryChip, city, uniqueness, businessDescription,
+    services, bookingMethod, language, tone, modelOverride,
+  } = args;
+
+  const knownChip = industryChip && INDUSTRY_CONTEXT[industryChip];
+  const context = knownChip
+    ? INDUSTRY_CONTEXT[industryChip]
+    : `The user describes their business as: ${industry}. Infer the cultural and competitive context for this kind of business in Kosovo. Do not assume it's one of the standard categories.`;
+
+  const serviceNames = Array.isArray(services)
+    ? services.map((s: any) => s?.name).filter(Boolean).join(', ')
+    : '';
+
+  const dynamicSystemPrompt = briefLanguageInstruction(language || 'sq');
+
+  const userPrompt = `BUSINESS:
+- Name: ${businessName}
+- Industry (user's words): ${industry}
+- Standard category: ${industryChip || 'none — treat as a custom industry'}
+- Location: ${city}
+- What the business offers (user's own words): ${businessDescription || '(not provided)'}
+- What makes it different (highest signal): ${uniqueness || '(not provided)'}
+- Specific services offered: ${serviceNames || '(none — infer from description)'}
+- Booking model: ${bookingMethod || 'unspecified'}
+- Site language: ${language || 'sq'}
+- Tone: ${tone || 'friendly'}
+
+INDUSTRY CONTEXT:
+${context}
+
+Write the brief. Every field must be specific enough that it couldn't describe a competitor.`;
+
+  const response = await anthropic.messages.create({
+    model: modelOverride || 'claude-haiku-4-5',
+    max_tokens: 2000,
+    temperature: 0.3,
+    system: [
+      {
+        type: 'text',
+        text: BRAND_BRIEF_STATIC_SYSTEM_PROMPT,
+        cache_control: { type: 'ephemeral' },
+      },
+      {
+        type: 'text',
+        text: dynamicSystemPrompt,
+      },
+    ],
+    messages: [
+      { role: 'user', content: userPrompt },
+    ],
+  });
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : '';
+  return parseModelJson(text);
+}
+
 export async function POST(request: NextRequest) {
   try {
     if (!process.env.ANTHROPIC_API_KEY) {
@@ -144,56 +223,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const knownChip = industryChip && INDUSTRY_CONTEXT[industryChip];
-    const context = knownChip
-      ? INDUSTRY_CONTEXT[industryChip]
-      : `The user describes their business as: ${industry}. Infer the cultural and competitive context for this kind of business in Kosovo. Do not assume it's one of the standard categories.`;
-
-    const serviceNames = Array.isArray(services)
-      ? services.map((s: any) => s?.name).filter(Boolean).join(', ')
-      : '';
-
-    const dynamicSystemPrompt = briefLanguageInstruction(language || 'sq');
-
-    const userPrompt = `BUSINESS:
-- Name: ${businessName}
-- Industry (user's words): ${industry}
-- Standard category: ${industryChip || 'none — treat as a custom industry'}
-- Location: ${city}
-- What the business offers (user's own words): ${businessDescription || '(not provided)'}
-- What makes it different (highest signal): ${uniqueness || '(not provided)'}
-- Specific services offered: ${serviceNames || '(none — infer from description)'}
-- Booking model: ${bookingMethod || 'unspecified'}
-- Site language: ${language || 'sq'}
-- Tone: ${tone || 'friendly'}
-
-INDUSTRY CONTEXT:
-${context}
-
-Write the brief. Every field must be specific enough that it couldn't describe a competitor.`;
-
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 2000,
-      temperature: 0.3,
-      system: [
-        {
-          type: 'text',
-          text: BRAND_BRIEF_STATIC_SYSTEM_PROMPT,
-          cache_control: { type: 'ephemeral' },
-        },
-        {
-          type: 'text',
-          text: dynamicSystemPrompt,
-        },
-      ],
-      messages: [
-        { role: 'user', content: userPrompt },
-      ],
+    const brief = await runBrandBrief({
+      businessName, industry, industryChip, city, uniqueness, businessDescription,
+      services, bookingMethod, language, tone,
     });
-
-    const text = response.content[0].type === 'text' ? response.content[0].text : '';
-    const brief = parseModelJson(text);
     console.log('[brand-brief]', JSON.stringify(brief, null, 2));
 
     if (canEmit) {

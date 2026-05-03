@@ -46,5 +46,8 @@ tsconfig.tsbuildinfo
 tests/wizard-harness/output/
 tests/wizard-harness/_last-run.log
 
+# Ad-hoc A/B test harness outputs (point-in-time JSON dumps from scripts/ab-test.ts)
+scripts/output-*.json
+
 # Claude Code runtime artifacts (session locks, scheduled-task state)
 .claude/

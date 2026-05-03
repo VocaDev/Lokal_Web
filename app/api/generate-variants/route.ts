@@ -18,6 +18,7 @@ import { parseModelJson } from '@/lib/json-extract';
 import { emitProgress } from '@/lib/ai-progress';
 import { contrastRatio, ensureReadableTextColor, relativeLuminance, generatePaletteFromBrandColors } from '@/lib/utils';
 import { ARCHETYPES, isArchetypeKey, type ArchetypeKey } from '@/lib/archetypes';
+import { BANNED_PHRASES } from '@/lib/banned-phrases';
 
 export const maxDuration = 120;
 
@@ -111,15 +112,6 @@ const THEME_SCHEMA = {
     required: ['metaDescription', 'sections', 'artDirection'],
   },
 };
-
-const BANNED_PHRASES = [
-  'top-notch', 'premium quality', 'one-stop shop', 'we pride ourselves',
-  'commitment to excellence', 'passionate about', 'unmatched quality',
-  'unparalleled', 'state-of-the-art', 'cutting-edge', 'delighting our customers',
-  'satisfaction is our priority', 'experience the difference', 'a cut above',
-  'second to none', 'elevate your', 'unleash your', 'discover the',
-  'where style meets', 'more than just',
-];
 
 // Returns the per-section layout instruction the system prompt embeds.
 // 'ai' means the AI picks freely from the listed options. Anything else is

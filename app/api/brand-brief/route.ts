@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser, bumpAiUsage } from '@/lib/api-auth';
 import { parseModelJson } from '@/lib/json-extract';
 import { emitProgress } from '@/lib/ai-progress';
+import { BANNED_PHRASES, BANNED_KOSOVAR_WORDS } from '@/lib/banned-phrases';
 
 export const maxDuration = 30;
 
@@ -113,6 +114,20 @@ GOOD definingTraits: ["unapologetically traditional", "silent-while-working prec
 
 BAD culturalAnchor: "Kosovar hospitality"
 GOOD culturalAnchor: "The fifteen minutes of silence after the warm towel — the only moment of the week men don't have to talk."
+
+BANNED WORDS — never use any of these in ANY field of the brief.
+Downstream prompts quote your brief fields verbatim into customer-facing
+copy, so a banned word here leaks into the rendered website.
+
+Banned English marketing clichés:
+${BANNED_PHRASES.map((p) => `- "${p}"`).join('\n')}
+
+Banned Albanian/Kosovar register words (these signal Tirana-Tosk filler
+or translated marketing instead of authentic Kosovar speech):
+${BANNED_KOSOVAR_WORDS.map((p) => `- "${p}"`).join('\n')}
+
+If you find one of these words in your draft, REWRITE the sentence with
+a concrete specific (a number, a year, a place, a tool, a behavior) instead.
 
 Output ONLY raw JSON — no markdown code fences, no explanation, no backticks. Just the JSON object matching this schema:
 ${JSON.stringify(BRAND_BRIEF_SCHEMA.schema)}`;

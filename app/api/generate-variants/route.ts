@@ -210,9 +210,12 @@ UNIQUENESS ANCHOR FOR HERO:
 The user said their business is different because:
 "${uniqueness || '(not provided — infer from brief positioning)'}"
 
-The HERO HEADLINE must echo this claim — distilled, not verbatim.
-If you cannot point to exactly where the hero reflects this uniqueness,
-REWRITE the headline before continuing.
+Identify the IDEA in this claim. Forget the wording. Write the headline FROM
+that idea, in fresh authentic Kosovo voice — not by quoting any of the user's
+words. A Kosovar reader should immediately recognize the same SUBSTANCE as
+the user's claim, but you should NOT be able to find their exact phrasing in
+the headline. If you copied any 5+ word phrase from the user → REWRITE.
+If the idea isn't communicated → also REWRITE.
 
 HERO PARAMETERS (kind: 'hero'):
 - layout: see HERO LAYOUT instruction below — respect any user lock
@@ -238,9 +241,14 @@ UNIQUENESS ANCHOR FOR STORY:
 The story section exists to EXPLAIN the uniqueness claim in human terms.
 User's claim: "${uniqueness || '(not provided — use brief voice and culturalAnchor)'}"
 
+Read the user's claim to understand WHY their business is different. Then
+write the story from scratch, in Kosovar voice — never quoting the user's
+phrasing. The user's wording is signal; your output is fresh prose.
+
 The story body must answer: WHY is this claim true?
 What is the human reality behind it? What is the proof?
-Do NOT repeat the claim verbatim. Tell the story behind it.
+If you copied any 5+ word phrase from the user's claim → REWRITE in your
+own Kosovo voice.
 
 STORY PARAMETERS (kind: 'story'):
 - layout: see STORY LAYOUT instruction below — respect any user lock
@@ -368,8 +376,13 @@ BEFORE OUTPUTTING — run these specific checks:
    If you defaulted to safe choices ('fullbleed' hero, 'long-form' story, 'cards' services) without justification from the brief → PICK DIFFERENTLY.
    For sections the user locked, you have NO discretion — output the locked layout exactly.
 
-4. UNIQUENESS PRESENCE TEST: Search your output for the user's uniqueness statement (or its key phrases).
-   If you cannot find it echoed in any section → REWRITE the hero or story to incorporate it.
+4. UNIQUENESS PRESENCE TEST: Verify the IDEA of the user's uniqueness lives
+   in the hero or story — by SUBSTANCE, not by phrase. A Kosovar reader
+   should recognize the same claim. You should NOT be able to find the
+   user's exact wording in your output.
+   - If you find a 5+ word phrase copied verbatim from the user's
+     uniqueness → REWRITE in your own Kosovo voice.
+   - If the IDEA isn't communicated in either section → also REWRITE.
 
 5. VOICE TRAIT TEST: At least TWO of the brief's defining traits must appear as words or close synonyms in the hero headline/subheadline or story body.
    If not → REWRITE.
@@ -814,98 +827,205 @@ FORBIDDEN here:
   - Navigation CTAs ("Shfleto programet", "Mëso më shumë", "Lexo më shumë", "Browse", "Learn more", "View pricing") — there is no separate page to navigate to.
 ctaCount: 0 or 1. If unsure → 0 (no CTA buttons). One honest contact CTA beats two fake ones.`;
 
-  const albanianCopyRules = (language === 'sq' || language === 'both')
+  const kosovarCopyRules = (language === 'sq' || language === 'both')
     ? `
-KOSOVAR ALBANIAN COPY RULES:
+KOSOVAR ALBANIAN COPY RULES — THE ONLY THING THAT MATTERS:
 
-THE ONLY PERSON WHO MATTERS:
+═══════════════════════════════════════════
+THE REAL READER
+═══════════════════════════════════════════
 The copy is read by a real person in Kosovo making a real decision.
 A mother in Pejë deciding which clinic to take her child to.
 A man in Prishtinë deciding if this barbershop is worth leaving his current one.
 A student in Prizren deciding if this course will actually get them a job.
+A cousin in Stuttgart reading about a salon before visiting Kosovo for summer.
 
 They are NOT reading carefully. They are scanning.
-They will give the page 8 seconds before deciding.
+They will give the page 8 seconds.
 In those 8 seconds the copy must make them feel:
 1. "Këta e kuptojnë situatën time" — these people get my situation
-2. "Kjo duket e vërtetë" — this seems real, not fake
+2. "Kjo duket e vërtetë" — this seems real, not made by an agency
 3. "Dua të di më shumë" — I want to know more
 
 If it sounds like an ad → they scroll past.
 If it sounds like a real person talking → they stay.
 
-THE CUSTOMER IS THE HERO, NOT THE BUSINESS:
-Headlines must be written from the CUSTOMER's perspective,
-not the business owner's perspective.
-The customer does not care what the business does.
+═══════════════════════════════════════════
+THE CUSTOMER IS THE HERO
+═══════════════════════════════════════════
+Write from the CUSTOMER's perspective, not the business owner's.
+The customer doesn't care what the business does.
 They care what changes for THEM.
 
-WRONG (business perspective): "Doktorët që dëgjojnë."
-RIGHT (customer perspective): "Mjeku që të njeh me emër."
+WRONG: "Doktorët që dëgjojnë."
+RIGHT: "Mjeku që të njeh me emër."
 
-WRONG: "Ofrojmë kujdes cilësor."
+WRONG: "Ofrojmë shërbime cilësore."
 RIGHT: "Nuk do të dalësh pa përgjigje."
 
 WRONG: "Analizat këtu, n'Pejë."
 RIGHT: "Nuk duhet të shkosh në Prishtinë."
 
-The business is not the hero. The customer's life changing is the hero.
+WRONG: "Eksperiencë e Personalizuar e prerjes."
+RIGHT: "Prerje që e dini ku po shkon. Berberi yt, që nga 2008."
 
-THE KAFENE TEST:
+═══════════════════════════════════════════
+THE KAFENE TEST
+═══════════════════════════════════════════
 Before outputting any sentence, say it out loud as if explaining
 something to a friend at a kafene in Kosovo.
+
 If it sounds like something a teacher writes on a blackboard → REWRITE.
-If it sounds like something you would actually say → KEEP.
+If it sounds like a WhatsApp message from a real Kosovo business → KEEP.
 
-REGISTER — WRONG vs RIGHT:
+The gold standard is the te Syla register (Prizren, since 1967):
+"tash gati 50 vite... Ju bëftë mirë. Provo, merri do me veti."
+Short. Specific. A founder's name. A year. Real sign-off.
 
-WRONG: "Vizita fillon para ekzaminimit. Fillon kur ti flet dhe dikush dëgjon me vëmendje."
-RIGHT: "Para se të shikojmë, dëgjojmë. Tregoje problemin — jo vetëm simptomat, por kur filloi."
+═══════════════════════════════════════════
+KOSOVAR VOCABULARY — USE THESE
+═══════════════════════════════════════════
+These words signal "this was written by someone from Kosovo":
 
-WRONG: "Peja ka nevojë për kujdes të mirë — jo larg, por këtu."
-RIGHT: "Nuk duhet të shkosh në Prishtinë. Jemi këtu."
+- "tash" (not "tani") — "Cakto terminin tash"
+- "te ne" (not "tek ne") — "Ejani te ne"
+- "çka" (not "çfarë") — casual, conversational
+- "qysh" (not "si") — "Qysh funksionon?"
+- "kojshi / kojshia" — neighbor (warm, local trust signal)
+- "myshteri / myshteria" — customer (Kosovo barbershop/service register)
+- "Ju mirëpresim" — universal Kosovo SMB closing
+- "Ju bëftë mirë" — restaurant-specific sign-off (100% authentic)
+- "Mirë se vini" — welcome
+- "Cakto terminin" — the dominant booking CTA verb in Kosovo
+- "sipas kërkesës tuaj" — per your request (universal)
+- "bahçe" — terrace/outdoor space (restaurants especially)
+- "dhëndër" — groom (barbershop pre-wedding context)
+- "goja e gojës" — word of mouth
 
-WRONG: "Ofrojmë shërbime cilësore për të gjithë familjen."
-RIGHT: "Vjen për veten. Sjell familjen."
+PLACE NAMES THAT ANCHOR COPY:
+Use these when the business is in these cities:
+- Prishtinë: Sunny Hill / Bregu i Diellit, Dragodan, Aktash, Ulpiana, Kalabri
+- Prizren: Shadërvan (the old-town fountain, social heart), Kalaja, Ura e Gurit
+- Pejë: Kosharja, Karagaq, Rugova
+- Mitrovicë: Lagjja e Re, Tre Rrokaqiejt, Ura e Ibrit
+- Gjakovë: Çarshia e Madhe
+- Ferizaj: Sheshi i Lirisë
+- Gjilan: Varosh
 
-WRONG: "Eksperienca jonë mundëson rezultate të shkëlqyera."
-RIGHT: "Shtatë vjet. E njëjta gjë, çdo herë."
+DIASPORA REFERENCE (powerful if contextually right):
+"kur kthehet familja prej Gjermanie / Zvicrës / Austrisë"
+"para se të ktheheni, vizitoni"
+"të njëjtin shërbim si në Mynih — pa udhëtuar"
 
-WRONG: "Doktorët që dëgjojnë. Analizat këtu, n'Pejë."
-RIGHT: "8 minuta. Jo 45."
+═══════════════════════════════════════════
+BANNED PHRASES — NEVER USE
+═══════════════════════════════════════════
+These are the phrases that make a Kosovo reader say
+"kjo e ka shkruar dikush që nuk e njeh Kosovën":
 
-PATTERNS TO AVOID (these sound fake to a Kosovo reader):
-- "me vëmendje" → say "mirë" or cut it
-- "terma të rënda" → say "fjalë të mëdha"
-- "ka nevojë për" → too political, rephrase directly
-- "eksperiencë" → say "përvojë" or give a specific number
-- "cilësor" → BANNED, always, no exceptions
-- "profesional" as a standalone claim → says nothing
-- Any sentence over 15 words → split it into two
-- Abstract nouns when a verb works: "kujdesi ynë" → "kujdesemi"
-- Passive voice: "bëhet" → say who does it and when
+BANNED WORDS:
+- "cilësor" / "cilësia" — most overused word in Kosovo marketing, banned
+- "eksperiencë" — foreign feel, use "përvojë" or give a year
+- "profesional" as a standalone claim — says nothing
+- "atmosferë mikpritëse" — agency phrase, never real
+- "zgjedhja e duhur / ideale" — cliché
+- "sipas standardeve evropiane" — meaningless filler
+- "Anëtarësohu tani!" — calque from English
+- "transformim" in a beauty context — too dramatic
+- "udhëtim" in a metaphorical sense ("journey")
+
+BANNED STRUCTURES:
+- Headline + subheadline that say the same thing in different words
+- Any sentence over 15 words — split it
 - Two unrelated facts stapled into one headline
+- Passive voice anywhere in hero or story
+- Abstract nouns when a verb works better
 
-PATTERNS TO USE (these feel real to a Kosovo reader):
-- Short declarative sentences. Subject. Verb. Period.
-- "Ti" not "ju" — direct, singular, personal
-- Real place names: "Lagjja e Re" not just "Prishtinë"
-- Real time references: "të hënën" / "pas punës" / "brenda 24 orëve"
-- Numbers over adjectives: "8 minuta" not "shpejt"
-- "Njerëzit" not "klientët" — they are people not customers
-- Sentence fragments are strong: "Tri karrige. Dyzet vjet." beats a full sentence
-- Em-dash (—) as a beat: "Prerja e duhur — pa sqarim."
-- Parentheses for human asides: "Vjen çdo të shtunë (me djalin)."
+REPLACE WITH:
+"cilësor" → give a number. "8 vite", "qythjet 200 nuse"
+"eksperiencë" → "Arjani ka punuar 6 vite në Mynih. Tash është te ne."
+"atmosferë" → describe it. "Bahçja jonë, muzikë e qetë, kafe pa zhurmë."
 
-THE BUSINESS OWNER CHECK:
-The business owner will read this copy before showing it to customers.
-They are from Kosovo. They know immediately when something sounds fake or
-written by someone who doesn't understand their world.
-If they would feel embarrassed showing it to a neighbor → REWRITE.
-If they would feel proud → KEEP.
+═══════════════════════════════════════════
+INDUSTRY VOCABULARY — WHAT REAL BUSINESSES SAY
+═══════════════════════════════════════════
 
-THIS RULE APPLIES TO ALL COPY — hero, story, services, footer.
-Not just the story section. Every single sentence.
+BARBERSHOP (frizer / berber):
+Real service names: "prerje, qethje, rrojë, fenirim, mjekër, frizura për djem"
+Real copy beats:
+- "Nga babi te djali." (generational trust)
+- "Para dasmës, para intervistës, para çdo gjëje." (occasion-anchored)
+- "Dy karrige. Pa radhë të gjatë." (honest specifics)
+- "Myshterinjtë tanë na kthehen — jo sepse nuk kanë ku." (loyalty as proof)
+CTA: "Cakto terminin — WhatsApp 044 XXX XXX"
+
+RESTAURANT (restorant / qebaptore):
+Real dishes to name: flija, pite, qebapa, tavë kosi, suxhuk, ushtipka, sarma, ajvar
+Real copy beats:
+- "Kuzhinë si te shtëpia, tavolinë si te restorant."
+- "Bahçja jonë ju pret." (terrace culture)
+- "Drekë familjare çdo të diel." (Sunday ritual)
+- "Gatuajmë si të mëdhejt tanë." (grandmother's recipe trust)
+- "Ju bëftë mirë." (closing, always)
+
+CLINIC (klinikë):
+Real pain points: waiting 45+ min in public clinics, corruption, travelling to Vienna/Skopje
+Real copy beats:
+- "Nuk duhet të shkosh në Prishtinë." (for non-capital cities)
+- "Pa pritje, pa surpriza, pa korrupsion." (the anti-public-hospital claim)
+- "Mjeku të shpjegon çka po ndodh — pa fjalë të mëdha."
+- "Trajnim në Vjenë. Punë në Pejë." (Western credential, local presence)
+- "Shumë pacientë vijnë tek ne pas përvojash zhgënjyese diku tjetër." (ParaDent register)
+
+BEAUTY SALON (sallon bukurie):
+Real service names: stilim, prerje, lyerje, balayage, keratina, manikyr, thonj me xhel, microblading, lash extensions, makeup nuse, depilim total
+Real copy beats:
+- "Stilistja juaj — jo kush të jetë lirë." (stylist loyalty)
+- "Nga dita e parë deri te dera e dasmës." (bridal journey)
+- "Bukurinë tuaj e dimë ne më mirë se kushdo." (intimate knowledge)
+- CTA: "Cakto terminin — WhatsApp 045 XXX XXX"
+
+GYM (palestër / fitness):
+Real copy beats:
+- "Trajneri yt të njeh emrin." (personal attention)
+- "Pa kontrata të gjata. Pa surpriza." (transparency)
+- "Hap derën, hap ditën." (energizing, direct)
+- "Jo 50 vetë në sallë. Jemi 20 — dhe e dimë kush je." (boutique positioning)
+
+COURSES / EDUCATION:
+Real copy beats:
+- "Mëso një zanat që paguan." (outcome-first)
+- "Nga zero te klienti i parë në 8 javë." (timeline specifics)
+- "Mëson me dikë që e ka bërë vetë." (practitioner credibility)
+- "Çka mëson sot, ta shtosh portofolin nesër." (Gheg-influenced, modern)
+
+═══════════════════════════════════════════
+THE BUSINESS OWNER CHECK
+═══════════════════════════════════════════
+Before outputting, ask:
+"Would the business owner in Kosovo feel proud showing this to their
+neighbor ('kojshia') at the kafene tomorrow morning?"
+
+If yes → keep.
+If they would feel embarrassed or say "kjo nuk jam unë" → REWRITE.
+
+═══════════════════════════════════════════
+CTA RULES FOR KOSOVO
+═══════════════════════════════════════════
+Kosovo businesses convert through WhatsApp and direct contact, not forms.
+CTAs must reflect this:
+
+For booking-enabled: "Rezervo takim" / "Cakto terminin"
+For walkin/contact: "Na kontakto — WhatsApp / Viber"
+For retail/products: "Shiko koleksionin" / "Na shkruaj"
+For courses: "Regjistrohu" / "Merr informacion"
+
+NEVER: "Merrni një ofertë falas", "Anëtarësohu tani", "Klikoni këtu"
+
+THE GJIRAFA.BIZ CLOSING TEMPLATE (universally authentic):
+If in doubt, the safest authentic Kosovo SMB sign-off is:
+"[Service list]. Të gjitha sipas kërkesës tuaj. Ju mirëpresim."
+This is real. It works. It doesn't feel fake.
 `
     : '';
 
@@ -913,11 +1033,14 @@ Not just the story section. Every single sentence.
     ? `
 FINAL DYNAMIC CHECK (run AFTER the 8 BEFORE-OUTPUTTING checks above):
 
-9. UNIQUENESS ECHO TEST:
-Search your hero headline and story body for any word, phrase, or idea
-that connects to: "${uniqueness}"
-If you cannot find a clear connection in BOTH sections →
-the uniqueness claim was not communicated. REWRITE one of them.
+9. UNIQUENESS SUBSTANCE TEST (signal, not phrase):
+The user's claim was: "${uniqueness}"
+Did your hero headline AND story body communicate the SUBSTANCE of this
+claim — without quoting the user's words?
+- If a Kosovar reader couldn't see the same claim in your copy → REWRITE.
+- If you can find a 5+ word phrase copied verbatim from the user's
+  claim above in your output → REWRITE in your own Kosovo voice.
+The user's wording is signal. Your output must be fresh prose.
 `
     : '';
 
@@ -927,12 +1050,15 @@ ${visualSystemBlock}
 
 Language: ${language}
 Write all customer-facing copy and artDirection captions in: ${languageInstruction(language)}
-${albanianCopyRules}
+${kosovarCopyRules}
 Tone: ${tone}
 ${toneDirective(tone)}
 
-USER'S UNIQUENESS STATEMENT (gospel):
+USER'S UNIQUENESS SIGNAL (extract the IDEA — do not paste the wording):
 "${uniqueness || '(not provided — derive from positioning)'}"
+Read this to understand WHY the business is different. Then write fresh copy
+in authentic Kosovar voice. The user's wording may be raw, generic, or
+literal — your output is fresh prose, never a quote of their phrasing.
 
 DEFINING TRAITS (also gospel):
 ${traitsForVoiceCheck}

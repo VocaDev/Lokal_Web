@@ -180,21 +180,37 @@ Total sections: 4 to 5 (gallery is optional).
 
 ABSOLUTELY NO testimonials section. NO FAQ section. Do not output them.
 
-PRE-HERO QUALITY CHECK (run this BEFORE writing any hero content):
+PRE-HERO QUALITY CHECK — run this BEFORE writing any hero content:
 
-Before choosing hero parameters or writing copy, verify:
-1. The headline I'm planning: is it 10 words or fewer? (Shorter is almost always stronger)
-2. The headline I'm planning: does it contain any banned phrase? (Check the list now)
-3. The headline I'm planning: does a competitor in the same industry say something similar? (If yes, start over)
-4. The subheadline I'm planning: does it ADD new information, or just rephrase the headline? (If rephrase, cut it or rewrite)
+1. HEADLINE LENGTH: Is the headline I'm planning 10 words or fewer?
+   Shorter is almost always stronger. If over 10 words → cut.
 
-If any answer is wrong, pick a completely different angle before writing the hero.
-The hero is the most important section. It deserves the most deliberate choice.
+2. BANNED PHRASES: Does the headline contain any banned phrase?
+   Check the list now before writing.
+
+3. COMPETITOR TEST: Could a competitor in the same industry say
+   the same headline without lying?
+   If yes → it's generic. Start over with a different angle.
+
+4. CUSTOMER PERSPECTIVE: Is the headline about what the CUSTOMER
+   gets, feels, or avoids — or is it about what the BUSINESS does?
+   If it's about the business → rewrite from the customer's perspective.
+
+5. SUBHEADLINE TEST: Does the subheadline ADD new information,
+   or just rephrase the headline in different words?
+   If it rephrases → cut it or rewrite with a new angle.
+
+The hero is the most important section. A bad hero loses the customer
+in the first 3 seconds. It deserves the most deliberate choice.
+Run all 5 checks before committing to any hero copy.
 
 UNIQUENESS ANCHOR FOR HERO:
-The user said their business is different because: "${uniqueness || '(not provided — infer from brief positioning)'}"
-The HERO HEADLINE must either quote this (distilled, not verbatim) or make it unmistakably clear.
-If you cannot point to exactly where the hero reflects this uniqueness claim, REWRITE the headline.
+The user said their business is different because:
+"${uniqueness || '(not provided — infer from brief positioning)'}"
+
+The HERO HEADLINE must echo this claim — distilled, not verbatim.
+If you cannot point to exactly where the hero reflects this uniqueness,
+REWRITE the headline before continuing.
 
 HERO PARAMETERS (kind: 'hero'):
 - layout: see HERO LAYOUT instruction below — respect any user lock
@@ -218,9 +234,11 @@ ${layoutInstruction('services', servicesLayout)}
 
 UNIQUENESS ANCHOR FOR STORY:
 The story section exists to EXPLAIN the uniqueness claim in human terms.
-The user's claim: "${uniqueness || '(not provided — use brief voice and culturalAnchor instead)'}"
-The story body must answer: WHY is this claim true? What's the proof? What's the human reality behind it?
-Do not repeat the claim verbatim. Tell the story behind it.
+User's claim: "${uniqueness || '(not provided — use brief voice and culturalAnchor)'}"
+
+The story body must answer: WHY is this claim true?
+What is the human reality behind it? What is the proof?
+Do NOT repeat the claim verbatim. Tell the story behind it.
 
 STORY PARAMETERS (kind: 'story'):
 - layout: see STORY LAYOUT instruction below — respect any user lock
@@ -754,29 +772,96 @@ async function generateTheme(args: GenerateThemeArgs) {
 
   const albanianCopyRules = (language === 'sq' || language === 'both')
     ? `
-ALBANIAN COPY QUALITY RULES (applies when language includes 'sq'):
+KOSOVAR ALBANIAN COPY RULES:
 
-These rules define what AUTHENTIC Albanian marketing copy sounds like vs what AI-generated Albanian sounds like:
+THE ONLY PERSON WHO MATTERS:
+The copy is read by a real person in Kosovo making a real decision.
+A mother in Pejë deciding which clinic to take her child to.
+A man in Prishtinë deciding if this barbershop is worth leaving his current one.
+A student in Prizren deciding if this course will actually get them a job.
 
-SENTENCE STRUCTURE:
-- Short sentences. Lots of full stops. Not commas stringing clauses together.
-- "Kemi." not "Ne kemi një..." — drop the subject pronoun when context is clear.
-- Sentence fragments are a feature, not a bug. "Tri karrige. Dyzet vjet." is stronger than "Ne kemi tri karrige dhe dyzet vjet përvojë."
+They are NOT reading carefully. They are scanning.
+They will give the page 8 seconds before deciding.
+In those 8 seconds the copy must make them feel:
+1. "Këta e kuptojnë situatën time" — these people get my situation
+2. "Kjo duket e vërtetë" — this seems real, not fake
+3. "Dua të di më shumë" — I want to know more
 
-WORD CHOICE:
-- NEVER use: "cilësor" (overused), "eksperiencë" (foreign feel — use "përvojë"), "profesional" as a standalone descriptor, "shërbim i shkëlqyer"
-- PREFER: specific nouns over adjectives. "Duar të sigurta" beats "shërbim cilësor". "30 minuta" beats "shpejt".
-- Use "ke" (you have) more than "kemi" (we have) — speak TO the customer, not ABOUT the business.
-- Numbers feel specific and trustworthy: "tetë vjet" beats "shumë vjet", "gjashtë klientë" beats "klientë të shumtë".
+If it sounds like an ad → they scroll past.
+If it sounds like a real person talking → they stay.
 
-PUNCTUATION AS STYLE:
-- Em-dash (—) is used like a beat. "Prerja e duhur — pa sqarim." Use it.
-- Parentheses for asides that humanize: "Vjen çdo të shtunë (me djalin)."
+THE CUSTOMER IS THE HERO, NOT THE BUSINESS:
+Headlines must be written from the CUSTOMER's perspective,
+not the business owner's perspective.
+The customer does not care what the business does.
+They care what changes for THEM.
 
-THE REAL-PERSON TEST:
-Before outputting any copy, ask: "Would a real Kosovar business owner say this out loud to a friend?"
-If it sounds like a brochure or a translation from English → REWRITE.
-The best Albanian copy sounds like it was spoken first, then written.
+WRONG (business perspective): "Doktorët që dëgjojnë."
+RIGHT (customer perspective): "Mjeku që të njeh me emër."
+
+WRONG: "Ofrojmë kujdes cilësor."
+RIGHT: "Nuk do të dalësh pa përgjigje."
+
+WRONG: "Analizat këtu, n'Pejë."
+RIGHT: "Nuk duhet të shkosh në Prishtinë."
+
+The business is not the hero. The customer's life changing is the hero.
+
+THE KAFENE TEST:
+Before outputting any sentence, say it out loud as if explaining
+something to a friend at a kafene in Kosovo.
+If it sounds like something a teacher writes on a blackboard → REWRITE.
+If it sounds like something you would actually say → KEEP.
+
+REGISTER — WRONG vs RIGHT:
+
+WRONG: "Vizita fillon para ekzaminimit. Fillon kur ti flet dhe dikush dëgjon me vëmendje."
+RIGHT: "Para se të shikojmë, dëgjojmë. Tregoje problemin — jo vetëm simptomat, por kur filloi."
+
+WRONG: "Peja ka nevojë për kujdes të mirë — jo larg, por këtu."
+RIGHT: "Nuk duhet të shkosh në Prishtinë. Jemi këtu."
+
+WRONG: "Ofrojmë shërbime cilësore për të gjithë familjen."
+RIGHT: "Vjen për veten. Sjell familjen."
+
+WRONG: "Eksperienca jonë mundëson rezultate të shkëlqyera."
+RIGHT: "Shtatë vjet. E njëjta gjë, çdo herë."
+
+WRONG: "Doktorët që dëgjojnë. Analizat këtu, n'Pejë."
+RIGHT: "8 minuta. Jo 45."
+
+PATTERNS TO AVOID (these sound fake to a Kosovo reader):
+- "me vëmendje" → say "mirë" or cut it
+- "terma të rënda" → say "fjalë të mëdha"
+- "ka nevojë për" → too political, rephrase directly
+- "eksperiencë" → say "përvojë" or give a specific number
+- "cilësor" → BANNED, always, no exceptions
+- "profesional" as a standalone claim → says nothing
+- Any sentence over 15 words → split it into two
+- Abstract nouns when a verb works: "kujdesi ynë" → "kujdesemi"
+- Passive voice: "bëhet" → say who does it and when
+- Two unrelated facts stapled into one headline
+
+PATTERNS TO USE (these feel real to a Kosovo reader):
+- Short declarative sentences. Subject. Verb. Period.
+- "Ti" not "ju" — direct, singular, personal
+- Real place names: "Lagjja e Re" not just "Prishtinë"
+- Real time references: "të hënën" / "pas punës" / "brenda 24 orëve"
+- Numbers over adjectives: "8 minuta" not "shpejt"
+- "Njerëzit" not "klientët" — they are people not customers
+- Sentence fragments are strong: "Tri karrige. Dyzet vjet." beats a full sentence
+- Em-dash (—) as a beat: "Prerja e duhur — pa sqarim."
+- Parentheses for human asides: "Vjen çdo të shtunë (me djalin)."
+
+THE BUSINESS OWNER CHECK:
+The business owner will read this copy before showing it to customers.
+They are from Kosovo. They know immediately when something sounds fake or
+written by someone who doesn't understand their world.
+If they would feel embarrassed showing it to a neighbor → REWRITE.
+If they would feel proud → KEEP.
+
+THIS RULE APPLIES TO ALL COPY — hero, story, services, footer.
+Not just the story section. Every single sentence.
 `
     : '';
 
@@ -785,8 +870,10 @@ The best Albanian copy sounds like it was spoken first, then written.
 FINAL DYNAMIC CHECK (run AFTER the 8 BEFORE-OUTPUTTING checks above):
 
 9. UNIQUENESS ECHO TEST:
-Search your hero headline and story body for any word, phrase, or idea that connects to: "${uniqueness}"
-If you cannot find a clear connection in BOTH sections → the uniqueness claim was not communicated. REWRITE one of them.
+Search your hero headline and story body for any word, phrase, or idea
+that connects to: "${uniqueness}"
+If you cannot find a clear connection in BOTH sections →
+the uniqueness claim was not communicated. REWRITE one of them.
 `
     : '';
 
@@ -830,21 +917,36 @@ ${uniquenessEchoCheck}`;
 - Target customer: ${brief.targetCustomer}
 - Cultural anchor: ${brief.culturalAnchor}
 
-Voice (how this business SPEAKS — match this register exactly):
+VOICE — HOW THIS BUSINESS SPEAKS (match this register exactly):
 "${brief.voice}"
 
-This is not a suggestion. Every sentence of copy must feel like it came from
-this voice. If a sentence sounds like generic marketing instead of this specific
-voice, rewrite it until it doesn't.
+This is not a suggestion. It is the brand's actual personality.
+Every sentence of copy must feel like it came from this voice.
 
-SECTION → BRIEF FIELD MAPPING (each section has a specific job):
-- HERO: express "${brief.positioning}" — the brand's core claim in its strongest form
-- STORY: embody "${brief.voice}" voice + anchor it in "${brief.culturalAnchor}"
-- SERVICES: speak directly to "${brief.targetCustomer}" — use their language, not the owner's
-- FOOTER: close with "${primaryTrait}" — the single most defining trait, as a tagline
+If a sentence sounds like generic marketing instead of this specific voice:
+→ REWRITE it until a real person from Kosovo would recognize it
+   as authentic to this specific business.
 
-Each section has ONE primary brief field to honor. Don't let sections become generic —
-tie every section back to its assigned brief field.
+The voice applies to: hero headline, subheadline, story body,
+service descriptions, and footer tagline. All of it. Consistently.
+
+SECTION → BRIEF FIELD MAPPING:
+Each section has ONE primary job tied to a specific brief field.
+
+HERO → express: "${brief.positioning}"
+  The brand's core claim in its strongest, most direct form.
+
+STORY → embody: "${brief.voice}" voice + anchor in "${brief.culturalAnchor}"
+  The story must SOUND like the brand and FEEL like Kosovo.
+
+SERVICES → speak to: "${brief.targetCustomer}"
+  Use their language. Describe services from their perspective, not the owner's.
+
+FOOTER → echo: "${primaryTrait}"
+  Close with the single most defining trait. One line. Memorable.
+
+Do NOT let any section become generic.
+Every section must be traceable back to its assigned brief field.
 
 BUSINESS:
 - Name: ${businessName}

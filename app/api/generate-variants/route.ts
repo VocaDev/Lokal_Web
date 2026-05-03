@@ -16,7 +16,8 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser, bumpAiUsage } from '@/lib/api-auth';
 import { parseModelJson } from '@/lib/json-extract';
 import { emitProgress } from '@/lib/ai-progress';
-import { contrastRatio, ensureReadableTextColor, relativeLuminance } from '@/lib/utils';
+import { contrastRatio, ensureReadableTextColor, relativeLuminance, generatePaletteFromBrandColors } from '@/lib/utils';
+import { ARCHETYPES, isArchetypeKey, type ArchetypeKey } from '@/lib/archetypes';
 
 export const maxDuration = 120;
 
@@ -29,7 +30,14 @@ const THEME_SCHEMA = {
     type: 'object',
     additionalProperties: false,
     properties: {
-      // Theme tokens
+      // archetypeChoice — only emitted when the user picked "AI vendos" in
+      // Step 4. Server expands it to a palette + fonts in postProcess. Optional
+      // because non-AI modes have the archetype pre-resolved server-side.
+      archetypeChoice: { type: 'string' },
+      // Theme tokens — OPTIONAL. The server overlays them from the resolved
+      // archetype palette in postProcessTheme, so Sonnet's hex output (if
+      // any) is overwritten. This eliminates the contrast-failure mode where
+      // Sonnet invented cream-on-cream or similar.
       primaryColor: { type: 'string' },
       accentColor: { type: 'string' },
       bgColor: { type: 'string' },
@@ -100,12 +108,7 @@ const THEME_SCHEMA = {
         },
       },
     },
-    required: [
-      'primaryColor', 'accentColor', 'bgColor', 'surfaceColor',
-      'textColor', 'mutedTextColor', 'borderColor',
-      'headingFont', 'bodyFont', 'metaDescription', 'sections',
-      'artDirection',
-    ],
+    required: ['metaDescription', 'sections', 'artDirection'],
   },
 };
 
@@ -507,27 +510,124 @@ The services section is flexible: it can be services, products, deliverables, or
   }
 }
 
-function moodDirective(mood: string, primary?: string, accent?: string): string {
-  switch (mood) {
-    case 'warm': return 'Earthy warm palette — browns, golds, cream, dark surfaces. Traditional, rooted feel. Generate hex values that feel timeless and tactile.';
-    case 'cool': return 'Cool modern palette — blues, teals, dark or light. Clean, professional. Generate hex values that feel digital but warm.';
-    case 'bold': return 'High-contrast bold palette — strong reds, oranges, near-black backgrounds. Striking. Generate hex values that demand attention without being garish.';
-    case 'elegant': return 'Refined elegant palette — golds, ivories, deep neutrals. Premium feel. Generate hex values that signal quality and restraint.';
-    case 'custom':
-      return `LOCKED BRAND COLORS — primary=${primary}, accent=${accent}. Use these EXACTLY. Generate background, surface, text, mutedTextColor, and border hex values that harmonize with these two.`;
-    default: return '';
+// ----------------------------------------------------------------
+// Visual system resolution — palette + fonts + voice hint come from a named
+// archetype (curated, WCAG-validated) rather than hex values Sonnet invents.
+//
+// Three modes:
+//   - archetypeKey === 'ai':     Sonnet picks a key from the list. Server
+//                                expands palette/fonts in postProcess.
+//   - archetypeKey === 'custom': User provides primary+accent. Server fills
+//                                the other 5 palette tokens. customFont sets
+//                                headingFont; bodyFont stays neutral.
+//   - archetypeKey is a key:     Server resolves palette+fonts from
+//                                ARCHETYPES directly. Sonnet only writes
+//                                copy; postProcess overwrites colors/fonts.
+// ----------------------------------------------------------------
+
+type ResolvedVisual = {
+  palette: Record<string, string> | null;  // null only when archetypeKey==='ai' and AI must pick
+  fonts: { headingFont: string; bodyFont: string } | null;
+  copyVoiceHint: string;
+  archetypeChoiceFromAi: boolean;  // true when 'ai' mode — Sonnet must emit archetypeChoice
+};
+
+function resolveVisual(args: {
+  archetypeKey: ArchetypeKey | 'custom' | 'ai';
+  brandPrimary?: string;
+  brandAccent?: string;
+  customFont?: string;
+}): ResolvedVisual {
+  const { archetypeKey, brandPrimary, brandAccent, customFont } = args;
+
+  if (archetypeKey === 'custom' && brandPrimary && brandAccent) {
+    return {
+      palette: generatePaletteFromBrandColors(brandPrimary, brandAccent),
+      fonts: {
+        headingFont: customFont || 'dm-sans',
+        bodyFont: customFont === 'playfair' ? 'inter' : (customFont || 'dm-sans'),
+      },
+      copyVoiceHint: 'match the user-provided brand colors — professional and consistent with their existing identity',
+      archetypeChoiceFromAi: false,
+    };
   }
+
+  if (isArchetypeKey(archetypeKey)) {
+    const arch = ARCHETYPES[archetypeKey];
+    return {
+      palette: { ...arch.palette },
+      fonts: { headingFont: arch.headingFont, bodyFont: arch.bodyFont },
+      copyVoiceHint: arch.copyVoiceHint,
+      archetypeChoiceFromAi: false,
+    };
+  }
+
+  // 'ai' (or unknown — defensive default)
+  return {
+    palette: null,
+    fonts: null,
+    copyVoiceHint: '',
+    archetypeChoiceFromAi: true,
+  };
 }
 
-function fontDirective(personality: string): string {
-  switch (personality) {
-    case 'editorial': return 'headingFont MUST be "playfair". bodyFont MUST be "inter" or "dm-sans".';
-    case 'modern': return 'headingFont MUST be "space-grotesk". bodyFont MUST be "dm-sans" or "inter".';
-    case 'friendly': return 'headingFont and bodyFont MUST both be "poppins".';
-    case 'bold': return 'headingFont MUST be "space-grotesk" or "poppins". bodyFont MUST be "dm-sans" or "inter".';
-    case 'elegant': return 'headingFont MUST be "playfair". bodyFont MUST be "inter".';
-    default: return '';
+function buildVisualSystemBlock(args: {
+  archetypeKey: ArchetypeKey | 'custom' | 'ai';
+  brandPrimary?: string;
+  brandAccent?: string;
+  customFont?: string;
+}): string {
+  const resolved = resolveVisual(args);
+
+  if (resolved.archetypeChoiceFromAi) {
+    const list = (Object.entries(ARCHETYPES) as Array<[ArchetypeKey, typeof ARCHETYPES[ArchetypeKey]]>)
+      .map(([k, a]) => `- "${k}" (${a.nameAlb}): ${a.descriptor} — fits: ${a.fits.join(', ')}; voice: ${a.copyVoiceHint}`)
+      .join('\n');
+    return `VISUAL SYSTEM (you pick — server expands the palette/fonts):
+
+Pick ONE archetype key from this list that best fits the brand brief and the business description:
+${list}
+
+Output your choice as a top-level field: "archetypeChoice": "<key>"
+Do NOT output primaryColor, accentColor, bgColor, surfaceColor, textColor, mutedTextColor, borderColor, headingFont, or bodyFont.
+The server will fill those from your archetypeChoice.
+
+Match your copy voice to the chosen archetype's voice hint (above).`;
   }
+
+  if (args.archetypeKey === 'custom') {
+    const p = resolved.palette!;
+    const f = resolved.fonts!;
+    return `VISUAL SYSTEM — USER-LOCKED BRAND COLORS:
+The user has provided their own brand identity. The palette has been resolved server-side:
+- bgColor: ${p.bgColor}
+- surfaceColor: ${p.surfaceColor}
+- textColor: ${p.textColor}
+- mutedTextColor: ${p.mutedTextColor}
+- primaryColor: ${p.primaryColor} (USER BRAND PRIMARY — already set, do not change)
+- accentColor: ${p.accentColor} (USER BRAND ACCENT — already set, do not change)
+- borderColor: ${p.borderColor}
+- headingFont: ${f.headingFont}
+- bodyFont: ${f.bodyFont}
+
+Do NOT output color or font fields in your response — they are already set. Focus on copy and sections.
+Copy voice MUST match: ${resolved.copyVoiceHint}`;
+  }
+
+  // Pre-resolved named archetype.
+  const arch = ARCHETYPES[args.archetypeKey as ArchetypeKey];
+  const p = resolved.palette!;
+  const f = resolved.fonts!;
+  return `VISUAL SYSTEM — PRE-SET ARCHETYPE: "${arch.nameAlb}" (${arch.descriptor})
+Palette and fonts are FIXED by the user's archetype choice. Server will fill these regardless — do NOT output color or font fields in your response.
+
+For your reference (so your copy aligns with the visual register):
+- bgColor: ${p.bgColor} | textColor: ${p.textColor} | primaryColor: ${p.primaryColor}
+- headingFont: ${f.headingFont} | bodyFont: ${f.bodyFont}
+- preferred hero layout: ${arch.preferredHeroLayout} (only used when user left Hero on AI)
+- preferred story layout: ${arch.preferredStoryLayout} (only used when user left Story on AI)
+
+Copy voice MUST match: ${resolved.copyVoiceHint}`;
 }
 
 function languageInstruction(lang: string): string {
@@ -615,10 +715,12 @@ type GenerateThemeArgs = {
   storyLayout: string;
   servicesLayout: string;
   galleryLayout: string;
-  mood: string;
-  brandPrimary?: string;
-  brandAccent?: string;
-  fontPersonality: string;
+  // Visual archetype: a key from ARCHETYPES, or 'custom' (user brand colors)
+  // or 'ai' (Sonnet picks the key from the list).
+  archetypeKey: ArchetypeKey | 'custom' | 'ai';
+  brandPrimary?: string;  // only consulted when archetypeKey === 'custom'
+  brandAccent?: string;   // only consulted when archetypeKey === 'custom'
+  customFont?: string;    // only consulted when archetypeKey === 'custom'
   language: string;
   tone: string;
   userProvidedServices: string;
@@ -632,8 +734,8 @@ async function generateTheme(args: GenerateThemeArgs) {
   const {
     brief, businessName, industry, city, uniqueness, businessDescription,
     heroLayout, storyLayout, servicesLayout, galleryLayout,
-    mood, brandPrimary, brandAccent,
-    fontPersonality, language, tone, userProvidedServices,
+    archetypeKey, brandPrimary, brandAccent, customFont,
+    language, tone, userProvidedServices,
     canonicalIndustry, userHasGalleryPhotos, userHasServicePhotos, regenSeed,
   } = args;
 
@@ -644,6 +746,10 @@ async function generateTheme(args: GenerateThemeArgs) {
   const traitsForVoiceCheck = Array.isArray(brief.definingTraits)
     ? brief.definingTraits.join(' / ')
     : String(brief.definingTraits ?? '');
+
+  const visualSystemBlock = buildVisualSystemBlock({
+    archetypeKey, brandPrimary, brandAccent, customFont,
+  });
 
   const albanianCopyRules = (language === 'sq' || language === 'both')
     ? `
@@ -685,11 +791,7 @@ If you cannot find a clear connection in BOTH sections → the uniqueness claim 
 
   const dynamicSystemPrompt = `REQUEST-SPECIFIC CREATIVE DIRECTION:
 
-Mood: ${mood}
-${moodDirective(mood, brandPrimary, brandAccent)}
-
-Font personality: ${fontPersonality}
-${fontDirective(fontPersonality)}
+${visualSystemBlock}
 
 Language: ${language}
 Write all customer-facing copy and artDirection captions in: ${languageInstruction(language)}
@@ -748,7 +850,7 @@ BUSINESS:
 - Industry: ${industry}
 - City: ${city}
 - Business description (user's own words, primary scope signal): ${businessDescription || '(not provided)'}
-${mood === 'custom' ? `- BRAND COLORS (LOCKED): primary=${brandPrimary}, accent=${brandAccent}` : ''}
+${archetypeKey === 'custom' ? `- BRAND COLORS (LOCKED): primary=${brandPrimary}, accent=${brandAccent}` : ''}
 
 USER-PROVIDED SERVICES (may be empty — that's fine):
 ${userProvidedServices || '(none provided — infer 3-5 representative services from the business description)'}
@@ -837,6 +939,14 @@ interface PostProcessCtx {
   businessName: string;
   uniqueness: string;
   city: string;
+  // Visual archetype context — postProcess overlays palette/fonts onto the AI
+  // theme so colors are ALWAYS from a validated source. Sonnet's color/font
+  // outputs (if any) are discarded for archetype/custom; for 'ai' mode we
+  // honor the archetypeChoice it emitted.
+  archetypeKey: ArchetypeKey | 'custom' | 'ai';
+  brandPrimary?: string;
+  brandAccent?: string;
+  customFont?: string;
 }
 
 function nonEmptyString(v: any): string {
@@ -896,6 +1006,47 @@ function reorderSections(sections: any[]): any[] {
 }
 
 function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
+  // 0. Archetype palette + fonts overlay. Always run BEFORE contrast checks.
+  //    For 'ai' mode, honor Sonnet's archetypeChoice (if valid). For 'custom'
+  //    or named-archetype, server is the source of truth — Sonnet's hex
+  //    output (if any) is discarded so the page can never render with bad
+  //    contrast.
+  let effectiveArchetypeKey: ArchetypeKey | 'custom' | 'ai' = ctx.archetypeKey;
+  if (ctx.archetypeKey === 'ai') {
+    const aiChoice = typeof theme?.archetypeChoice === 'string' ? theme.archetypeChoice : '';
+    if (isArchetypeKey(aiChoice)) {
+      effectiveArchetypeKey = aiChoice;
+    } else {
+      // Sonnet failed to pick a valid key — fall back to a sensible default
+      // by canonical industry. 'besim-qartesi' is the safest neutral pick.
+      console.warn('[generate-variants] AI did not return a valid archetypeChoice, falling back:', aiChoice);
+      effectiveArchetypeKey = 'besim-qartesi';
+    }
+  }
+
+  if (effectiveArchetypeKey === 'custom' && ctx.brandPrimary && ctx.brandAccent) {
+    const palette = generatePaletteFromBrandColors(ctx.brandPrimary, ctx.brandAccent);
+    theme = {
+      ...theme,
+      ...palette,
+      headingFont: ctx.customFont || 'dm-sans',
+      bodyFont: ctx.customFont === 'playfair' ? 'inter' : (ctx.customFont || 'dm-sans'),
+    };
+  } else if (isArchetypeKey(effectiveArchetypeKey)) {
+    const arch = ARCHETYPES[effectiveArchetypeKey];
+    theme = {
+      ...theme,
+      ...arch.palette,
+      headingFont: arch.headingFont,
+      bodyFont: arch.bodyFont,
+    };
+  }
+  // Sonnet may have leaked archetypeChoice into the theme — strip it so it
+  // doesn't end up persisted to the customization row.
+  if (theme && typeof theme === 'object' && 'archetypeChoice' in theme) {
+    delete (theme as any).archetypeChoice;
+  }
+
   let sections: any[] = (theme?.sections ?? []).filter(Boolean);
   const publicAcademic = isPublicAcademicContext(ctx);
 
@@ -1073,11 +1224,18 @@ export async function POST(request: NextRequest) {
     const {
       brief, businessName, industry, city, uniqueness, businessDescription,
       heroLayout, storyLayout, servicesLayout, galleryLayout,
-      mood,
-      brandPrimary, brandAccent, fontPersonality,
+      archetypeKey,
+      brandPrimary, brandAccent, customFont,
       language, tone, userProvidedServices, wizardServices, regenSeed,
       generationId, businessId,
     } = body;
+
+    // Normalize archetypeKey: must be 'ai', 'custom', or a known archetype
+    // key. Anything else (including legacy 'mood' values) defaults to 'ai'.
+    const normalizedArchetypeKey: ArchetypeKey | 'custom' | 'ai' =
+      archetypeKey === 'custom' ? 'custom'
+      : isArchetypeKey(archetypeKey) ? archetypeKey
+      : 'ai';
 
     if (!brief || !businessName || !industry) {
       return NextResponse.json({ error: 'brief, businessName, industry required' }, { status: 400 });
@@ -1117,10 +1275,10 @@ export async function POST(request: NextRequest) {
       storyLayout: typeof storyLayout === 'string' && storyLayout ? storyLayout : 'ai',
       servicesLayout: typeof servicesLayout === 'string' && servicesLayout ? servicesLayout : 'ai',
       galleryLayout: typeof galleryLayout === 'string' && galleryLayout ? galleryLayout : 'ai',
-      mood: mood || 'warm',
+      archetypeKey: normalizedArchetypeKey,
       brandPrimary,
       brandAccent,
-      fontPersonality: fontPersonality || 'editorial',
+      customFont,
       language: language || 'sq',
       tone: tone || 'friendly',
       userProvidedServices: userProvidedServices || '',
@@ -1131,7 +1289,7 @@ export async function POST(request: NextRequest) {
     };
 
     console.log('[generate-variants] Generating parametric theme', {
-      canonical, mood: args.mood,
+      canonical, archetypeKey: args.archetypeKey,
       layouts: {
         hero: args.heroLayout,
         story: args.storyLayout,
@@ -1163,6 +1321,10 @@ export async function POST(request: NextRequest) {
       businessName: args.businessName,
       uniqueness: args.uniqueness,
       city: args.city,
+      archetypeKey: args.archetypeKey,
+      brandPrimary: args.brandPrimary,
+      brandAccent: args.brandAccent,
+      customFont: args.customFont,
     };
 
     let theme = postProcessTheme(await generateTheme(args), postProcessCtx);

@@ -368,12 +368,24 @@ story, footer, metaDescription).
    2+ sections is a template-tell. REWRITE one of them. (This generalizes
    the previous "siç duhet" rule from one phrase to all phrases.)
 
-2. NO TRICOLONS. Forbidden in headline / subheadline / tagline / hero
-   subheadline / story body / metaDescription: 3-item parallel lists like
-   "X, Y, dhe Z" or "X, Y, Z." Tricolons are an AI signature — elegant,
-   never natural Kosovar. Two short sentences beat one elegant comma list.
-   WRONG: "Punojmë me dorë, me kohë dhe me kujdes."
-   RIGHT: "Me dorë. Me kohë."
+2. TRICOLONS — comma form banned, fragment form allowed.
+   Comma-tricolons ("X, Y, dhe Z" / "X, Y, Z.") are an AI signature —
+   elegant, never natural Kosovar. They are FORBIDDEN in: headline,
+   subheadline, tagline, hero subheadline, story body, metaDescription.
+   Two short sentences beat one elegant comma list.
+   WRONG (banned everywhere): "Punojmë me dorë, me kohë dhe me kujdes."
+   WRONG (banned in headline/tagline): "Saktësi, Vjenë, Pejë."
+   RIGHT (everywhere): "Me dorë. Me kohë."
+
+   CARVE-OUT — fragment form is fine for service item descriptions and
+   item-listing contexts where naming 3 specifics is the WHOLE POINT.
+   Period-separated fragments read as scannable spec lists, not as
+   elegant-AI prose:
+   OK in service description: "Trup. Xhama. Goma." (fragment-form list)
+   OK in service description: "Aspirator. Shampoo. Parfum." (same)
+   STILL BANNED in service description: "Trup, xhama, goma." (comma form)
+   STILL BANNED in headline/tagline: any 3-item parallel form, comma OR
+   fragment. Headlines must not be 3-item lists at all.
 
 3. EM-DASH BUDGET. Hero, story body, and footer tagline get max ONE
    em-dash (—) each. Subheadline gets ZERO. More than one in any section
@@ -499,8 +511,13 @@ BEFORE OUTPUTTING — run these specific checks:
 
 10. ANTI-TELL SCAN: Verify all 5 ANTI-TELL PATTERNS rules above:
     - Same 3+ word phrase in 2+ sections? → REWRITE one.
-    - Tricolons ("X, Y, dhe Z" / "X, Y, Z") in headlines/taglines/
-      subheadline/story body/metaDescription? → REWRITE as fragments.
+    - Comma-tricolons ("X, Y, dhe Z" / "X, Y, Z") anywhere in
+      headlines/taglines/subheadline/story body/metaDescription?
+      → REWRITE as period-separated fragments.
+    - ANY 3-item parallel list (comma OR fragment form) in a HEADLINE
+      or TAGLINE? → REWRITE — headlines must not be 3-item lists.
+    - Service item descriptions: comma-tricolons forbidden, but
+      "Trup. Xhama. Goma." fragment-form is FINE — do not flag it.
     - More than one em-dash in any single section (hero/story/footer)?
       → REWRITE.
     - Two consecutive sentences with the same syntactic shape inside any

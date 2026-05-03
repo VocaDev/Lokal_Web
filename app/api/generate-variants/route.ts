@@ -159,6 +159,7 @@ function sectionsBriefing(
   storyLayout: string,
   servicesLayout: string,
   galleryLayout: string,
+  uniqueness: string,
 ): string {
   return `
 THIS IS HOW SECTIONS WORK:
@@ -175,6 +176,22 @@ REQUIRED SECTIONS (in this exact order):
 Total sections: 4 to 5 (gallery is optional).
 
 ABSOLUTELY NO testimonials section. NO FAQ section. Do not output them.
+
+PRE-HERO QUALITY CHECK (run this BEFORE writing any hero content):
+
+Before choosing hero parameters or writing copy, verify:
+1. The headline I'm planning: is it 10 words or fewer? (Shorter is almost always stronger)
+2. The headline I'm planning: does it contain any banned phrase? (Check the list now)
+3. The headline I'm planning: does a competitor in the same industry say something similar? (If yes, start over)
+4. The subheadline I'm planning: does it ADD new information, or just rephrase the headline? (If rephrase, cut it or rewrite)
+
+If any answer is wrong, pick a completely different angle before writing the hero.
+The hero is the most important section. It deserves the most deliberate choice.
+
+UNIQUENESS ANCHOR FOR HERO:
+The user said their business is different because: "${uniqueness || '(not provided — infer from brief positioning)'}"
+The HERO HEADLINE must either quote this (distilled, not verbatim) or make it unmistakably clear.
+If you cannot point to exactly where the hero reflects this uniqueness claim, REWRITE the headline.
 
 HERO PARAMETERS (kind: 'hero'):
 - layout: see HERO LAYOUT instruction below — respect any user lock
@@ -195,6 +212,12 @@ SERVICES PARAMETERS (kind: 'services'):
 - items: array of offerings with name, description, price only when applicable, and durationMinutes only for appointment-like services
 
 ${layoutInstruction('services', servicesLayout)}
+
+UNIQUENESS ANCHOR FOR STORY:
+The story section exists to EXPLAIN the uniqueness claim in human terms.
+The user's claim: "${uniqueness || '(not provided — use brief voice and culturalAnchor instead)'}"
+The story body must answer: WHY is this claim true? What's the proof? What's the human reality behind it?
+Do not repeat the claim verbatim. Tell the story behind it.
 
 STORY PARAMETERS (kind: 'story'):
 - layout: see STORY LAYOUT instruction below — respect any user lock
@@ -622,6 +645,44 @@ async function generateTheme(args: GenerateThemeArgs) {
     ? brief.definingTraits.join(' / ')
     : String(brief.definingTraits ?? '');
 
+  const albanianCopyRules = (language === 'sq' || language === 'both')
+    ? `
+ALBANIAN COPY QUALITY RULES (applies when language includes 'sq'):
+
+These rules define what AUTHENTIC Albanian marketing copy sounds like vs what AI-generated Albanian sounds like:
+
+SENTENCE STRUCTURE:
+- Short sentences. Lots of full stops. Not commas stringing clauses together.
+- "Kemi." not "Ne kemi një..." — drop the subject pronoun when context is clear.
+- Sentence fragments are a feature, not a bug. "Tri karrige. Dyzet vjet." is stronger than "Ne kemi tri karrige dhe dyzet vjet përvojë."
+
+WORD CHOICE:
+- NEVER use: "cilësor" (overused), "eksperiencë" (foreign feel — use "përvojë"), "profesional" as a standalone descriptor, "shërbim i shkëlqyer"
+- PREFER: specific nouns over adjectives. "Duar të sigurta" beats "shërbim cilësor". "30 minuta" beats "shpejt".
+- Use "ke" (you have) more than "kemi" (we have) — speak TO the customer, not ABOUT the business.
+- Numbers feel specific and trustworthy: "tetë vjet" beats "shumë vjet", "gjashtë klientë" beats "klientë të shumtë".
+
+PUNCTUATION AS STYLE:
+- Em-dash (—) is used like a beat. "Prerja e duhur — pa sqarim." Use it.
+- Parentheses for asides that humanize: "Vjen çdo të shtunë (me djalin)."
+
+THE REAL-PERSON TEST:
+Before outputting any copy, ask: "Would a real Kosovar business owner say this out loud to a friend?"
+If it sounds like a brochure or a translation from English → REWRITE.
+The best Albanian copy sounds like it was spoken first, then written.
+`
+    : '';
+
+  const uniquenessEchoCheck = uniqueness && uniqueness.trim().length > 0
+    ? `
+FINAL DYNAMIC CHECK (run AFTER the 8 BEFORE-OUTPUTTING checks above):
+
+9. UNIQUENESS ECHO TEST:
+Search your hero headline and story body for any word, phrase, or idea that connects to: "${uniqueness}"
+If you cannot find a clear connection in BOTH sections → the uniqueness claim was not communicated. REWRITE one of them.
+`
+    : '';
+
   const dynamicSystemPrompt = `REQUEST-SPECIFIC CREATIVE DIRECTION:
 
 Mood: ${mood}
@@ -632,7 +693,7 @@ ${fontDirective(fontPersonality)}
 
 Language: ${language}
 Write all customer-facing copy and artDirection captions in: ${languageInstruction(language)}
-
+${albanianCopyRules}
 Tone: ${tone}
 ${toneDirective(tone)}
 
@@ -643,7 +704,7 @@ DEFINING TRAITS (also gospel):
 ${traitsForVoiceCheck}
 
 STRUCTURAL CHOICES:
-${sectionsBriefing(heroLayout, storyLayout, servicesLayout, galleryLayout)}
+${sectionsBriefing(heroLayout, storyLayout, servicesLayout, galleryLayout, uniqueness)}
 
 THIS BUSINESS'S CANONICAL INDUSTRY: ${canonicalIndustry}
 
@@ -653,14 +714,34 @@ If a user-provided service has no price or duration, do NOT invent a price or mi
 
 ${industryVoiceFor(canonicalIndustry)}
 
-${fewShotsFor(canonicalIndustry)}`;
+${fewShotsFor(canonicalIndustry)}
+${uniquenessEchoCheck}`;
+
+  const primaryTrait = Array.isArray(brief.definingTraits) && brief.definingTraits.length > 0
+    ? String(brief.definingTraits[0])
+    : definingTraits.split(',')[0]?.trim() || '(use positioning)';
 
   const userPrompt = `BRAND BRIEF (gospel — every design choice must serve it):
 - Positioning: ${brief.positioning}
 - Defining traits: ${definingTraits}
 - Target customer: ${brief.targetCustomer}
-- Voice: ${brief.voice}
 - Cultural anchor: ${brief.culturalAnchor}
+
+Voice (how this business SPEAKS — match this register exactly):
+"${brief.voice}"
+
+This is not a suggestion. Every sentence of copy must feel like it came from
+this voice. If a sentence sounds like generic marketing instead of this specific
+voice, rewrite it until it doesn't.
+
+SECTION → BRIEF FIELD MAPPING (each section has a specific job):
+- HERO: express "${brief.positioning}" — the brand's core claim in its strongest form
+- STORY: embody "${brief.voice}" voice + anchor it in "${brief.culturalAnchor}"
+- SERVICES: speak directly to "${brief.targetCustomer}" — use their language, not the owner's
+- FOOTER: close with "${primaryTrait}" — the single most defining trait, as a tagline
+
+Each section has ONE primary brief field to honor. Don't let sections become generic —
+tie every section back to its assigned brief field.
 
 BUSINESS:
 - Name: ${businessName}
@@ -738,6 +819,7 @@ interface WizardServiceInput {
   price?: string | number;
   duration?: string | number;
   durationMinutes?: string | number;
+  description?: string;
 }
 
 interface PostProcessCtx {

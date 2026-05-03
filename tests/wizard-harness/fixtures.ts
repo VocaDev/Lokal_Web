@@ -24,8 +24,16 @@ export interface WizardFixture {
   storyLayout: 'centered-quote' | 'two-column' | 'long-form' | 'pull-quote' | 'ai';
   servicesLayout: 'list' | 'grid-3' | 'editorial-rows' | 'cards' | 'ai';
   galleryLayout: 'masonry' | 'grid-uniform' | 'showcase' | 'strip' | 'ai';
-  mood: 'warm' | 'cool' | 'bold' | 'elegant' | 'custom';
-  fontPersonality: 'editorial' | 'modern' | 'friendly' | 'bold' | 'elegant';
+  // Visual archetype — replaces the old mood + fontPersonality pickers.
+  // Use any key from src/lib/archetypes.ts, or 'ai' (Sonnet picks) or
+  // 'custom' (user provides brandPrimary/brandAccent + customFont).
+  archetypeKey:
+    | 'i-ngrohte' | 'erresi-karakter' | 'besim-qartesi' | 'gjalleri-moderne'
+    | 'leter-stil' | 'studioja' | 'familjar-mirprites' | 'elegant-rafinuar'
+    | 'ai' | 'custom';
+  brandPrimary?: string;   // only when archetypeKey === 'custom'
+  brandAccent?: string;    // only when archetypeKey === 'custom'
+  customFont?: 'playfair' | 'space-grotesk' | 'dm-sans' | 'poppins';
   language: 'sq' | 'en';
   tone: 'friendly' | 'professional' | 'bold';
 }
@@ -48,8 +56,7 @@ export const FIXTURES: WizardFixture[] = [
     storyLayout: 'pull-quote',
     servicesLayout: 'editorial-rows',
     galleryLayout: 'grid-uniform',
-    mood: 'warm',
-    fontPersonality: 'editorial',
+    archetypeKey: 'i-ngrohte',
     language: 'sq',
     tone: 'friendly',
   },
@@ -70,8 +77,7 @@ export const FIXTURES: WizardFixture[] = [
     storyLayout: 'ai',
     servicesLayout: 'ai',
     galleryLayout: 'ai',
-    mood: 'cool',
-    fontPersonality: 'modern',
+    archetypeKey: 'ai',
     language: 'sq',
     tone: 'professional',
   },
@@ -92,8 +98,7 @@ export const FIXTURES: WizardFixture[] = [
     storyLayout: 'two-column',
     servicesLayout: 'cards',
     galleryLayout: 'masonry',
-    mood: 'bold',
-    fontPersonality: 'bold',
+    archetypeKey: 'studioja',
     language: 'sq',
     tone: 'bold',
   },
@@ -113,8 +118,7 @@ export const FIXTURES: WizardFixture[] = [
     storyLayout: 'ai',
     servicesLayout: 'ai',
     galleryLayout: 'ai',
-    mood: 'elegant',
-    fontPersonality: 'elegant',
+    archetypeKey: 'elegant-rafinuar',
     language: 'sq',
     tone: 'friendly',
   },
@@ -136,8 +140,7 @@ export const FIXTURES: WizardFixture[] = [
     storyLayout: 'ai',
     servicesLayout: 'list',
     galleryLayout: 'ai',
-    mood: 'cool',
-    fontPersonality: 'friendly',
+    archetypeKey: 'besim-qartesi',
     language: 'sq',
     tone: 'professional',
   },
@@ -162,8 +165,7 @@ export const FIXTURES: WizardFixture[] = [
     storyLayout: 'long-form',
     servicesLayout: 'editorial-rows',
     galleryLayout: 'ai',
-    mood: 'cool',
-    fontPersonality: 'editorial',
+    archetypeKey: 'leter-stil',
     language: 'sq',
     tone: 'professional',
   },

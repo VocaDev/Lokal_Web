@@ -122,24 +122,19 @@ const GALLERY_LAYOUT_SUB: Record<WizardFixture['galleryLayout'], RegExp> = {
   ai:             /Le AI të zgjedhë/,
 };
 
-// Mood cards collide on label "I guximshëm" with the font chip — same step.
-// Disambiguate via the unique mood-card sub-text.
-const MOOD_CARD_SUB: Record<WizardFixture['mood'], RegExp> = {
-  warm: /Tradicionale, e tokës/,
-  cool: /Modern, profesional/,
-  bold: /Tërheqës, i fortë/,
-  elegant: /Premium, i rafinuar/,
-  custom: /Zgjidhi vetë/,
-};
-
-// Font chips have only their label as accessible name. Using exact match
-// avoids matching mood cards (whose name includes the sub).
-const FONT_LABEL: Record<WizardFixture['fontPersonality'], string> = {
-  editorial: 'Editorial',
-  modern: 'Modern dhe i mprehtë',
-  friendly: 'I afërt dhe miqësor',
-  bold: 'I guximshëm',
-  elegant: 'Elegant tradicional',
+// Archetype cards each show their Albanian name as the prominent label.
+// Using the descriptor (sub-text) to disambiguate keeps these robust against
+// label collisions with other steps' chips ("I guximshëm" used to clash).
+const ARCHETYPE_CARD_SUB: Record<Exclude<WizardFixture['archetypeKey'], 'custom'>, RegExp> = {
+  'i-ngrohte':         /Personal, i bërë me dorë/,
+  'erresi-karakter':   /I fortë, i drejtpërdrejtë/,
+  'besim-qartesi':     /I qartë, i besueshëm/,
+  'gjalleri-moderne':  /Energjik, i freskët/,
+  'leter-stil':        /Klasik, me karakter/,
+  'studioja':          /I guximshëm, i madh/,
+  'familjar-mirprites':/I butë, i ngrohtë, familjar/,
+  'elegant-rafinuar':  /I sofistikuar, premium/,
+  'ai':                /Zgjedh stilin bazuar në biznesin tënd/,
 };
 
 const LANGUAGE_LABEL: Record<WizardFixture['language'], string> = {
@@ -236,11 +231,24 @@ async function fillWizard(page: Page, f: WizardFixture): Promise<void> {
 
   await page.getByRole('button', { name: 'Vazhdo →' }).click();
 
-  // ----- Step 4 -----
+  // ----- Step 4 — visual archetype picker -----
   await page.getByText(/Hapi 4 nga 5/).waitFor({ timeout: 5000 });
 
-  await page.getByRole('button', { name: MOOD_CARD_SUB[f.mood] }).click();
-  await page.getByRole('button', { name: FONT_LABEL[f.fontPersonality], exact: true }).click();
+  if (f.archetypeKey === 'custom') {
+    if (!f.brandPrimary || !f.brandAccent) {
+      throw new Error(`Fixture "${f.name}" uses archetypeKey 'custom' but is missing brandPrimary/brandAccent.`);
+    }
+    // CustomColorsCard is a div[role="button"] (not a real <button>) so the
+    // ByRole helper would miss it — match by its visible label instead.
+    await page.getByText('Ngjyrat e mia', { exact: true }).click();
+    await page.getByPlaceholder('#4f8ef7').fill(f.brandPrimary);
+    await page.getByPlaceholder('#8b5cf6').fill(f.brandAccent);
+    if (f.customFont) {
+      await page.locator('select').selectOption(f.customFont);
+    }
+  } else {
+    await page.getByRole('button', { name: ARCHETYPE_CARD_SUB[f.archetypeKey] }).click();
+  }
   await page.getByRole('button', { name: 'Vazhdo →' }).click();
 
   // ----- Step 5 -----

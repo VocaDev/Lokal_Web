@@ -7,6 +7,7 @@ import type { Business, Service } from '@/lib/types';
 import { DynamicSiteRenderer } from '@/components/templates/ai/DynamicSiteRenderer';
 import { createClient } from '@/lib/supabase/client';
 import type { ProgressStep, ProgressStatus } from '@/lib/ai-progress';
+import { ARCHETYPES, type ArchetypeKey, type Archetype } from '@/lib/archetypes';
 
 type Brief = {
   positioning: string;
@@ -87,29 +88,11 @@ const GALLERY_LAYOUTS: Array<{ id: WizardInput['galleryLayout']; label: string; 
   { id: 'ai',            label: 'AI vendos',        sub: 'Le AI të zgjedhë' },
 ];
 
-// Mood swatches are intentional palette samples — the only place hex literals
-// are allowed in this file. They are also the source of truth the AI prompt
-// references via moodDirective() in app/api/generate-variants/route.ts.
-const MOOD_OPTIONS: Array<{
-  id: WizardInput['mood'];
-  label: string;
-  sub: string;
-  swatches: string[];
-  hatched?: boolean;
-}> = [
-  { id: 'warm',    label: 'I ngrohtë',    sub: 'Tradicionale, e tokës',  swatches: ['#8b6f47', '#d4af37', '#1a1512', '#3a2f24'] },
-  { id: 'cool',    label: 'I qetë',       sub: 'Modern, profesional',     swatches: ['#3b82f6', '#06b6d4', '#0a0a0f', '#1e293b'] },
-  { id: 'bold',    label: 'I guximshëm',  sub: 'Tërheqës, i fortë',       swatches: ['#ef4444', '#f59e0b', '#0a0a0f', '#2a1414'] },
-  { id: 'elegant', label: 'Elegant',      sub: 'Premium, i rafinuar',     swatches: ['#d4af37', '#8b6f47', '#0d0a0a', '#1f1a14'] },
-  { id: 'custom',  label: 'Ngjyrat e mia', sub: 'Zgjidhi vetë',            swatches: ['', '', '', ''], hatched: true },
-];
-
-const FONT_PERSONALITY_CHIPS: Array<{ label: string; value: WizardInput['fontPersonality'] }> = [
-  { label: 'Editorial', value: 'editorial' },
-  { label: 'Modern dhe i mprehtë', value: 'modern' },
-  { label: 'I afërt dhe miqësor', value: 'friendly' },
-  { label: 'I guximshëm', value: 'bold' },
-  { label: 'Elegant tradicional', value: 'elegant' },
+const CUSTOM_FONT_OPTIONS: Array<{ value: NonNullable<WizardInput['customFont']>; label: string }> = [
+  { value: 'playfair',      label: 'Klasik & Serif' },
+  { value: 'space-grotesk', label: 'Modern & Gjeometrik' },
+  { value: 'dm-sans',       label: 'I pastër & Neutral' },
+  { value: 'poppins',       label: 'Miqësor & i Rrumbullakët' },
 ];
 
 const LANGUAGE_CHIPS: Array<{ label: string; value: WizardInput['language'] }> = [
@@ -155,10 +138,10 @@ function defaultInput(bookingEnabled: boolean): WizardInput {
     storyLayout: 'ai',
     servicesLayout: 'ai',
     galleryLayout: 'ai',
-    mood: 'warm',
+    archetypeKey: 'ai',
     brandPrimary: undefined,
     brandAccent: undefined,
-    fontPersonality: 'editorial',
+    customFont: undefined,
     language: 'sq',
     tone: 'friendly',
   };
@@ -263,8 +246,8 @@ export default function WizardV2({ businessId, subdomain, businessName, bookingE
     // Step 3 always valid — every layout picker defaults to 'ai'.
     if (s === 3) return true;
     if (s === 4) {
-      if (!input.mood) return false;
-      if (input.mood === 'custom') return isHex(input.brandPrimary) && isHex(input.brandAccent);
+      if (!input.archetypeKey) return false;
+      if (input.archetypeKey === 'custom') return isHex(input.brandPrimary) && isHex(input.brandAccent);
       return true;
     }
     if (s === 5) return !!input.language && !!input.tone;
@@ -346,10 +329,10 @@ export default function WizardV2({ businessId, subdomain, businessName, bookingE
           storyLayout: input.storyLayout,
           servicesLayout: input.servicesLayout,
           galleryLayout: input.galleryLayout,
-          mood: input.mood,
+          archetypeKey: input.archetypeKey,
           brandPrimary: input.brandPrimary,
           brandAccent: input.brandAccent,
-          fontPersonality: input.fontPersonality,
+          customFont: input.customFont,
           language: input.language,
           tone: input.tone,
           userProvidedServices: input.services
@@ -1222,73 +1205,77 @@ function GalleryThumb({ id }: { id: string }) {
 }
 
 // ---------- Step 4 ----------
+//
+// Visual archetype picker — replaces the old mood + fontPersonality steps.
+// 8 pre-validated archetype cards, plus a "Ngjyrat e mia" custom-colors card
+// (with inline color pickers + font dropdown) and an "AI vendos" card that
+// lets Sonnet pick the archetype from the list. The server resolves palette
+// and fonts for every path; Sonnet never invents hex values.
 function Step4({
   input, update,
 }: { input: WizardInput; update: (p: Partial<WizardInput>) => void }) {
+  const setArchetype = (key: WizardInput['archetypeKey']) => {
+    if (key === 'custom') {
+      update({ archetypeKey: 'custom' });
+    } else {
+      // Selecting an archetype or AI clears any custom-color leftovers so the
+      // server doesn't see stale brandPrimary/brandAccent values.
+      update({ archetypeKey: key, brandPrimary: undefined, brandAccent: undefined, customFont: undefined });
+    }
+  };
+
   return (
-    <div className="space-y-7">
-      <div className="space-y-3">
-        <FieldLabel>Vibe-i / atmosfera</FieldLabel>
-        <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
-          {MOOD_OPTIONS.map(m => (
-            <MoodCard
-              key={m.id}
-              mood={m}
-              active={input.mood === m.id}
-              onClick={() => update({ mood: m.id })}
-            />
-          ))}
-        </div>
+    <div className="space-y-3">
+      <FieldLabel hint="Zgjidh ndjenjën vizuale që i përshtatet biznesit tënd. Ngjyrat dhe shkronjat janë të paracaktuara — pa rrezik të lexueshmërisë.">
+        Stili i faqes suaj
+      </FieldLabel>
 
-        {input.mood === 'custom' && (
-          <div className="rounded-xl border border-border bg-card p-4 mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="text-[13px] font-medium text-foreground mb-3">Ngjyrat e tua</div>
-            <div className="grid grid-cols-2 gap-4">
-              <CustomColorInput
-                label="Primare"
-                value={input.brandPrimary ?? '#8b6f47'}
-                onChange={(v) => update({ brandPrimary: v })}
-              />
-              <CustomColorInput
-                label="Aksent"
-                value={input.brandAccent ?? '#d4af37'}
-                onChange={(v) => update({ brandAccent: v })}
-              />
-            </div>
-            {(input.mood === 'custom' && (!isHex(input.brandPrimary) || !isHex(input.brandAccent))) && (
-              <p className="text-[11px] text-muted-foreground mt-3">
-                Të dyja ngjyrat duhet të jenë hex të vlefshme (#rrggbb).
-              </p>
-            )}
-          </div>
-        )}
-      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {(Object.entries(ARCHETYPES) as Array<[ArchetypeKey, Archetype]>).map(([key, arch]) => (
+          <ArchetypeCard
+            key={key}
+            archetype={arch}
+            active={input.archetypeKey === key}
+            onClick={() => setArchetype(key)}
+          />
+        ))}
 
-      <div className="space-y-3">
-        <FieldLabel>Personaliteti i shkronjave</FieldLabel>
-        <div className="flex flex-wrap gap-2">
-          {FONT_PERSONALITY_CHIPS.map(c => (
-            <Chip
-              key={c.value}
-              active={input.fontPersonality === c.value}
-              onClick={() => update({ fontPersonality: c.value })}
-            >
-              {c.label}
-            </Chip>
-          ))}
-        </div>
+        <CustomColorsCard
+          active={input.archetypeKey === 'custom'}
+          onSelect={() => setArchetype('custom')}
+          brandPrimary={input.brandPrimary}
+          brandAccent={input.brandAccent}
+          customFont={input.customFont}
+          onPrimaryChange={(v) => update({ brandPrimary: v })}
+          onAccentChange={(v) => update({ brandAccent: v })}
+          onFontChange={(v) => update({ customFont: v })}
+        />
+
+        <AIDecideCard
+          active={input.archetypeKey === 'ai'}
+          onClick={() => setArchetype('ai')}
+        />
       </div>
     </div>
   );
 }
 
-function MoodCard({
-  mood, active, onClick,
+function ArchetypeCard({
+  archetype, active, onClick,
 }: {
-  mood: typeof MOOD_OPTIONS[number];
+  archetype: Archetype;
   active: boolean;
   onClick: () => void;
 }) {
+  const { bgColor, primaryColor, accentColor, textColor, surfaceColor } = archetype.palette;
+  // The wizard preview uses system fonts (Google Fonts only load on the
+  // generated tenant site). Approximate per family so the card sample at
+  // least hints at serif vs geometric vs neutral vs friendly.
+  const fontFamily =
+    archetype.headingFont === 'playfair' ? 'Georgia, "Times New Roman", serif' :
+    archetype.headingFont === 'space-grotesk' ? '"Helvetica Neue", system-ui, sans-serif' :
+    archetype.headingFont === 'poppins' ? '"Trebuchet MS", system-ui, sans-serif' :
+    'system-ui, sans-serif';
   return (
     <button
       type="button"
@@ -1300,48 +1287,135 @@ function MoodCard({
           : 'border-border hover:border-foreground/30',
       )}
     >
-      <div className="flex gap-1.5 mb-3">
-        {mood.swatches.map((sw, i) => (
+      <div className="flex gap-1 mb-2">
+        {[bgColor, primaryColor, accentColor, textColor, surfaceColor].map((color, i) => (
           <div
             key={i}
-            className="h-8 flex-1 rounded-md border border-border/50"
-            style={
-              mood.hatched
-                ? { background: 'repeating-linear-gradient(45deg, #444, #444 4px, #555 4px, #555 8px)' }
-                : { background: sw }
-            }
+            className="w-5 h-5 rounded-full border border-border/50"
+            style={{ background: color }}
           />
         ))}
       </div>
-      <div className="text-[13px] font-semibold text-foreground">{mood.label}</div>
-      <div className="text-[11px] text-muted-foreground">{mood.sub}</div>
+      <div
+        className="text-[13px] font-semibold text-foreground mb-0.5 truncate"
+        style={{ fontFamily }}
+      >
+        {archetype.nameAlb}
+      </div>
+      <div className="text-[11px] text-muted-foreground leading-tight">{archetype.descriptor}</div>
     </button>
   );
 }
 
-function CustomColorInput({
-  label, value, onChange,
-}: { label: string; value: string; onChange: (v: string) => void }) {
+function CustomColorsCard({
+  active, onSelect, brandPrimary, brandAccent, customFont,
+  onPrimaryChange, onAccentChange, onFontChange,
+}: {
+  active: boolean;
+  onSelect: () => void;
+  brandPrimary?: string;
+  brandAccent?: string;
+  customFont?: WizardInput['customFont'];
+  onPrimaryChange: (v: string) => void;
+  onAccentChange: (v: string) => void;
+  onFontChange: (v: NonNullable<WizardInput['customFont']>) => void;
+}) {
   return (
-    <label className="flex items-center gap-3">
-      <span className="text-[12px] text-muted-foreground w-16">{label}</span>
-      <input
-        type="color"
-        value={isHex(value) ? value : '#000000'}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-10 w-14 rounded border border-border bg-card cursor-pointer"
-      />
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="#rrggbb"
-        className={cn(
-          'flex-1 bg-background border border-border rounded px-2 py-1.5 text-[12px] font-mono',
-          'text-foreground focus:outline-none focus:border-primary',
-        )}
-      />
-    </label>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } }}
+      className={cn(
+        'text-left rounded-xl border p-3 bg-card transition-all cursor-pointer',
+        active
+          ? 'border-primary ring-2 ring-primary/30'
+          : 'border-border hover:border-foreground/30',
+      )}
+    >
+      <div className="text-[16px] mb-1" aria-hidden="true">🎨</div>
+      <div className="text-[13px] font-semibold text-foreground mb-0.5">Ngjyrat e mia</div>
+      <div className="text-[11px] text-muted-foreground leading-tight">Kam tashmë ngjyrat e markës</div>
+
+      {active && (
+        <div className="mt-3 space-y-2" onClick={(e) => e.stopPropagation()}>
+          <div>
+            <label className="text-[11px] text-muted-foreground block mb-1">Ngjyra kryesore</label>
+            <div className="flex gap-2 items-center">
+              <input
+                type="color"
+                value={isHex(brandPrimary) ? brandPrimary! : '#4f8ef7'}
+                onChange={(e) => onPrimaryChange(e.target.value)}
+                className="h-8 w-10 rounded border border-border cursor-pointer bg-card"
+              />
+              <input
+                type="text"
+                value={brandPrimary ?? ''}
+                onChange={(e) => onPrimaryChange(e.target.value)}
+                placeholder="#4f8ef7"
+                className="flex-1 text-[12px] font-mono bg-background border border-border rounded px-2 py-1 text-foreground focus:outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] text-muted-foreground block mb-1">Ngjyra dytësore</label>
+            <div className="flex gap-2 items-center">
+              <input
+                type="color"
+                value={isHex(brandAccent) ? brandAccent! : '#8b5cf6'}
+                onChange={(e) => onAccentChange(e.target.value)}
+                className="h-8 w-10 rounded border border-border cursor-pointer bg-card"
+              />
+              <input
+                type="text"
+                value={brandAccent ?? ''}
+                onChange={(e) => onAccentChange(e.target.value)}
+                placeholder="#8b5cf6"
+                className="flex-1 text-[12px] font-mono bg-background border border-border rounded px-2 py-1 text-foreground focus:outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] text-muted-foreground block mb-1">Fonti</label>
+            <select
+              value={customFont ?? 'dm-sans'}
+              onChange={(e) => onFontChange(e.target.value as NonNullable<WizardInput['customFont']>)}
+              className="w-full text-[12px] bg-background border border-border rounded px-2 py-1.5 text-foreground focus:outline-none focus:border-primary"
+            >
+              {CUSTOM_FONT_OPTIONS.map(f => (
+                <option key={f.value} value={f.value}>{f.label}</option>
+              ))}
+            </select>
+          </div>
+          {(!isHex(brandPrimary) || !isHex(brandAccent)) && (
+            <p className="text-[11px] text-muted-foreground">
+              Të dyja ngjyrat duhet të jenë hex të vlefshme (#rrggbb).
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AIDecideCard({
+  active, onClick,
+}: { active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'text-left rounded-xl border p-3 bg-card transition-all',
+        active
+          ? 'border-primary ring-2 ring-primary/30'
+          : 'border-border hover:border-foreground/30',
+      )}
+    >
+      <div className="text-[16px] mb-1" aria-hidden="true">✨</div>
+      <div className="text-[13px] font-semibold text-foreground mb-0.5">AI vendos</div>
+      <div className="text-[11px] text-muted-foreground leading-tight">Zgjedh stilin bazuar në biznesin tënd</div>
+    </button>
   );
 }
 
@@ -1401,8 +1475,11 @@ function Step5({
 }
 
 function RecapCard({ input, businessName }: { input: WizardInput; businessName: string }) {
-  const moodLabel = MOOD_OPTIONS.find(m => m.id === input.mood)?.label ?? input.mood;
-  const fontLabel = FONT_PERSONALITY_CHIPS.find(c => c.value === input.fontPersonality)?.label ?? input.fontPersonality;
+  const archetypeLabel: string = input.archetypeKey === 'ai'
+    ? '✨ AI vendos'
+    : input.archetypeKey === 'custom'
+      ? '🎨 Ngjyrat e mia'
+      : ARCHETYPES[input.archetypeKey].nameAlb;
   const bookingLabel = BOOKING_CHIPS.find(c => c.value === input.bookingMethod)?.label ?? input.bookingMethod;
   const namedServices = input.services.filter(s => s.name.trim()).length;
 
@@ -1428,7 +1505,7 @@ function RecapCard({ input, businessName }: { input: WizardInput; businessName: 
     ['Historia', storyLayoutLabel],
     ['Shërbimet (layout)', servicesLayoutLabel],
     ['Galeria', galleryLayoutLabel],
-    ['Atmosfera', `${moodLabel} · ${fontLabel}`],
+    ['Stili', archetypeLabel],
   ];
 
   return (

@@ -22,8 +22,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { runBrandBrief } from '../app/api/brand-brief/route';
-import { generateTheme, type GenerateThemeArgs } from '../app/api/generate-variants/route';
+import { runBrandBrief } from '../src/lib/ai/brand-brief';
+import { generateTheme, type GenerateThemeArgs } from '../src/lib/ai/theme';
 
 type Fixture = {
   businessName: string;

@@ -99,7 +99,7 @@ export interface WizardInput {
   // Required at the wizard layer (>=30 chars) so the brief and theme prompts
   // always have the user's own framing, not just a list of services.
   businessDescription: string;
-  services: Array<{ name: string; price?: string; durationMinutes?: number }>;
+  services: Array<{ name: string; price?: string; durationMinutes?: number; description?: string }>;
   bookingMethod: 'appointments' | 'walkin' | 'both' | 'none';
   // Per-section layout pickers. Each can hold a specific layout OR 'ai' to
   // let the model decide. Defaults to 'ai' across the board, so users who

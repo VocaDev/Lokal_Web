@@ -117,10 +117,10 @@ const LANGUAGE_CHIPS: Array<{ label: string; value: WizardInput['language'] }> =
   { label: 'Anglisht', value: 'en' },
 ];
 
-const TONE_CHIPS: Array<{ label: string; value: WizardInput['tone'] }> = [
-  { label: 'Miqësor', value: 'friendly' },
-  { label: 'Profesional', value: 'professional' },
-  { label: 'I guximshëm', value: 'bold' },
+const TONE_OPTIONS: Array<{ value: WizardInput['tone']; label: string; example: string }> = [
+  { value: 'friendly',     label: 'Miqësor',     example: '"Hyrni kur të doni. Ju njohim me emër."' },
+  { value: 'professional', label: 'Profesional', example: '"8 minuta pritje. Çdo herë."' },
+  { value: 'bold',         label: 'I guximshëm', example: '"Prerja e fundit që do t\'ju duhet."' },
 ];
 
 const SUBSTEPS: { step: ProgressStep; labelSq: string; labelEn: string }[] = [
@@ -353,9 +353,15 @@ export default function WizardV2({ businessId, subdomain, businessName, bookingE
           language: input.language,
           tone: input.tone,
           userProvidedServices: input.services
-            .map(s => s.name.trim())
-            .filter(Boolean)
-            .join(', '),
+            .filter(s => s.name.trim())
+            .map(s => {
+              const parts = [s.name.trim()];
+              if (s.price && String(s.price).trim()) parts.push(`€${String(s.price).trim()}`);
+              if (s.durationMinutes !== undefined) parts.push(`${s.durationMinutes}min`);
+              if (s.description && s.description.trim()) parts.push(`— ${s.description.trim()}`);
+              return parts.join(' / ');
+            })
+            .join('\n'),
           // Structured copy of the same input — used by postProcessTheme to
           // overlay user-typed prices/durations onto the AI's items so the
           // preview shows what the user actually entered.
@@ -365,6 +371,7 @@ export default function WizardV2({ businessId, subdomain, businessName, bookingE
               name: s.name.trim(),
               price: s.price,
               durationMinutes: s.durationMinutes,
+              description: s.description?.trim() || undefined,
             })),
           regenSeed: opts.reuseBrief ? Date.now().toString() : undefined,
           generationId: newGenId,
@@ -697,8 +704,11 @@ function Step1({
         <TextInput
           value={input.city}
           onChange={(e) => update({ city: e.target.value })}
-          placeholder="p.sh., Prishtinë, Sunny Hill"
+          placeholder="p.sh. Prishtinë, Lagjja Sunny Hill"
         />
+        <p className="text-xs text-[#5a5a7a] mt-1">
+          Shto lagjen nëse mundesh — ndihmon AI të kuptojë kontekstin lokal.
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -708,8 +718,14 @@ function Step1({
         <TextArea
           value={input.uniqueness ?? ''}
           onChange={(e) => update({ uniqueness: e.target.value })}
-          placeholder="p.sh., Pa takim. Vetëm hyni dhe uleni në karrigen e parë të lirë."
+          placeholder="p.sh. Jam i vetmi berberi në lagje që e di emrin e secilit klient dhe historinë e flokëve të tij."
         />
+        <div className="mt-2 p-3 rounded-lg bg-[#1e1e35] border border-[rgba(120,120,255,0.12)]">
+          <p className="text-xs text-[#5a5a7a] mb-1">💡 Nëse nuk di nga të fillosh, provo:</p>
+          <p className="text-xs text-[#8888aa] italic">
+            &quot;Klientët tanë vijnë tek ne sepse _______, jo sepse nuk kanë ku tjetër të shkojnë.&quot;
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -751,10 +767,13 @@ function Step2({
         <TextArea
           value={input.businessDescription ?? ''}
           onChange={(e) => update({ businessDescription: e.target.value })}
-          placeholder="p.sh. Mësoj programim dhe gjuhë të huaja, kurse të organizuara në grupe të vogla, niveli fillestar deri i avancuar."
+          placeholder="p.sh. Mësoj programim për fillestarë absolutë — njerëz që kurrë nuk kanë parë kod. Grupe prej 6 vetash maksimum, çdo kurs 8 javë, çdo student del me një projekt real."
           maxLength={300}
           className="min-h-[72px]"
         />
+        <p className="text-xs text-[#5a5a7a] mt-1">
+          Sa më specifik të jesh, aq më mirë do ta kuptojë AI biznesin tënd.
+        </p>
       </div>
 
       {/* Visual divider between sections */}
@@ -767,43 +786,50 @@ function Step2({
         </FieldLabel>
 
         {input.services.length > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {input.services.map((s, idx) => (
-              <div
-                key={idx}
-                className="grid grid-cols-[1fr_88px_40px] md:grid-cols-[1fr_100px_120px_40px] gap-2 items-center"
-              >
-                <TextInput
-                  value={s.name}
-                  onChange={(e) => updateService(idx, { name: e.target.value })}
-                  placeholder="Emri i shërbimit (p.sh. Kurs Python)"
+              <div key={idx} className="space-y-1">
+                <div className="grid grid-cols-[1fr_88px_40px] md:grid-cols-[1fr_100px_120px_40px] gap-2 items-center">
+                  <TextInput
+                    value={s.name}
+                    onChange={(e) => updateService(idx, { name: e.target.value })}
+                    placeholder="Emri i shërbimit (p.sh. Kurs Python)"
+                  />
+                  <TextInput
+                    value={s.price ?? ''}
+                    onChange={(e) => updateService(idx, { price: e.target.value })}
+                    placeholder="Çmimi €"
+                  />
+                  <TextInput
+                    className="hidden md:block"
+                    value={s.durationMinutes !== undefined ? String(s.durationMinutes) : ''}
+                    onChange={(e) => {
+                      const raw = e.target.value.trim();
+                      const n = raw === '' ? undefined : Number(raw);
+                      updateService(idx, { durationMinutes: Number.isFinite(n) ? (n as number) : undefined });
+                    }}
+                    placeholder="Kohëzgjatja"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeService(idx)}
+                    className={cn(
+                      'h-10 w-10 rounded-lg border border-border text-muted-foreground',
+                      'hover:border-foreground/30 hover:text-foreground transition-colors',
+                    )}
+                    aria-label="Hiq shërbimin"
+                  >
+                    ×
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  maxLength={80}
+                  value={s.description ?? ''}
+                  onChange={(e) => updateService(idx, { description: e.target.value })}
+                  placeholder="Përshkrim i shkurtër (opsionale) — p.sh. Me brisk të nxehtë, përfundon me krem."
+                  className="w-full text-xs bg-[#1e1e35] border border-[rgba(120,120,255,0.12)] rounded-md px-3 py-1.5 text-[#8888aa] placeholder:text-[#5a5a7a]"
                 />
-                <TextInput
-                  value={s.price ?? ''}
-                  onChange={(e) => updateService(idx, { price: e.target.value })}
-                  placeholder="Çmimi €"
-                />
-                <TextInput
-                  className="hidden md:block"
-                  value={s.durationMinutes !== undefined ? String(s.durationMinutes) : ''}
-                  onChange={(e) => {
-                    const raw = e.target.value.trim();
-                    const n = raw === '' ? undefined : Number(raw);
-                    updateService(idx, { durationMinutes: Number.isFinite(n) ? (n as number) : undefined });
-                  }}
-                  placeholder="Kohëzgjatja"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeService(idx)}
-                  className={cn(
-                    'h-10 w-10 rounded-lg border border-border text-muted-foreground',
-                    'hover:border-foreground/30 hover:text-foreground transition-colors',
-                  )}
-                  aria-label="Hiq shërbimin"
-                >
-                  ×
-                </button>
               </div>
             ))}
           </div>
@@ -1346,16 +1372,26 @@ function Step5({
 
       <div className="space-y-3">
         <FieldLabel>Toni</FieldLabel>
-        <div className="flex flex-wrap gap-2">
-          {TONE_CHIPS.map(c => (
-            <Chip
-              key={c.value}
-              active={input.tone === c.value}
-              onClick={() => update({ tone: c.value })}
-            >
-              {c.label}
-            </Chip>
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {TONE_OPTIONS.map(tone => {
+            const active = input.tone === tone.value;
+            return (
+              <button
+                key={tone.value}
+                type="button"
+                onClick={() => update({ tone: tone.value })}
+                className={cn(
+                  'flex flex-col items-start text-left rounded-xl border p-3 transition-all',
+                  active
+                    ? 'bg-primary/15 border-primary'
+                    : 'bg-card border-border hover:border-foreground/30',
+                )}
+              >
+                <span className="text-[14px] font-medium text-foreground">{tone.label}</span>
+                <span className="text-xs text-[#5a5a7a] italic mt-1 block">{tone.example}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

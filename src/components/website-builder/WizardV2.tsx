@@ -336,6 +336,11 @@ export default function WizardV2({ businessId, subdomain, businessName, bookingE
           brandPrimary: input.brandPrimary,
           brandAccent: input.brandAccent,
           customFont: input.customFont,
+          // bookingMethod gates which CTAs the AI is allowed to write.
+          // When 'none' or 'walkin', booking-style CTAs ("Rezervo termin")
+          // are forbidden because clicking them falls through to the
+          // contact handler — broken promise.
+          bookingMethod: input.bookingMethod,
           language: input.language,
           tone: input.tone,
           userProvidedServices: input.services
@@ -410,6 +415,11 @@ export default function WizardV2({ businessId, subdomain, businessName, bookingE
               price: s.price,
               durationMinutes: s.durationMinutes,
             })),
+          // Social URLs — apply-theme merges these into businesses.social_links.
+          // Empty/whitespace strings are stripped server-side so they don't
+          // overwrite values the user already set via /dashboard/profile.
+          instagramUrl: input.instagramUrl?.trim() || undefined,
+          tiktokUrl: input.tiktokUrl?.trim() || undefined,
         }),
       });
       const body = await res.json().catch(() => ({}));
@@ -711,6 +721,27 @@ function Step1({
           <p className="text-xs text-[#8888aa] italic">
             &quot;Vijn&apos; tek ne sepse _______, jo se s&apos;kanë ku tjetër me shku.&quot;
           </p>
+        </div>
+      </div>
+
+      {/* Social links — optional, render in the public-site footer. The
+          profile page (/dashboard/profile) is the canonical edit surface, but
+          asking here means new users get them wired up on first generation. */}
+      <div className="space-y-2">
+        <FieldLabel hint="Opsionale. Vendosen në fund të faqes — që klientët t'ju gjejnë.">
+          Rrjete sociale <span className="text-muted-foreground font-normal">(opsionale)</span>
+        </FieldLabel>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <TextInput
+            value={input.instagramUrl ?? ''}
+            onChange={(e) => update({ instagramUrl: e.target.value })}
+            placeholder="Instagram — instagram.com/biznesi_jot"
+          />
+          <TextInput
+            value={input.tiktokUrl ?? ''}
+            onChange={(e) => update({ tiktokUrl: e.target.value })}
+            placeholder="TikTok — tiktok.com/@biznesi_jot"
+          />
         </div>
       </div>
     </div>
@@ -1348,6 +1379,11 @@ function CustomColorsCard({
   onAccentChange: (v: string) => void;
   onFontChange: (v: NonNullable<WizardInput['customFont']>) => void;
 }) {
+  // Show the user's actual picks in the live preview when they parse as hex;
+  // fall back to the same defaults the color picker uses when they don't.
+  const previewPrimary = isHex(brandPrimary) ? brandPrimary! : '#4f8ef7';
+  const previewAccent = isHex(brandAccent) ? brandAccent! : '#8b5cf6';
+
   return (
     <div
       role="button"
@@ -1356,8 +1392,11 @@ function CustomColorsCard({
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } }}
       className={cn(
         'text-left rounded-xl border p-3 bg-card transition-all cursor-pointer',
+        // When active, span 2 grid columns so the preview + 2-col input
+        // layout has room to breathe. Collapsed state stays 1 col so the
+        // 4-up archetype grid is uniform.
         active
-          ? 'border-primary ring-2 ring-primary/30'
+          ? 'border-primary ring-2 ring-primary/30 col-span-2'
           : 'border-border hover:border-foreground/30',
       )}
     >
@@ -1366,43 +1405,65 @@ function CustomColorsCard({
       <div className="text-[11px] text-muted-foreground leading-tight">Kam tashmë ngjyrat e markës</div>
 
       {active && (
-        <div className="mt-3 space-y-2" onClick={(e) => e.stopPropagation()}>
-          <div>
-            <label className="text-[11px] text-muted-foreground block mb-1">Ngjyra kryesore</label>
-            <div className="flex gap-2 items-center">
-              <input
-                type="color"
-                value={isHex(brandPrimary) ? brandPrimary! : '#4f8ef7'}
-                onChange={(e) => onPrimaryChange(e.target.value)}
-                className="h-8 w-10 rounded border border-border cursor-pointer bg-card"
-              />
-              <input
-                type="text"
-                value={brandPrimary ?? ''}
-                onChange={(e) => onPrimaryChange(e.target.value)}
-                placeholder="#4f8ef7"
-                className="flex-1 text-[12px] font-mono bg-background border border-border rounded px-2 py-1 text-foreground focus:outline-none focus:border-primary"
-              />
+        <div className="mt-3 space-y-3" onClick={(e) => e.stopPropagation()}>
+          {/* Live combined preview — split bar so the user sees both colors
+              at usable size. Separator is a thin border so adjacent same-tone
+              picks don't merge into one block. */}
+          <div className="rounded-lg overflow-hidden border border-border/60 h-20 flex">
+            <div
+              className="flex-1 transition-colors duration-150"
+              style={{ background: previewPrimary }}
+              aria-label="Pamje — ngjyra kryesore"
+            />
+            <div className="w-px bg-border/40" aria-hidden="true" />
+            <div
+              className="flex-1 transition-colors duration-150"
+              style={{ background: previewAccent }}
+              aria-label="Pamje — ngjyra dytësore"
+            />
+          </div>
+
+          {/* Two color inputs side-by-side on the wider expanded card,
+              stacked on narrow viewports. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-[11px] text-muted-foreground block mb-1">Ngjyra kryesore</label>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="color"
+                  value={previewPrimary}
+                  onChange={(e) => onPrimaryChange(e.target.value)}
+                  className="h-10 w-12 rounded border border-border cursor-pointer bg-card flex-shrink-0"
+                />
+                <input
+                  type="text"
+                  value={brandPrimary ?? ''}
+                  onChange={(e) => onPrimaryChange(e.target.value)}
+                  placeholder="#4f8ef7"
+                  className="flex-1 min-w-0 text-[12px] font-mono bg-background border border-border rounded px-2 py-1.5 text-foreground focus:outline-none focus:border-primary"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-[11px] text-muted-foreground block mb-1">Ngjyra dytësore</label>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="color"
+                  value={previewAccent}
+                  onChange={(e) => onAccentChange(e.target.value)}
+                  className="h-10 w-12 rounded border border-border cursor-pointer bg-card flex-shrink-0"
+                />
+                <input
+                  type="text"
+                  value={brandAccent ?? ''}
+                  onChange={(e) => onAccentChange(e.target.value)}
+                  placeholder="#8b5cf6"
+                  className="flex-1 min-w-0 text-[12px] font-mono bg-background border border-border rounded px-2 py-1.5 text-foreground focus:outline-none focus:border-primary"
+                />
+              </div>
             </div>
           </div>
-          <div>
-            <label className="text-[11px] text-muted-foreground block mb-1">Ngjyra dytësore</label>
-            <div className="flex gap-2 items-center">
-              <input
-                type="color"
-                value={isHex(brandAccent) ? brandAccent! : '#8b5cf6'}
-                onChange={(e) => onAccentChange(e.target.value)}
-                className="h-8 w-10 rounded border border-border cursor-pointer bg-card"
-              />
-              <input
-                type="text"
-                value={brandAccent ?? ''}
-                onChange={(e) => onAccentChange(e.target.value)}
-                placeholder="#8b5cf6"
-                className="flex-1 text-[12px] font-mono bg-background border border-border rounded px-2 py-1 text-foreground focus:outline-none focus:border-primary"
-              />
-            </div>
-          </div>
+
           <div>
             <label className="text-[11px] text-muted-foreground block mb-1">Fonti</label>
             <select
@@ -1415,6 +1476,7 @@ function CustomColorsCard({
               ))}
             </select>
           </div>
+
           {(!isHex(brandPrimary) || !isHex(brandAccent)) && (
             <p className="text-[11px] text-muted-foreground">
               Të dyja ngjyrat duhet të jenë hex të vlefshme (#rrggbb).

@@ -12,6 +12,8 @@ export async function POST(request: NextRequest) {
       uniquenessStatement,
       bookingMethod,
       wizardServices,
+      instagramUrl,
+      tiktokUrl,
     } = await request.json();
     if (!businessId || !theme) {
       return NextResponse.json({ error: 'businessId and theme required' }, { status: 400 });
@@ -22,15 +24,36 @@ export async function POST(request: NextRequest) {
     const auth = await requireBusinessOwner(supabase, businessId);
     if (auth instanceof NextResponse) return auth;
 
+    // Merge wizard-supplied social URLs into businesses.social_links.
+    // Profile page is the canonical edit surface — we only set fields the
+    // wizard passed (truthy strings), so existing values aren't clobbered.
+    const trimmedInstagram = typeof instagramUrl === 'string' ? instagramUrl.trim() : '';
+    const trimmedTiktok = typeof tiktokUrl === 'string' ? tiktokUrl.trim() : '';
+    const wantsSocialMerge = trimmedInstagram.length > 0 || trimmedTiktok.length > 0;
+    let mergedSocialLinks: Record<string, string> | null = null;
+    if (wantsSocialMerge) {
+      const { data: bizExisting } = await supabase
+        .from('businesses')
+        .select('social_links')
+        .eq('id', businessId)
+        .maybeSingle();
+      const existing = (bizExisting?.social_links as Record<string, string> | null) ?? {};
+      mergedSocialLinks = { ...existing };
+      if (trimmedInstagram.length > 0) mergedSocialLinks.instagram = trimmedInstagram;
+      if (trimmedTiktok.length > 0) mergedSocialLinks.tiktok = trimmedTiktok;
+    }
+
     // AI-path sites get the literal '__ai__' template marker so existing
     // rendering code can detect them cleanly. Templates path is unchanged.
+    const businessUpdatePayload: Record<string, any> = {
+      template_id: '__ai__',
+      website_creation_method: 'ai_generated',
+      website_builder_completed: true,
+    };
+    if (mergedSocialLinks) businessUpdatePayload.social_links = mergedSocialLinks;
     const { data: bizUpdated, error: bizErr } = await supabase
       .from('businesses')
-      .update({
-        template_id: '__ai__',
-        website_creation_method: 'ai_generated',
-        website_builder_completed: true,
-      })
+      .update(businessUpdatePayload)
       .eq('id', businessId)
       .select('subdomain')
       .maybeSingle();

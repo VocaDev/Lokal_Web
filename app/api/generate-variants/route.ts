@@ -182,8 +182,10 @@ ABSOLUTELY NO testimonials section. NO FAQ section. Do not output them.
 
 PRE-HERO QUALITY CHECK — run this BEFORE writing any hero content:
 
-1. HEADLINE LENGTH: Is the headline I'm planning 10 words or fewer?
-   Shorter is almost always stronger. If over 10 words → cut.
+1. HEADLINE LENGTH: Is the headline I'm planning 7 words or fewer?
+   Hero typography renders LARGE — every extra word makes the visual heavier.
+   Target: 3-5 words. Hard cap: 7 words.
+   If over 7 → cut to the most essential part.
 
 2. BANNED PHRASES: Does the headline contain any banned phrase?
    Check the list now before writing.
@@ -281,6 +283,24 @@ ANTI-TEMPLATE RULE:
 - Avoid safe color choices that match every site in the category.
 - Avoid layouts that feel "industry default" rather than chosen.
 
+CTA HONESTY RULE — every CTA button must map to a real action this site does:
+The renderer wires hero CTA buttons to ONE of two actions ONLY:
+  (1) opening the booking drawer (when bookingMethod allows it)
+  (2) the contact handler (phone tel:/ WhatsApp)
+There is no separate page to navigate to. There is no "browse" view.
+Therefore CTAs that PROMISE navigation are forbidden — clicking them does
+nothing the user expects. Forbidden phrasings include:
+  "Shfleto programet" / "Shfleto" / "Browse programs" / "Browse"
+  "Mëso më shumë" / "Learn more" / "Read more" / "Lexo më shumë"
+  "Shih çmimet" / "View pricing" / "Discover more" / "Zbulo më shumë"
+  "Vizito faqen" / "Visit the page"
+Allowed CTAs are ONLY booking-style ("Rezervo termin", "Bëj rezervim",
+"Cakto orarin", "Book appointment") or contact-style ("Na kontakto",
+"Telefono", "Shkruan", "Get in touch", "Call us", "Message us").
+If neither booking nor contact fits cleanly → ctaCount=0 (no buttons).
+ONE honest CTA beats TWO fake ones. Per-request bookingMethod context will
+narrow this further.
+
 Produce THE WEBSITE THIS BUSINESS WOULD HAVE IF THEY HIRED A DESIGNER WHO READ THE BRIEF — not a generic site for the category.
 
 REALISTIC PRICING (Kosovo market, EUR):
@@ -355,7 +375,9 @@ BEFORE OUTPUTTING — run these specific checks:
    If not → REWRITE.
 
 6. STORY LENGTH TEST: Count the words in your story body.
-   If over 130 words → CUT until under 120.
+   Target: 40-60 words. Hard cap: 80 words.
+   If over 80 → CUT until under 60. Story must be scannable in under 10 seconds.
+   Long story = scrolled past. Short story with one specific detail = remembered.
 
 7. BANNED PHRASE SWEEP: Scan character by character.
    If any banned phrase appears → REPLACE.
@@ -740,6 +762,11 @@ type GenerateThemeArgs = {
   brandPrimary?: string;  // only consulted when archetypeKey === 'custom'
   brandAccent?: string;   // only consulted when archetypeKey === 'custom'
   customFont?: string;    // only consulted when archetypeKey === 'custom'
+  // Gates which hero CTAs the AI is allowed to write. The renderer only
+  // wires CTAs to two real actions: open the booking drawer (when bookingMethod
+  // allows it) or fire the contact handler (phone/WhatsApp). Anything else
+  // would be a broken promise.
+  bookingMethod: 'appointments' | 'walkin' | 'both' | 'none';
   language: string;
   tone: string;
   userProvidedServices: string;
@@ -754,6 +781,7 @@ async function generateTheme(args: GenerateThemeArgs) {
     brief, businessName, industry, city, uniqueness, businessDescription,
     heroLayout, storyLayout, servicesLayout, galleryLayout,
     archetypeKey, brandPrimary, brandAccent, customFont,
+    bookingMethod,
     language, tone, userProvidedServices,
     canonicalIndustry, userHasGalleryPhotos, userHasServicePhotos, regenSeed,
   } = args;
@@ -769,6 +797,22 @@ async function generateTheme(args: GenerateThemeArgs) {
   const visualSystemBlock = buildVisualSystemBlock({
     archetypeKey, brandPrimary, brandAccent, customFont,
   });
+
+  // Hero CTA constraint — varies per request based on bookingMethod, so it
+  // lives in the dynamic prompt. The static prompt has the universal "no
+  // navigation CTAs" rule; this adds the per-business "is booking real?" gate.
+  const bookingAllowsAppointments = bookingMethod === 'appointments' || bookingMethod === 'both';
+  const heroCtaConstraint = bookingAllowsAppointments
+    ? `HERO CTA SCOPE — this site supports BOTH actions:
+  - Booking (primary): "Rezervo termin" / "Bëj rezervim" / "Cakto orarin" / "Book appointment"
+  - Contact (secondary): "Na kontakto" / "Telefono" / "Get in touch"
+ctaCount: 1 or 2. NEVER write CTAs that imply navigation ("Shfleto", "Mëso më shumë", "Lexo më shumë", "Browse", "Learn more", "View pricing").`
+    : `HERO CTA SCOPE — this site does NOT support online booking. The ONLY real action is contact (phone / WhatsApp).
+Allowed CTAs: "Na kontakto" / "Telefono" / "Shkruan" / "Get in touch" / "Call us" / "Message us"
+FORBIDDEN here:
+  - Booking-style CTAs ("Rezervo", "Bëj rezervim") — they would fall through to contact, breaking the promise.
+  - Navigation CTAs ("Shfleto programet", "Mëso më shumë", "Lexo më shumë", "Browse", "Learn more", "View pricing") — there is no separate page to navigate to.
+ctaCount: 0 or 1. If unsure → 0 (no CTA buttons). One honest contact CTA beats two fake ones.`;
 
   const albanianCopyRules = (language === 'sq' || language === 'both')
     ? `
@@ -892,6 +936,8 @@ USER'S UNIQUENESS STATEMENT (gospel):
 
 DEFINING TRAITS (also gospel):
 ${traitsForVoiceCheck}
+
+${heroCtaConstraint}
 
 STRUCTURAL CHOICES:
 ${sectionsBriefing(heroLayout, storyLayout, servicesLayout, galleryLayout, uniqueness)}
@@ -1035,6 +1081,7 @@ interface PostProcessCtx {
   galleryLayout: string;
   userHasServicePhotos: boolean;
   userHasGalleryPhotos: boolean;
+  userHasHeroPhoto: boolean;
   language: string;
   wizardServices: WizardServiceInput[];
   businessDescription: string;
@@ -1156,9 +1203,9 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
   // 1. Strip section types we never render.
   sections = sections.filter(s => s?.kind !== 'testimonials' && s?.kind !== 'faq');
 
-  // 2. Force a gallery section if the user uploaded gallery photos but the
-  //    AI didn't include one. Default to user-locked layout when present,
-  //    'masonry' otherwise.
+  // 2a. Force a gallery section if the user uploaded gallery photos but the
+  //     AI didn't include one. Default to user-locked layout when present,
+  //     'masonry' otherwise.
   const hasGallery = sections.some(s => s?.kind === 'gallery');
   if (ctx.userHasGalleryPhotos && !hasGallery) {
     const lockedGallery = ctx.galleryLayout && ctx.galleryLayout !== 'ai'
@@ -1169,6 +1216,25 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
       layout: lockedGallery,
       caption: undefined,
     });
+  }
+
+  // 2b. Strip the gallery section when the user has NOT uploaded any gallery
+  //     photos. The renderer's empty state was rendering 5-6 dashed-border
+  //     "GALLERY PHOTO" placeholder boxes that don't blend with most sites.
+  //     If the user uploads photos later, regeneration brings the section back
+  //     via 2a.
+  if (!ctx.userHasGalleryPhotos) {
+    sections = sections.filter(s => s?.kind !== 'gallery');
+  }
+
+  // 2c. Force hero imageStyle='photo' when the user uploaded a hero photo.
+  //     Without this, Sonnet sometimes picks 'gradient' or 'pattern' for
+  //     editorial/text-first sites — and the uploaded photo never renders
+  //     because HeroSection only reads it on the 'photo' branch.
+  if (ctx.userHasHeroPhoto) {
+    sections = sections.map(s => (
+      s?.kind === 'hero' ? { ...s, imageStyle: 'photo' } : s
+    ));
   }
 
   // 3. Wizard's structured service inputs are authoritative for name / price /
@@ -1329,9 +1395,18 @@ export async function POST(request: NextRequest) {
       heroLayout, storyLayout, servicesLayout, galleryLayout,
       archetypeKey,
       brandPrimary, brandAccent, customFont,
+      bookingMethod,
       language, tone, userProvidedServices, wizardServices, regenSeed,
       generationId, businessId,
     } = body;
+
+    // Whitelist bookingMethod — anything else (legacy callers, malformed
+    // payloads) defaults to 'none' so we err on the side of "no booking CTA".
+    const normalizedBookingMethod: 'appointments' | 'walkin' | 'both' | 'none' =
+      bookingMethod === 'appointments' || bookingMethod === 'walkin' ||
+      bookingMethod === 'both' || bookingMethod === 'none'
+        ? bookingMethod
+        : 'none';
 
     // Normalize archetypeKey: must be 'ai', 'custom', or a known archetype
     // key. Anything else (including legacy 'mood' values) defaults to 'ai'.
@@ -1357,6 +1432,7 @@ export async function POST(request: NextRequest) {
     // (migration 011) so user-scoped client is fine.
     let userHasGalleryPhotos = false;
     let userHasServicePhotos = false;
+    let userHasHeroPhoto = false;
     if (typeof businessId === 'string' && businessId.length > 0) {
       const { data: galleryRows } = await supabase
         .from('gallery_items')
@@ -1365,6 +1441,7 @@ export async function POST(request: NextRequest) {
       const rows = galleryRows ?? [];
       userHasGalleryPhotos = rows.some(r => r.section_key === 'gallery');
       userHasServicePhotos = rows.some(r => r.section_key === 'services');
+      userHasHeroPhoto = rows.some(r => r.section_key === 'hero');
     }
 
     const args: GenerateThemeArgs = {
@@ -1382,6 +1459,7 @@ export async function POST(request: NextRequest) {
       brandPrimary,
       brandAccent,
       customFont,
+      bookingMethod: normalizedBookingMethod,
       language: language || 'sq',
       tone: tone || 'friendly',
       userProvidedServices: userProvidedServices || '',
@@ -1415,6 +1493,7 @@ export async function POST(request: NextRequest) {
       galleryLayout: args.galleryLayout,
       userHasServicePhotos,
       userHasGalleryPhotos,
+      userHasHeroPhoto,
       language: args.language,
       wizardServices: Array.isArray(wizardServices)
         ? (wizardServices as WizardServiceInput[])

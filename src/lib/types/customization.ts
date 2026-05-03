@@ -122,6 +122,12 @@ export interface WizardInput {
   // 'casual' renders as "Bisedor" in the UI — Gheg-flavored, dropped subject
   // pronouns and apostrophes (n'kafe, t'qojm, vijn') in customer-facing copy.
   tone: 'friendly' | 'professional' | 'bold' | 'casual';
+  // Optional social media URLs collected at wizard time. Persisted to
+  // businesses.social_links by /api/apply-theme and rendered in the public
+  // footer. The /dashboard/profile page is the canonical edit surface; the
+  // wizard just lets users set them upfront.
+  instagramUrl?: string;
+  tiktokUrl?: string;
 }
 
 // ----------------------------------------------------------------

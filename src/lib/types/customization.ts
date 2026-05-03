@@ -109,10 +109,15 @@ export interface WizardInput {
   storyLayout: 'centered-quote' | 'two-column' | 'long-form' | 'pull-quote' | 'ai';
   servicesLayout: 'list' | 'grid-3' | 'editorial-rows' | 'cards' | 'ai';
   galleryLayout: 'masonry' | 'grid-uniform' | 'showcase' | 'strip' | 'ai';
-  mood: 'warm' | 'cool' | 'bold' | 'elegant' | 'custom';
-  brandPrimary?: string;
-  brandAccent?: string;
-  fontPersonality: 'editorial' | 'modern' | 'friendly' | 'bold' | 'elegant';
+  // Visual archetype — replaces the previous mood + fontPersonality pickers.
+  // 'ai' = let Sonnet pick a key from src/lib/archetypes.ts
+  // 'custom' = user provides brandPrimary/brandAccent + customFont; server
+  //            generates the remaining 5 palette tokens.
+  // Anything else = a key in ARCHETYPES, server expands palette/fonts.
+  archetypeKey: import('../archetypes').ArchetypeKey | 'custom' | 'ai';
+  brandPrimary?: string;  // only used when archetypeKey === 'custom'
+  brandAccent?: string;   // only used when archetypeKey === 'custom'
+  customFont?: 'playfair' | 'space-grotesk' | 'dm-sans' | 'poppins'; // only when custom
   language: 'sq' | 'en' | 'both';
   tone: 'friendly' | 'professional' | 'bold';
 }

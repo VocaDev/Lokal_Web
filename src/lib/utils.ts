@@ -178,3 +178,33 @@ export function ensureReadableTextColor(textColor: string, bgColor: string): str
   if (contrastRatio(textColor, bgColor) >= 4.5) return textColor;
   return relativeLuminance(bgColor) > 0.5 ? '#0a0a0a' : '#fafafa';
 }
+
+/**
+ * Build a 7-token palette from the user's brand primary + accent.
+ * Picks a light or dark background by the primary's luminance, then derives
+ * surface / text / mutedText / border with WCAG AA contrast ensured.
+ * Used when the user picks "Ngjyrat e mia" — server-side palette generation
+ * so Sonnet never has to invent the missing five tokens.
+ */
+export function generatePaletteFromBrandColors(primary: string, accent: string): Record<string, string> {
+  const primLum = relativeLuminance(primary);
+  const isDarkBrand = primLum < 0.4;
+
+  const bgColor = isDarkBrand ? '#f8f8f8' : '#0f0f0f';
+  const surfaceColor = isDarkBrand ? '#ffffff' : '#1a1a1a';
+  const textColor = ensureReadableTextColor(isDarkBrand ? '#0f0f0f' : '#f8f8f8', bgColor);
+  const mutedTextColor = isDarkBrand ? '#666666' : '#999999';
+  const rgb = parseHex6(primary);
+  const rgbStr = rgb ? `${rgb[0]}, ${rgb[1]}, ${rgb[2]}` : '120, 120, 120';
+  const borderColor = `rgba(${rgbStr}, 0.15)`;
+
+  return {
+    bgColor,
+    surfaceColor,
+    textColor,
+    mutedTextColor,
+    primaryColor: primary,
+    accentColor: accent,
+    borderColor,
+  };
+}

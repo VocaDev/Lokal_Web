@@ -1333,7 +1333,17 @@ ${regenSeed ? `REGENERATION ATTEMPT — produce a notably DIFFERENT direction th
 
 Generate the theme.`;
 
-  const effectiveModel = args.modelOverride || THEME_MODEL;
+  // Tone-conditional model selection. A/B test on the lavazh-casual fixture
+  // showed Sonnet produces meaningfully better road-Gheg copy than Haiku for
+  // tone='casual' specifically — using apostrophe forms like n'Tavnik,
+  // n'fillim, me u shqetësu, ta themi para — where Haiku stays in standard
+  // register on the same prompt. For other tones Haiku is sufficient and
+  // ~5x cheaper / 2x faster, so we keep Haiku as default.
+  // modelOverride still wins (used by scripts/ab-test.ts).
+  const casualModel = process.env.CASUAL_THEME_MODEL || 'claude-sonnet-4-6';
+  const tonePicked = (args.tone === 'casual') ? casualModel : THEME_MODEL;
+  const effectiveModel = args.modelOverride || tonePicked;
+  console.log('[generate-variants] model:', effectiveModel, 'tone:', args.tone, 'industry:', args.canonicalIndustry);
   const response = await anthropic.messages.create({
     model: effectiveModel,
     max_tokens: 4500,

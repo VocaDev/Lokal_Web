@@ -1194,6 +1194,43 @@ This is real. It works. It doesn't feel fake.
 `
     : '';
 
+  // Did the user explicitly reference the city in their own inputs? If
+  // not, the model has no mandate to use the city as a narrative anchor —
+  // any city mention in story/hero/services would be fabricated thematic
+  // material rather than honoring what the user said about what makes
+  // this business special. We split the city field on commas and skip
+  // generic locator words like "Qendër" / "Qytetit" so a user who typed
+  // "Pejë, Qendër" is judged on whether they mentioned Pejë.
+  const cityComponents = (city ?? '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(s => s.length > 1 && !/^(qend[eë]r|qytet[i]?|komun[ae]|lagj[ae])$/i.test(s));
+  const userInputBlob = `${uniqueness ?? ''} ${businessDescription ?? ''} ${businessName ?? ''}`.toLowerCase();
+  const userExplicitlyMentionedCity = cityComponents.some(c => userInputBlob.includes(c.toLowerCase()));
+  const primaryCityToken = cityComponents[0] ?? (city ?? '').trim();
+
+  const placeNameRule = userExplicitlyMentionedCity
+    ? `PLACE NAME CAP — soft (the user referenced the city in their inputs):
+You MAY use the city, but AT MOST ONCE total across the entire output (all sections + metaDescription combined). Footer location line is the recommended slot. Repeated city mentions read as marketing filler — Kosovo readers find them unnatural. Real Kosovo businesses say their city once.`
+    : `STRICT BAN ON CITY IN COPY — hard (the user did NOT reference the city in their inputs):
+The user's inputs (uniqueness, business description, business name) do NOT contain "${primaryCityToken}". The city is not part of their story.
+
+The city MUST NOT appear in:
+- hero headline, hero subheadline
+- story body, story attribution
+- service descriptions, service item names
+- taglines (hero, footer)
+- any copy field outside the footer's location/metadata line and metaDescription
+
+Forbidden patterns include but are not limited to:
+- "Në ${primaryCityToken} punon...", "n'${primaryCityToken}", "te ${primaryCityToken}", "te ${primaryCityToken}-së"
+- "...e ${primaryCityToken}-së", "familjet e ${primaryCityToken}", "prej ${primaryCityToken}"
+- "${primaryCityToken.toUpperCase()}" in attributions like "— BIZNES, ${primaryCityToken.toUpperCase()}"
+
+The ONLY allowed appearance is the footer's location/metadata line (metadataLeft / metadataRight) and the metaDescription's location signal — at most ONCE each.
+
+The story, hero, and services must be about what the user actually said makes this business special — not the geography. The user did not give you a "city as narrative" mandate; do not invent one. This rule supersedes any concrete-detail or anti-tell guidance: if rule 9's "real PLACE name" anchor would violate this, pick a different concrete (number, year, time, named person, physical detail) instead.`;
+
   const uniquenessEchoCheck = uniqueness && uniqueness.trim().length > 0
     ? `
 FINAL DYNAMIC CHECK (run AFTER the 8 BEFORE-OUTPUTTING checks above):
@@ -1224,6 +1261,8 @@ USER'S UNIQUENESS SIGNAL (extract the IDEA — do not paste the wording):
 Read this to understand WHY the business is different. Then write fresh copy
 in authentic Kosovar voice. The user's wording may be raw, generic, or
 literal — your output is fresh prose, never a quote of their phrasing.
+
+${placeNameRule}
 
 DEFINING TRAITS (also gospel):
 ${traitsForVoiceCheck}

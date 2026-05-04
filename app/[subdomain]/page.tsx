@@ -178,8 +178,32 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
     Array.isArray(aiSections) &&
     aiSections.length > 0
   ) {
+    // Render-time override: photos uploaded AFTER theme generation aren't
+    // reflected in the persisted sections (the post-processor's
+    // userHasHeroPhoto / userHasGalleryPhotos flags were false at gen time,
+    // so hero imageStyle was left non-photo and any gallery section was
+    // stripped). Re-apply those decisions here based on what's actually in
+    // gallery_items right now.
+    let effectiveSections: AiSection[] = aiSections;
+    const hasHeroPhoto = (galleryBySection.hero?.length ?? 0) > 0;
+    const hasGalleryPhotos = (galleryBySection.gallery?.length ?? 0) > 0;
+    const hasGallerySection = effectiveSections.some(s => s?.kind === 'gallery');
+
+    if (hasHeroPhoto) {
+      effectiveSections = effectiveSections.map(s =>
+        s?.kind === 'hero' ? { ...s, imageStyle: 'photo' } : s,
+      );
+    }
+    if (hasGalleryPhotos && !hasGallerySection) {
+      const gallerySection: AiSection = { kind: 'gallery', layout: 'masonry' };
+      const footerIdx = effectiveSections.findIndex(s => s?.kind === 'footer');
+      effectiveSections = footerIdx >= 0
+        ? [...effectiveSections.slice(0, footerIdx), gallerySection, ...effectiveSections.slice(footerIdx)]
+        : [...effectiveSections, gallerySection];
+    }
+
     const payload: AiSitePayload = {
-      sections: aiSections,
+      sections: effectiveSections,
       bookingMethod: (customData as any)?.booking_method ?? 'appointments',
       primaryColor: customData!.primary_color,
       accentColor: customData!.accent_color,

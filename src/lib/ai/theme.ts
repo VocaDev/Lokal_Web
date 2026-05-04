@@ -284,6 +284,15 @@ ANTI-TEMPLATE RULE:
 - Avoid safe color choices that match every site in the category.
 - Avoid layouts that feel "industry default" rather than chosen.
 
+HEADLINE FORM CHECK — hero headlines must NOT read as commands or imperatives toward the customer:
+- "Te [Business Name]" reads in Albanian as "Go to [name]!" — a command. WRONG as a hero headline.
+- "Tek ne" / "Te ne" as a standalone hero headline reads similarly imperative. WRONG.
+- Imperative verbs as the hero headline ("Bli tash", "Mëso shqip") are acceptable as CTAs but NOT as the hero headline. WRONG for hero.
+Hero headlines should be statements, claims, or noun phrases. They describe what the business IS or what the customer GETS — not commands the customer to do something.
+WRONG: "Te Arta" / "Tek mjeku" / "Bli tash"
+RIGHT: "Rrobat e tua, te Arta." / "Mjeku që të njeh." / "Tre karrige te Shadërvani."
+If your hero headline starts with "Te" or "Tek" followed by the business name, REWRITE.
+
 CTA HONESTY RULE — every CTA button must map to a real action this site does:
 The renderer wires hero CTA buttons to ONE of two actions ONLY:
   (1) opening the booking drawer (when bookingMethod allows it)
@@ -320,6 +329,13 @@ SERVICES SECTION INTRO (the optional 'intro' field):
   "Ofrojmë shërbime të shumta."
   "Zgjedh shërbimin që të përshtatet."
   "Çka të duhet, e bëjmë."
+
+SERVICE DESCRIPTIONS ARE REQUIRED:
+Every service item MUST have a non-empty description field — 1-2 sentences, under 16 words (see SERVICE ITEM DESCRIPTIONS below for full quality bar). If the user did not provide a description for a service, INFER one from the service name + business context. Do NOT leave description empty; an empty description renders the services section sparse and unfinished. Examples of inferred descriptions for user-provided service names:
+- "Qethje klasike" (no description provided) → "Gërshëra. Makinë. 30 minuta."
+- "Përshtatje fustanesh" (no description provided) → "Sjell fustanin, matet, gati brenda dy ditësh."
+- "Konsultë e përgjithshme" (no description provided) → "Anamneza, ekzaminim, plan trajtimi nëse nevojitet."
+The inferred description must follow ALL existing FIELD QUALITY RULES (concrete, no fillers, no banned phrases, ≤16 words).
 
 SERVICE ITEM DESCRIPTIONS (items[].description):
 - Hard cap: 16 words. Target 6-12.
@@ -398,6 +414,33 @@ story, footer, metaDescription).
      customer.")
    RIGHT: "Çdo klient — të vetin." (no clean English equivalent without
      restructuring; sounds Kosovar.)
+
+REGISTER CHECK — FUNCTIONAL OVER APHORISTIC:
+
+Real Kosovo small businesses write functional prose, not folk wisdom. The model's tendency is to make every line quotable — short parallel constructions, oppositions, mini-aphorisms. This is a tell that AI wrote the copy, not a real owner.
+
+APHORISTIC PATTERNS — max ONE per entire page (not per section):
+- "X — Y." constructions ("Para gjilpërës — bisedë.")
+- "X. Jo Y." contrasts ("Lajm me dorë. Jo me makineri.")
+- "X. Y. Z." fragmented tricolons in headlines / taglines
+- "X që Y, jo Z." parallel oppositions
+- Idiomatic sayings dressed as taglines ("Matet dy herë. Pritet një herë.")
+
+The page should have AT MOST ONE moment of aphoristic punch — typically the hero OR the footer tagline, never both, never every section. Other sections must be FUNCTIONAL: services described in plain terms, story written as direct narrative not poetry, footer giving real info (hours, phone, address-anchor) not another aphorism.
+
+WRONG (every line aphoristic — real failure mode from rrobaqepëse fixture):
+  Hero:   "Para gjilpërës — bisedë."
+  Sub:    "Matim dy herë. Çdo rrobe i japim kohën që meriton."
+  Story:  ends with "Robat nuk hidhen — ndreqen."
+  Footer: "Matet dy herë. Pritet një herë."
+
+RIGHT (one aphoristic moment, rest functional):
+  Hero:   "Rrobaqepse n'Fushë Kosovë. Rregullime, përshtatje, qepje fustani."
+  Sub:    "Shumicën e punëve i kthej brenda dy ditësh."
+  Story:  "Punoj me makinën që e kam blerë në 2003. Klientët e mi vijnë me materialin e tyre — pelhura nga gjyshja, gjysmë-fustani që duan ta përshtasin, pantallona që po vijnë jashtë formë..."
+  Footer: "Matet dy herë. Pritet një herë." ← OK here, this is the one allowed aphorism.
+
+If you find yourself writing an aphorism in a section that already has functional prose elsewhere, STOP. Pick ONE section to be aphoristic. Make all the others plain.
 
 Produce THE WEBSITE THIS BUSINESS WOULD HAVE IF THEY HIRED A DESIGNER WHO READ THE BRIEF — not a generic site for the category.
 
@@ -524,8 +567,41 @@ Output JSON only after all 10 checks pass.
 Output valid JSON matching this schema:
 ${JSON.stringify(THEME_SCHEMA.schema)}`;
 
+// Anti-convergence preamble for few-shot examples. Same fixture regenerated
+// multiple times was converging on near-identical output (e.g. "Tre karrige.
+// Dyzet vjet." appearing across 5+ regenerations of the barbershop fixture)
+// because the model treated example concretes as literal templates instead
+// of register/angle reference.
+const FEW_SHOT_PREAMBLE = `
+CRITICAL — EXAMPLES ARE ANGLE REFERENCE, NOT TEMPLATES:
+
+The example headlines and copy below show the QUALITY LEVEL and ANGLE you should hit — not the exact words, structures, or numbers to reuse.
+
+If your output uses:
+- The same nouns as an example ("three chairs", "eight minutes", "forty years")
+- The same parallel structure ("X. Forty Y.")
+- The same numbers (3, 8, 40)
+- The same syntactic shape
+
+...you have copied the example, not learned from it. REWRITE with different concrete details drawn from the USER'S ACTUAL INPUTS — their real services, their real description, their real uniqueness statement.
+
+Examples teach you what register and concreteness LOOK LIKE. Your output must invent its own concretes from the user's data, not borrow from the examples.
+
+WRONG (real failure mode — model copied "Tre karrige. Dyzet vjet." from examples across 5+ regenerations of the same fixture):
+  Hero: "Tre karrige. Dyzet vjet." ← copied from example
+
+RIGHT (model derives concretes from user's actual uniqueness statement and description):
+  Hero (run 1): "Babi e hapi në '85. Unë e drejtoj tash."
+  Hero (run 2): "Prerje që njeh familjet n'Shadërvan."
+  Hero (run 3): "Dyzet vjet, e njëjta përshëndetje."
+
+Each regeneration of the same fixture should produce a NOTICEABLY DIFFERENT hero. If you produce the same hero structure twice, you have failed the angle-not-template rule.
+`;
+
 function fewShotsFor(canonicalIndustry: string): string {
-  switch (canonicalIndustry) {
+  const industryHeader = `EXAMPLES BELOW — angle and register reference for ${canonicalIndustry}. DO NOT COPY THE EXACT NOUNS, NUMBERS, OR STRUCTURES.`;
+  const examples = (() => {
+    switch (canonicalIndustry) {
     case 'courses':
     case 'education':
       return `
@@ -681,7 +757,9 @@ NOTE: If the business doesn't match any known category, focus the brief on:
 - The owner's voice — direct, not corporate
 
 The services section is flexible: it can be services, products, deliverables, or packages. Pick the frame that fits the business description.`;
-  }
+    }
+  })();
+  return `${FEW_SHOT_PREAMBLE}\n${industryHeader}\n${examples}`;
 }
 
 // ----------------------------------------------------------------

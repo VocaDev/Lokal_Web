@@ -25,6 +25,7 @@ import { contrastRatio, ensureReadableTextColor, relativeLuminance, generatePale
 import { ARCHETYPES, isArchetypeKey, type ArchetypeKey } from '@/lib/archetypes';
 import { BANNED_PHRASES } from '@/lib/banned-phrases';
 import { applyKosovoSubstitutions } from '@/lib/kosovo-substitutions';
+import { detectBusinessShape, sectionHeaderForShape, type BusinessShape } from '@/lib/business-shape';
 import { generateTheme, type GenerateThemeArgs } from '@/lib/ai/theme';
 
 export const maxDuration = 120;
@@ -99,6 +100,8 @@ interface PostProcessCtx {
   userHasHeroPhoto: boolean;
   language: string;
   tone: string;
+  // Detected business shape — drives services section header label.
+  businessShape: BusinessShape;
   wizardServices: WizardServiceInput[];
   businessDescription: string;
   industry: string;
@@ -234,6 +237,19 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
     sections = sections.map(s => (
       s?.kind === 'hero' ? { ...s, imageStyle: 'photo' } : s
     ));
+  }
+
+  // 2d. Shape-aware section header. Attach the resolved header label
+  //     ("Shërbimet" for service businesses, "Pse Te Ne" for retail,
+  //     "Menyja" for restaurants, etc.) to the services section so the
+  //     renderer can read it. Items framing is steered separately by a
+  //     prompt block; this is the visible label.
+  {
+    const language = ctx.language === 'en' ? 'en' : 'sq';
+    const header = sectionHeaderForShape(ctx.businessShape, language);
+    sections = sections.map(s =>
+      s?.kind === 'services' ? { ...s, sectionHeader: header } : s,
+    );
   }
 
   // 3. Wizard's structured service inputs are authoritative for name / price /
@@ -380,7 +396,7 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
     return updated;
   });
 
-  return { ...theme, sections, metaDescription };
+  return { ...theme, sections, metaDescription, businessShape: ctx.businessShape };
 }
 
 // ----------------------------------------------------------------
@@ -444,6 +460,10 @@ export async function POST(request: NextRequest) {
     const userId = userOrResponse.id;
 
     const canonical = normalizeGenerationIndustry(industry, businessDescription);
+    const businessShape = detectBusinessShape({
+      industryText: industry,
+      businessDescription,
+    });
 
     // Look up uploaded photo slots so the prompt can be photo-aware and the
     // post-processor can force a gallery section.
@@ -481,6 +501,7 @@ export async function POST(request: NextRequest) {
       tone: tone || 'friendly',
       userProvidedServices: userProvidedServices || '',
       canonicalIndustry: canonical,
+      businessShape,
       userHasGalleryPhotos,
       userHasServicePhotos,
       regenSeed,
@@ -513,6 +534,7 @@ export async function POST(request: NextRequest) {
       userHasHeroPhoto,
       language: args.language,
       tone: args.tone,
+      businessShape: args.businessShape as BusinessShape,
       wizardServices: Array.isArray(wizardServices)
         ? (wizardServices as WizardServiceInput[])
         : [],

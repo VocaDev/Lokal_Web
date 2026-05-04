@@ -21,6 +21,7 @@ import { parseModelJson } from '@/lib/json-extract';
 import { generatePaletteFromBrandColors } from '@/lib/utils';
 import { ARCHETYPES, isArchetypeKey, type ArchetypeKey } from '@/lib/archetypes';
 import { BANNED_PHRASES } from '@/lib/banned-phrases';
+import { sectionHeaderForShape, type BusinessShape } from '@/lib/business-shape';
 
 const THEME_MODEL = process.env.THEME_GENERATION_MODEL || 'claude-haiku-4-5';
 
@@ -918,6 +919,10 @@ export type GenerateThemeArgs = {
   tone: string;
   userProvidedServices: string;
   canonicalIndustry: string;
+  // Detected business shape (service / retail / restaurant / education /
+  // events / freelance). Drives the services-section header and a small
+  // framing hint added to the dynamic prompt when shape !== 'service'.
+  businessShape: string;
   userHasGalleryPhotos: boolean;
   userHasServicePhotos: boolean;
   regenSeed?: string;
@@ -934,7 +939,7 @@ export async function generateTheme(args: GenerateThemeArgs) {
     archetypeKey, brandPrimary, brandAccent, customFont,
     bookingMethod,
     language, tone, userProvidedServices,
-    canonicalIndustry, userHasGalleryPhotos, userHasServicePhotos, regenSeed,
+    canonicalIndustry, businessShape, userHasGalleryPhotos, userHasServicePhotos, regenSeed,
   } = args;
 
   const definingTraits = Array.isArray(brief.definingTraits)
@@ -1209,6 +1214,23 @@ This is real. It works. It doesn't feel fake.
   const userExplicitlyMentionedCity = cityComponents.some(c => userInputBlob.includes(c.toLowerCase()));
   const primaryCityToken = cityComponents[0] ?? (city ?? '').trim();
 
+  // Shape-aware framing hint. Empty for service-shape businesses (existing
+  // prompt behavior unchanged); for product/program/menu/event/deliverable
+  // businesses we tell the model what the items section actually represents,
+  // so it stops emitting "Shërbim 1, Shërbim 2" and frames items correctly.
+  const shape = businessShape as BusinessShape;
+  const sectionHeader = sectionHeaderForShape(shape, language === 'en' ? 'en' : 'sq');
+  const shapeFramingBlock = shape !== 'service' ? `
+BUSINESS SHAPE: This business is a ${shape} business, NOT a service business. The section that lists "items" will be labeled "${sectionHeader}" on the rendered page — frame items accordingly:
+- retail: items are products, product categories, or trust signals about your products. Don't list "services" — there are no appointments to book.
+- restaurant: items are dishes or menu categories. Don't list services.
+- education: items are programs, courses, or degrees. Don't list services.
+- events: items are ticket types, packages, or event types. Don't list services.
+- freelance: items are deliverables or types of work. Don't list services.
+
+Frame items as fits the shape. Don't write "Shërbim 1, Shërbim 2" — write what the user actually offers.
+` : '';
+
   const placeNameRule = userExplicitlyMentionedCity
     ? `PLACE NAME CAP — soft (the user referenced the city in their inputs):
 You MAY use the city, but AT MOST ONCE total across the entire output (all sections + metaDescription combined). Footer location line is the recommended slot. Repeated city mentions read as marketing filler — Kosovo readers find them unnatural. Real Kosovo businesses say their city once.`
@@ -1263,7 +1285,7 @@ in authentic Kosovar voice. The user's wording may be raw, generic, or
 literal — your output is fresh prose, never a quote of their phrasing.
 
 ${placeNameRule}
-
+${shapeFramingBlock}
 DEFINING TRAITS (also gospel):
 ${traitsForVoiceCheck}
 

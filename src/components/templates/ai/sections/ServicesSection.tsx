@@ -50,13 +50,19 @@ export function ServicesSection({ section, business, services, payload }: Props)
 // ----------------------------------------------------------------
 
 function SectionHeader({ section, payload }: { section: AiServicesSection; payload: AiSitePayload }) {
+  // Shape-aware header. Set by the post-processor based on detected business
+  // shape (see src/lib/business-shape.ts). Fallback covers old themes
+  // persisted before this field existed.
+  const heading = section.sectionHeader && section.sectionHeader.trim().length > 0
+    ? section.sectionHeader
+    : 'Shërbimet';
   return (
     <div className="mb-10 md:mb-14">
       <h2
         className="text-3xl md:text-4xl font-bold mb-3"
         style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
       >
-        Shërbimet
+        {heading}
       </h2>
       {section.intro && (
         <p className="text-base max-w-2xl" style={{ color: payload.mutedTextColor }}>

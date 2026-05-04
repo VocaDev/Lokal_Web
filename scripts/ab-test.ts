@@ -24,6 +24,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { runBrandBrief } from '../src/lib/ai/brand-brief';
 import { generateTheme, type GenerateThemeArgs } from '../src/lib/ai/theme';
+import { detectBusinessShape } from '../src/lib/business-shape';
 
 type Fixture = {
   businessName: string;
@@ -186,6 +187,47 @@ const FIXTURES: Record<string, Fixture> = {
     archetype: 'leter-stil',
     canonicalIndustry: 'education',
   },
+  // ─── Shape-aware verification fixtures ───
+  // Autosallon (car dealer) — should detect as retail shape, header "Pse Te Ne".
+  'autosallon-mitrovice': {
+    businessName: 'Autosallon Drini',
+    industry: 'Autosallon',
+    industryChip: 'other',
+    city: 'Mitrovicë',
+    uniqueness: 'Verifikim i kilometrazhit me dokumente. Garanci 6 muaj për motor dhe transmision. Provë në rrugë para çdo blerjeje.',
+    businessDescription: 'Autosallon në Mitrovicë i specializuar në automjete të përdorura të kontrolluara — modele europiane me histori të verifikuar, garanci shkruar dhe mundësi këmbimi.',
+    services: [
+      { name: 'Verifikim i Kilometrazhit', price: '', durationMinutes: 0 },
+      { name: 'Garanci 6 Muaj', price: '', durationMinutes: 0 },
+      { name: 'Provë në Rrugë', price: '', durationMinutes: 0 },
+      { name: 'Këmbim me Veturë të Vjetër', price: '', durationMinutes: 0 },
+    ],
+    bookingMethod: 'none',
+    language: 'sq',
+    tone: 'professional',
+    archetype: 'ai',
+    canonicalIndustry: 'other',
+  },
+  // Restaurant — should detect as restaurant shape, header "Menyja".
+  'restaurant-traditional': {
+    businessName: 'Restoranti Pishat',
+    industry: 'Restorant',
+    industryChip: 'restaurant',
+    city: 'Prishtinë, Qendër',
+    uniqueness: 'Mish pjekur n\'furrë druri. Brumë i bërë çdo mëngjes. Recetat e gjyshes — pa kompromis.',
+    businessDescription: 'Restorant tradicional shqiptar në Prishtinë me specialitete të pjekura në furrë druri — flija, qebapa, tavë kosi, byrek dhe ëmbëlsira shtëpie.',
+    services: [
+      { name: 'Flija me Kos', price: '6', durationMinutes: 0 },
+      { name: 'Qebapa 10 copë', price: '7', durationMinutes: 0 },
+      { name: 'Tavë Kosi', price: '8', durationMinutes: 0 },
+      { name: 'Byrek me Spinaq', price: '4', durationMinutes: 0 },
+    ],
+    bookingMethod: 'walkin',
+    language: 'sq',
+    tone: 'friendly',
+    archetype: 'i-ngrohte',
+    canonicalIndustry: 'other',
+  },
 };
 
 const FIXTURE_NAME = process.argv[2] || 'clinic-friendly';
@@ -336,6 +378,11 @@ function buildThemeArgsBase(brief: any, fixture: Fixture): Omit<GenerateThemeArg
     tone: fixture.tone,
     userProvidedServices: userProvidedServicesString,
     canonicalIndustry: fixture.canonicalIndustry,
+    businessShape: detectBusinessShape({
+      industryChip: fixture.industryChip,
+      industryText: fixture.industry,
+      businessDescription: fixture.businessDescription,
+    }),
     userHasGalleryPhotos: false,
     userHasServicePhotos: false,
   };

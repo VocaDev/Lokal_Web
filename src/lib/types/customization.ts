@@ -160,6 +160,11 @@ export interface AiServicesSection {
   divider: 'none' | 'line' | 'number';
   intro?: string;
   items: Array<{ name: string; description?: string; price?: number; durationMinutes?: number; durationLabel?: string }>;
+  // Shape-aware section header. Set by the post-processor based on detected
+  // business shape (service / retail / restaurant / education / events /
+  // freelance). Renderer falls back to "Shërbimet" if missing for backward
+  // compatibility with already-persisted themes.
+  sectionHeader?: string;
 }
 
 export interface AiStorySection {

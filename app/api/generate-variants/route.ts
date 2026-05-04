@@ -24,6 +24,7 @@ import { emitProgress } from '@/lib/ai-progress';
 import { contrastRatio, ensureReadableTextColor, relativeLuminance, generatePaletteFromBrandColors } from '@/lib/utils';
 import { ARCHETYPES, isArchetypeKey, type ArchetypeKey } from '@/lib/archetypes';
 import { BANNED_PHRASES } from '@/lib/banned-phrases';
+import { applyKosovoSubstitutions } from '@/lib/kosovo-substitutions';
 import { generateTheme, type GenerateThemeArgs } from '@/lib/ai/theme';
 
 export const maxDuration = 120;
@@ -47,16 +48,20 @@ function normalizeGenerationIndustry(industry: string, businessDescription?: str
   return normalizeIndustry(industry);
 }
 
+// Customer-facing copy fields. Shared between the banned-phrase scanner
+// (collectSectionCopy) and the Kosovo lexical substitution pass — both
+// passes need to see the same surface area.
+const SECTION_TEXT_FIELDS = ['headline', 'subheadline', 'body', 'intro', 'attribution', 'caption', 'tagline', 'metadataLeft', 'metadataRight', 'ctaPrimary', 'ctaSecondary'];
+const ITEM_TEXT_FIELDS = ['name', 'description', 'quote', 'role', 'question', 'answer'];
+
 // Recursively scan section text fields for banned phrases.
 function collectSectionCopy(sections: any[]): string {
   if (!Array.isArray(sections)) return '';
-  const TEXT_FIELDS = ['headline', 'subheadline', 'body', 'intro', 'attribution', 'caption', 'tagline', 'metadataLeft', 'metadataRight', 'ctaPrimary', 'ctaSecondary'];
-  const ITEM_TEXT_FIELDS = ['name', 'description', 'quote', 'role', 'question', 'answer'];
 
   const parts: string[] = [];
   for (const section of sections) {
     if (!section || typeof section !== 'object') continue;
-    for (const field of TEXT_FIELDS) {
+    for (const field of SECTION_TEXT_FIELDS) {
       if (typeof section[field] === 'string') parts.push(section[field]);
     }
     if (Array.isArray(section.items)) {
@@ -93,6 +98,7 @@ interface PostProcessCtx {
   userHasGalleryPhotos: boolean;
   userHasHeroPhoto: boolean;
   language: string;
+  tone: string;
   wizardServices: WizardServiceInput[];
   businessDescription: string;
   industry: string;
@@ -342,7 +348,39 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
   // 7. Final ordering — hero -> services -> story -> gallery -> footer.
   sections = reorderSections(sections);
 
-  return { ...theme, sections };
+  // 8. Kosovo lexical substitution — rewrite Tirana defaults (tani, tek,
+  // çfarë, fqinj, makinë, shtëpia) to Kosovo equivalents (tash, te, çka,
+  // kojshi, veturë, shpia). Tone-conditional. Runs LAST so it sees the
+  // final post-processed copy including any fallbacks injected above.
+  const tone = ctx.tone || 'friendly';
+  let metaDescription = theme?.metaDescription;
+  if (typeof metaDescription === 'string') {
+    metaDescription = applyKosovoSubstitutions(metaDescription, tone);
+  }
+  sections = sections.map(s => {
+    if (!s || typeof s !== 'object') return s;
+    const updated: any = { ...s };
+    for (const field of SECTION_TEXT_FIELDS) {
+      if (typeof updated[field] === 'string') {
+        updated[field] = applyKosovoSubstitutions(updated[field], tone);
+      }
+    }
+    if (Array.isArray(updated.items)) {
+      updated.items = updated.items.map((item: any) => {
+        if (!item || typeof item !== 'object') return item;
+        const updatedItem: any = { ...item };
+        for (const field of ITEM_TEXT_FIELDS) {
+          if (typeof updatedItem[field] === 'string') {
+            updatedItem[field] = applyKosovoSubstitutions(updatedItem[field], tone);
+          }
+        }
+        return updatedItem;
+      });
+    }
+    return updated;
+  });
+
+  return { ...theme, sections, metaDescription };
 }
 
 // ----------------------------------------------------------------
@@ -474,6 +512,7 @@ export async function POST(request: NextRequest) {
       userHasGalleryPhotos,
       userHasHeroPhoto,
       language: args.language,
+      tone: args.tone,
       wizardServices: Array.isArray(wizardServices)
         ? (wizardServices as WizardServiceInput[])
         : [],

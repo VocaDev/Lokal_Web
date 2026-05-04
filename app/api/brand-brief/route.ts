@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser, bumpAiUsage } from '@/lib/api-auth';
 import { emitProgress } from '@/lib/ai-progress';
 import { runBrandBrief } from '@/lib/ai/brand-brief';
+import { applyKosovoSubstitutions } from '@/lib/kosovo-substitutions';
 
 export const maxDuration = 30;
 
@@ -64,6 +65,26 @@ export async function POST(request: NextRequest) {
       businessName, industry, industryChip, city, uniqueness, businessDescription,
       services, bookingMethod, language, tone,
     });
+
+    // Kosovo lexical substitution — rewrite Tirana defaults in the brief
+    // before returning. The brief's string fields are quoted into the theme
+    // prompt downstream, so leaving Tirana words here would leak them into
+    // the theme output even with the theme's own substitution pass.
+    const briefTone = (typeof tone === 'string' && tone) ? tone : 'friendly';
+    const b = brief as Record<string, unknown>;
+    if (b && typeof b === 'object') {
+      for (const field of ['positioning', 'voice', 'targetCustomer', 'culturalAnchor']) {
+        if (typeof b[field] === 'string') {
+          b[field] = applyKosovoSubstitutions(b[field] as string, briefTone);
+        }
+      }
+      if (Array.isArray(b.definingTraits)) {
+        b.definingTraits = b.definingTraits.map((t: unknown) =>
+          typeof t === 'string' ? applyKosovoSubstitutions(t, briefTone) : t,
+        );
+      }
+    }
+
     console.log('[brand-brief]', JSON.stringify(brief, null, 2));
 
     if (canEmit) {

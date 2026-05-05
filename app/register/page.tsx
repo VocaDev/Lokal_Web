@@ -150,7 +150,7 @@ export default function RegisterPage() {
         // 2. Create business record. Real name + booking-enabled flag are
         //    captured here at signup; industry stays a placeholder until the
         //    wizard runs (the wizard asks for it).
-        const { error: bizError } = await supabase
+        const { data: newBiz, error: bizError } = await supabase
           .from("businesses")
           .insert({
             owner_id: data.user.id,
@@ -159,9 +159,35 @@ export default function RegisterPage() {
             industry: 'other',
             booking_enabled: form.bookingEnabled,
             website_builder_completed: false,
-          });
+          })
+          .select('id')
+          .single();
 
         if (bizError) throw bizError;
+
+        // 3. Seed default Mon-Sat 9-18 hours, Sunday closed. Without this
+        //    the booking date picker on the public site grays out every
+        //    day (hours.find(...)?.isOpen ?? false) and the public footer's
+        //    "ORARI" block renders empty. Owner can edit later in the
+        //    dashboard. We do not block signup if the seed fails — the
+        //    business row already committed and the user can fix hours
+        //    manually if Storage rejects the insert for any reason.
+        if (newBiz?.id) {
+          const days = [1, 2, 3, 4, 5, 6, 0];
+          const defaultHours = days.map(day => ({
+            business_id: newBiz.id,
+            day_of_week: day,
+            is_open: day !== 0,
+            open_time: '09:00',
+            close_time: '18:00',
+          }));
+          const { error: hoursError } = await supabase
+            .from('business_hours')
+            .insert(defaultHours);
+          if (hoursError) {
+            console.warn('[register] default business_hours seed failed:', hoursError);
+          }
+        }
 
         setStep(2); // Go to verification message
       }

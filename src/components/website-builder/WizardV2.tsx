@@ -720,7 +720,7 @@ function Step1({
         <TextInput
           value={input.industry}
           onChange={(e) => update({ industry: e.target.value, industryChip: undefined })}
-          placeholder="ose shkruaj: studio tatuazhi, lavazh makinash..."
+          placeholder="ose shkruaje vetë — p.sh. studio tatuazhi, marangoz, fotograf dasmash"
         />
       </div>
 
@@ -729,15 +729,16 @@ function Step1({
         <TextInput
           value={input.city}
           onChange={(e) => update({ city: e.target.value })}
-          placeholder="p.sh. Prishtinë, Sunny Hill"
+          placeholder="p.sh. Prishtinë — Sunny Hill, Ferizaj — qendër"
         />
         <p className="text-xs text-[#5a5a7a] mt-1">
-          Shto lagjen nëse mundesh — ndihmon AI të kuptojë kontekstin lokal.
+          Shto edhe lagjen nëse mundesh — kur klienti kërkon &ldquo;berber Sunny Hill&rdquo;,
+          faqja jote del. Pa lagje, del vetëm për qytetin.
         </p>
       </div>
 
       <div className="space-y-2">
-        <FieldLabel hint="Një fjali. Gjëja që sjell klientët mbrapa.">
+        <FieldLabel hint="Një ose dy fjali. Gjëja që klientët kujtojnë kur ikin nga dera.">
           Çfarë e bën biznesin tënd ndryshe? <span className="text-muted-foreground font-normal">(opsionale)</span>
         </FieldLabel>
         <TextArea
@@ -745,11 +746,13 @@ function Step1({
           onChange={(e) => update({ uniqueness: e.target.value })}
           placeholder="p.sh. Vetmi n'lagje që e mbaj emrin e klientit pa pyt'. Babai im e ka hap dyqanin n'87."
         />
-        <div className="mt-2 p-3 rounded-lg bg-[#1e1e35] border border-[rgba(120,120,255,0.12)]">
-          <p className="text-xs text-[#5a5a7a] mb-1">💡 Nëse nuk di nga të fillosh, provo:</p>
-          <p className="text-xs text-[#8888aa] italic">
-            &quot;Vijn&apos; tek ne sepse _______, jo se s&apos;kanë ku tjetër me shku.&quot;
-          </p>
+        <div className="mt-2 p-3 rounded-lg bg-[#1e1e35] border border-[rgba(120,120,255,0.12)] space-y-1.5">
+          <p className="text-xs text-[#5a5a7a]">💡 Nëse s&apos;din nga ku me fillu, plotëso njërin:</p>
+          <ul className="text-xs text-[#8888aa] italic space-y-1 pl-1">
+            <li>&ldquo;Vijn&apos; tek ne se _______, jo se s&apos;kanë ku tjetër me shku.&rdquo;</li>
+            <li>&ldquo;Gjëja që e bëjmë më mirë se kushdo tjetër n&apos;qytet asht _______.&rdquo;</li>
+            <li>&ldquo;Klienti i parë qysh në vitin _______ ende vjen — për shkak të _______.&rdquo;</li>
+          </ul>
         </div>
       </div>
 
@@ -757,19 +760,19 @@ function Step1({
           profile page (/dashboard/profile) is the canonical edit surface, but
           asking here means new users get them wired up on first generation. */}
       <div className="space-y-2">
-        <FieldLabel hint="Opsionale. Vendosen në fund të faqes — që klientët t'ju gjejnë.">
+        <FieldLabel hint="Opsionale, por ndihmon. Linket dalin në fund të faqes — klienti i ri sheh fotot e tua të vërteta para se t'a marrë vendimin.">
           Rrjete sociale <span className="text-muted-foreground font-normal">(opsionale)</span>
         </FieldLabel>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <TextInput
             value={input.instagramUrl ?? ''}
             onChange={(e) => update({ instagramUrl: e.target.value })}
-            placeholder="Instagram — instagram.com/biznesi_jot"
+            placeholder="instagram.com/biznesi_jot"
           />
           <TextInput
             value={input.tiktokUrl ?? ''}
             onChange={(e) => update({ tiktokUrl: e.target.value })}
-            placeholder="TikTok — tiktok.com/@biznesi_jot"
+            placeholder="tiktok.com/@biznesi_jot"
           />
         </div>
       </div>
@@ -807,19 +810,23 @@ function Step2({
     <div className="space-y-6">
       {/* A — Business description (required, silently gated) */}
       <div className="space-y-2">
-        <FieldLabel hint="Mos e mendo si listë — thjesht përshkruaje me fjalët e tua. Çfarë ofron klientëve?">
+        <FieldLabel hint="Mos e mendo si listë — fol me fjalët e tua, sikur t'i tregosh dikujt për herë t'parë çka po bën.">
           Përshkrimi i biznesit
         </FieldLabel>
         <TextArea
           value={input.businessDescription ?? ''}
           onChange={(e) => update({ businessDescription: e.target.value })}
-          placeholder="p.sh. Berber prej '99 n'Çarshi. Tre karrige, prerje klasike, brisk dhe paketa për dasma. Klientët vijn' edhe prej Prishtinës."
+          placeholder="p.sh. Kafene e vogël n'qendër t'Prishtinës. Kafe, çaj, byrek nga mëngjesi. Hapur çdo ditë nga ora 6:30 deri n'22:00."
           maxLength={300}
           className="min-h-[72px]"
         />
         <div className="flex items-start justify-between gap-3 mt-1">
           <p className="text-xs text-[#5a5a7a] flex-1">
-            Sa më shumë detaje, aq më e mirë faqja. Përshkruaj çfarë bën, kush vjen tek ti, dhe çfarë e bën biznesin tënd ndryshe. 2-4 fjali është mirë.
+            Sa më shumë detaje, aq më e mirë faqja. 2-4 fjali që mbulojnë:
+            <span className="text-[#8888aa]"> çka shet</span>,
+            <span className="text-[#8888aa]"> kush vjen tek ti</span>,
+            <span className="text-[#8888aa]"> dhe çfarë i bën klientët të kthehen</span>.
+            AI nuk po të gjykon — sa më t&apos;sinqertë, aq më e besueshme tingëllon faqja.
           </p>
           <DescriptionWordCount text={input.businessDescription ?? ''} />
         </div>
@@ -830,11 +837,11 @@ function Step2({
 
       {/* B — Specific services (optional) */}
       <div className="space-y-3">
-        <FieldLabel hint="Opsionale. Nëse ke një listë specifike që do t'i shfaqësh në faqe, shtoji më poshtë. Mund ta lësh bosh — AI do të krijojë seksionin sipas përshkrimit më lart.">
+        <FieldLabel hint="Opsionale. Nëse ke shërbime ose produkte specifike që do t'i shohë klienti me çmim, shtoji këtu. Mund t'a lësh bosh — AI do të krijojë seksionin sipas përshkrimit më lart.">
           Shërbime ose produkte specifike
         </FieldLabel>
         <p className="text-[11px] text-muted-foreground">
-          Kohëzgjatja: sa minuta zgjat shërbimi mesatarisht? P.sh. 15, 30, 60, 90.
+          Kohëzgjatja (opsionale): sa minuta zgjat shërbimi mesatarisht — p.sh. 15, 30, 60, 90. Lëre bosh për produkte ose gjëra që s&apos;maten me kohë.
         </p>
 
         {input.services.length > 0 && (
@@ -845,12 +852,12 @@ function Step2({
                   <TextInput
                     value={s.name}
                     onChange={(e) => updateService(idx, { name: e.target.value })}
-                    placeholder="Emri i shërbimit (p.sh. Kurs Python)"
+                    placeholder="p.sh. Prerje + krenim, Pizza Margherita, Konsultë"
                   />
                   <TextInput
                     value={s.price ?? ''}
                     onChange={(e) => updateService(idx, { price: e.target.value })}
-                    placeholder="Çmimi €"
+                    placeholder="p.sh. 12€"
                   />
                   <div className="relative hidden md:block">
                     <TextInput

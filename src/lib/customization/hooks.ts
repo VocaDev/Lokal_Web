@@ -73,6 +73,18 @@ export async function uploadGalleryImage(
     body: formData,
   });
 
-  if (!res.ok) throw new Error('Failed to upload image');
+  if (!res.ok) {
+    // Surface the server-side error verbatim so the user sees *why* the
+    // upload was rejected (size, MIME, RLS, storage quota, etc.) instead
+    // of a generic "Failed to upload image".
+    let message = `Upload failed (${res.status})`;
+    try {
+      const body = await res.json();
+      if (body?.error) message = String(body.error);
+    } catch {
+      // body wasn't JSON — fall back to status-based message.
+    }
+    throw new Error(message);
+  }
   return res.json();
 }

@@ -83,8 +83,14 @@ function backgroundStyle(
       // Otherwise return a neutral surface — the layout overlays a dashed
       // PhotoPlaceholder so the user sees exactly where the photo will go.
       if (heroImageUrl) {
+        // Quote the URL — without quotes, any '(' or ')' in the path (e.g.
+        // a Supabase Storage object whose original filename was
+        // "photo (1).jpg") terminates the CSS url() at the first ')',
+        // breaking the background-image silently. Backslash-escape any
+        // double-quote in the URL just in case.
+        const safe = heroImageUrl.replace(/"/g, '\\"');
         return {
-          backgroundImage: `url(${heroImageUrl})`,
+          backgroundImage: `url("${safe}")`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         };

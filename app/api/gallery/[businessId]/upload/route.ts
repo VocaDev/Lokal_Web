@@ -24,13 +24,34 @@ export async function POST(
       );
     }
 
-    // Upload to Supabase Storage
-    const filename = `${Date.now()}-${file.name}`;
+    // Sanitize the filename. Supabase Storage paths are technically
+    // permissive, but unescaped parens / spaces / non-ASCII characters in
+    // the resulting public URL break consumers (notably CSS url() values
+    // and certain image proxies). We strip the original name down to a
+    // safe slug + preserve the extension. The Date.now() prefix keeps
+    // collisions impossible and traceability intact.
+    const dotIdx = file.name.lastIndexOf('.');
+    const rawExt = dotIdx >= 0 ? file.name.slice(dotIdx + 1) : '';
+    const ext = rawExt.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8) || 'bin';
+    const rawBase = dotIdx >= 0 ? file.name.slice(0, dotIdx) : file.name;
+    const slug =
+      rawBase
+        .normalize('NFKD')
+        // Strip combining diacritical marks (ç → c, ë → e, ñ → n, …).
+        .replace(/[̀-ͯ]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 60) || 'image';
+    const filename = `${Date.now()}-${slug}.${ext}`;
     const path = `${businessId}/${sectionKey}/${filename}`;
 
     const { error: uploadError } = await supabase.storage
       .from('business-gallery')
-      .upload(path, file, { upsert: false });
+      .upload(path, file, {
+        upsert: false,
+        contentType: file.type || undefined,
+      });
 
     if (uploadError) {
       console.error('Supabase Storage Error:', uploadError);

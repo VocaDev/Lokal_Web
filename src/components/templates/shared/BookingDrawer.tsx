@@ -90,7 +90,10 @@ export default function BookingDrawer({
   const next7Days = useMemo(() => {
     const days: Date[] = []
     const today = new Date()
-    for (let i = 1; i <= 7; i++) {
+    // Start at i=0 so today is offered as a bookable date. Past time
+    // slots within today are filtered by generateAvailableSlots
+    // (bookingService.ts) — `if (t < nowMs) continue`.
+    for (let i = 0; i < 7; i++) {
       const d = new Date(today)
       d.setDate(today.getDate() + i)
       days.push(d)

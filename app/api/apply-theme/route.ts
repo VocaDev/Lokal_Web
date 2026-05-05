@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     // Fallback for migration 018 — strip photo caption columns if missing.
     if (error && /hero_photo_caption|story_photo_caption/i.test(error.message || '')) {
-      console.warn('[apply-theme] Photo caption columns missing, retrying without them. Run docs/migrations/018_photo_captions.sql.');
+      console.warn('[apply-theme] Photo caption columns missing, retrying without them. Run supabase/migrations/018_photo_captions.sql.');
       const { hero_photo_caption, story_photo_caption, ...withoutCaptions } = payload;
       const retry = await supabase
         .from('website_customization')
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
     // Fallback for migration 015 — strip ai_sections / ai_layout_seed if the
     // DB hasn't been migrated yet, then retry.
     if (error && /ai_sections|ai_layout_seed/i.test(error.message || '')) {
-      console.warn('[apply-theme] AI section columns missing, retrying without them. Run docs/migrations/015_ai_sections_payload.sql.');
+      console.warn('[apply-theme] AI section columns missing, retrying without them. Run supabase/migrations/015_ai_sections_payload.sql.');
       const {
         ai_sections, ai_layout_seed,
         hero_photo_caption, story_photo_caption,
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
 
     // Fallback for migration 014 — strip wizard v2 columns if missing.
     if (error && /site_language|site_tone|uniqueness_statement|booking_method/i.test(error.message || '')) {
-      console.warn('[apply-theme] Wizard v2 columns missing, retrying without them. Run docs/migrations/014_wizard_v2_columns.sql.');
+      console.warn('[apply-theme] Wizard v2 columns missing, retrying without them. Run supabase/migrations/014_wizard_v2_columns.sql.');
       const {
         site_language, site_tone,
         uniqueness_statement, booking_method,
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
 
     // Fallback for migration 005 — strip rich content / new columns if missing.
     if (error && /column .* does not exist|Could not find|schema cache|meta_description/i.test(error.message || '')) {
-      console.warn('[apply-theme] Rich content columns missing, falling back to core. Run docs/migrations/005_ai_rich_content_columns.sql.');
+      console.warn('[apply-theme] Rich content columns missing, falling back to core. Run supabase/migrations/005_ai_rich_content_columns.sql.');
       const {
         meta_description,
         ai_sections, ai_layout_seed,

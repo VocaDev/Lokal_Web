@@ -34,12 +34,24 @@ type Props = {
 
 const TOTAL_STEPS = 5;
 
+// Common Kosovo small-business types. The `id` is the canonical chip value
+// passed through to the brand-brief + theme prompts; the `label` is what the
+// user sees. New IDs (rrobaqepese / auto / lavazh / photography) fall through
+// to canonical 'other' in normalizeGenerationIndustry — that's fine, the
+// industry text + description still steer the prompt and the shape detector
+// (src/lib/business-shape.ts) handles section labeling.
 const INDUSTRY_CHIPS: Array<{ label: string; id: string }> = [
   { label: 'Berber', id: 'barbershop' },
-  { label: 'Restorant', id: 'restaurant' },
-  { label: 'Klinikë', id: 'clinic' },
+  { label: 'Restorant / Kafene', id: 'restaurant' },
+  { label: 'Klinikë / Dentist', id: 'clinic' },
   { label: 'Sallon Bukurie', id: 'beauty_salon' },
   { label: 'Palestër', id: 'gym' },
+  { label: 'Rrobaqepëse / Atelié', id: 'rrobaqepese' },
+  { label: 'Dyqan / Boutique', id: 'retail' },
+  { label: 'Autosallon / Servis', id: 'auto' },
+  { label: 'Lavazh', id: 'lavazh' },
+  { label: 'Fotograf / Studio', id: 'photography' },
+  { label: 'Kurse / Akademi', id: 'education' },
   { label: 'Diçka tjetër', id: 'other' },
 ];
 
@@ -606,6 +618,23 @@ function FieldLabel({ children, hint }: { children: React.ReactNode; hint?: stri
   );
 }
 
+// Live word counter for the business-description field. Muted under 15 words,
+// positive at 15-50, neutral over 50. Guidance only — the existing 10-char
+// minimum still gates submission silently elsewhere.
+function DescriptionWordCount({ text }: { text: string }) {
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const tone =
+    words === 0 ? 'text-muted-foreground/60' :
+    words < 15 ? 'text-muted-foreground' :
+    words <= 50 ? 'text-emerald-600' :
+    'text-muted-foreground';
+  return (
+    <span className={cn('text-[11px] font-medium tabular-nums shrink-0 mt-0.5', tone)}>
+      {words} {words === 1 ? 'fjalë' : 'fjalë'}
+    </span>
+  );
+}
+
 function Chip({
   active, onClick, children,
 }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
@@ -788,9 +817,12 @@ function Step2({
           maxLength={300}
           className="min-h-[72px]"
         />
-        <p className="text-xs text-[#5a5a7a] mt-1">
-          Sa më specifik të jesh, aq më mirë do ta kuptojë AI biznesin tënd.
-        </p>
+        <div className="flex items-start justify-between gap-3 mt-1">
+          <p className="text-xs text-[#5a5a7a] flex-1">
+            Sa më shumë detaje, aq më e mirë faqja. Përshkruaj çfarë bën, kush vjen tek ti, dhe çfarë e bën biznesin tënd ndryshe. 2-4 fjali është mirë.
+          </p>
+          <DescriptionWordCount text={input.businessDescription ?? ''} />
+        </div>
       </div>
 
       {/* Visual divider between sections */}
@@ -801,6 +833,9 @@ function Step2({
         <FieldLabel hint="Opsionale. Nëse ke një listë specifike që do t'i shfaqësh në faqe, shtoji më poshtë. Mund ta lësh bosh — AI do të krijojë seksionin sipas përshkrimit më lart.">
           Shërbime ose produkte specifike
         </FieldLabel>
+        <p className="text-[11px] text-muted-foreground">
+          Kohëzgjatja: sa minuta zgjat shërbimi mesatarisht? P.sh. 15, 30, 60, 90.
+        </p>
 
         {input.services.length > 0 && (
           <div className="space-y-3">
@@ -817,16 +852,24 @@ function Step2({
                     onChange={(e) => updateService(idx, { price: e.target.value })}
                     placeholder="Çmimi €"
                   />
-                  <TextInput
-                    className="hidden md:block"
-                    value={s.durationMinutes !== undefined ? String(s.durationMinutes) : ''}
-                    onChange={(e) => {
-                      const raw = e.target.value.trim();
-                      const n = raw === '' ? undefined : Number(raw);
-                      updateService(idx, { durationMinutes: Number.isFinite(n) ? (n as number) : undefined });
-                    }}
-                    placeholder="Kohëzgjatja"
-                  />
+                  <div className="relative hidden md:block">
+                    <TextInput
+                      className="pr-10"
+                      value={s.durationMinutes !== undefined ? String(s.durationMinutes) : ''}
+                      onChange={(e) => {
+                        const raw = e.target.value.trim();
+                        const n = raw === '' ? undefined : Number(raw);
+                        updateService(idx, { durationMinutes: Number.isFinite(n) ? (n as number) : undefined });
+                      }}
+                      placeholder="30"
+                    />
+                    <span
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-medium text-muted-foreground pointer-events-none select-none"
+                      aria-hidden="true"
+                    >
+                      min
+                    </span>
+                  </div>
                   <button
                     type="button"
                     onClick={() => removeService(idx)}
@@ -920,43 +963,71 @@ function Step2({
 
 // ---------- Step 3 ----------
 //
-// One scrollable step with four layout pickers. Each picker is a 5-card grid
-// (4 specific layouts + 'AI vendos'). Default selection is 'ai' across the
-// board; the post-processor in /api/generate-variants only forces the AI's
-// layout when the user picked a specific one.
+// AI is the default for all four sections (heroLayout/storyLayout/
+// servicesLayout/galleryLayout = 'ai' from defaultInput). The per-section
+// pickers live behind an "Opsione të avancuara" disclosure so most users
+// move forward with one obvious AI-decides choice; power users can still
+// override. Collapsed by default unless the user has already locked at
+// least one section to a specific layout (e.g. on a regen).
 function Step3({
   input, update,
 }: { input: WizardInput; update: (p: Partial<WizardInput>) => void }) {
+  const hasOverride =
+    input.heroLayout !== 'ai' ||
+    input.storyLayout !== 'ai' ||
+    input.servicesLayout !== 'ai' ||
+    input.galleryLayout !== 'ai';
+
   return (
-    <div className="space-y-10">
-      <LayoutPicker
-        title="Hero"
-        family="hero"
-        options={HERO_LAYOUTS}
-        selected={input.heroLayout}
-        onPick={(v) => update({ heroLayout: v as WizardInput['heroLayout'] })}
-      />
-      <LayoutPicker
-        title="Historia"
-        family="story"
-        options={STORY_LAYOUTS}
-        selected={input.storyLayout}
-        onPick={(v) => update({ storyLayout: v as WizardInput['storyLayout'] })}
-      />
-      <LayoutPicker
-        title="Shërbimet"
-        family="services"
-        options={SERVICES_LAYOUTS}
-        selected={input.servicesLayout}
-        onPick={(v) => update({ servicesLayout: v as WizardInput['servicesLayout'] })}
-      />
-      <LayoutPicker
-        title="Galeria"
-        family="gallery"
-        options={GALLERY_LAYOUTS}
-        selected={input.galleryLayout}
-        onPick={(v) => update({ galleryLayout: v as WizardInput['galleryLayout'] })}
-      />
+    <div className="space-y-6">
+      <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+        <div className="flex items-start gap-3">
+          <span aria-hidden="true" className="text-lg leading-none mt-0.5">✨</span>
+          <div className="space-y-1">
+            <div className="text-[14px] font-semibold text-foreground">AI vendos strukturën</div>
+            <div className="text-[12px] text-muted-foreground">
+              Sipas brief-it të biznesit tënd, AI zgjedh strukturën më të mirë për çdo seksion. Nëse do ta zgjedhësh vetë, hap opsionet e avancuara më poshtë.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <details className="group" open={hasOverride}>
+        <summary className="cursor-pointer list-none flex items-center justify-between gap-2 rounded-lg border border-border bg-card/50 px-4 py-3 hover:bg-card transition-colors">
+          <span className="text-[13px] font-medium text-foreground">Opsione të avancuara — zgjidh strukturën vetë</span>
+          <span aria-hidden="true" className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
+        </summary>
+        <div className="space-y-10 pt-6">
+          <LayoutPicker
+            title="Hero"
+            family="hero"
+            options={HERO_LAYOUTS}
+            selected={input.heroLayout}
+            onPick={(v) => update({ heroLayout: v as WizardInput['heroLayout'] })}
+          />
+          <LayoutPicker
+            title="Historia"
+            family="story"
+            options={STORY_LAYOUTS}
+            selected={input.storyLayout}
+            onPick={(v) => update({ storyLayout: v as WizardInput['storyLayout'] })}
+          />
+          <LayoutPicker
+            title="Shërbimet"
+            family="services"
+            options={SERVICES_LAYOUTS}
+            selected={input.servicesLayout}
+            onPick={(v) => update({ servicesLayout: v as WizardInput['servicesLayout'] })}
+          />
+          <LayoutPicker
+            title="Galeria"
+            family="gallery"
+            options={GALLERY_LAYOUTS}
+            selected={input.galleryLayout}
+            onPick={(v) => update({ galleryLayout: v as WizardInput['galleryLayout'] })}
+          />
+        </div>
+      </details>
     </div>
   );
 }

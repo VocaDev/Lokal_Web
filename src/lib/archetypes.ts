@@ -14,7 +14,7 @@
 export const ARCHETYPES = {
   'i-ngrohte': {
     nameAlb: 'I Ngrohtë',
-    descriptor: 'Personal, i bërë me dorë, me shpirt',
+    descriptor: 'Për biznese tradicionale, familjare. Ngjyra kafe, krem, drurë.',
     fits: ['barbershop', 'beauty_salon', 'retail', 'freelance'],
     palette: {
       bgColor: '#faf7f2',
@@ -33,7 +33,7 @@ export const ARCHETYPES = {
   },
   'erresi-karakter': {
     nameAlb: 'Errësirë & Karakter',
-    descriptor: 'I fortë, i drejtpërdrejtë, pa kompromis',
+    descriptor: 'Për biznese moderne, urbane, me karakter. Ngjyra të errëta, theks ari.',
     fits: ['gym', 'events', 'barbershop'],
     palette: {
       bgColor: '#0a0a0a',
@@ -52,7 +52,7 @@ export const ARCHETYPES = {
   },
   'besim-qartesi': {
     nameAlb: 'Besim & Qartësi',
-    descriptor: 'I qartë, i besueshëm, profesional',
+    descriptor: 'Për klinika, dentista, shërbime profesionale. Ngjyra të kthjellëta, blu.',
     fits: ['clinic', 'education', 'other'],
     palette: {
       bgColor: '#f8fafc',
@@ -71,7 +71,7 @@ export const ARCHETYPES = {
   },
   'gjalleri-moderne': {
     nameAlb: 'Gjallëri Moderne',
-    descriptor: 'Energjik, i freskët, bashkëkohor',
+    descriptor: 'Për biznese energjike, të reja. Ngjyra të gjalla, kontrast i lartë.',
     fits: ['other', 'education', 'retail', 'restaurant'],
     palette: {
       bgColor: '#ffffff',
@@ -90,7 +90,7 @@ export const ARCHETYPES = {
   },
   'leter-stil': {
     nameAlb: 'Letër & Stil',
-    descriptor: 'Klasik, me karakter, editorial',
+    descriptor: 'Për restorante klasike, akademi, biznese editoriale. Krem, hijeshi klasike.',
     fits: ['restaurant', 'freelance', 'education'],
     palette: {
       bgColor: '#f5f0e8',
@@ -109,7 +109,7 @@ export const ARCHETYPES = {
   },
   'studioja': {
     nameAlb: 'Studioja',
-    descriptor: 'I guximshëm, i madh, i papërmbajtur',
+    descriptor: 'Për biznese me zë të fortë, palestra, evente. Ngjyra të errëta, theks portokalli.',
     fits: ['gym', 'other', 'events'],
     palette: {
       bgColor: '#0d0d0d',
@@ -128,7 +128,7 @@ export const ARCHETYPES = {
   },
   'familjar-mirprites': {
     nameAlb: 'Familjar & Mirëpritës',
-    descriptor: 'I butë, i ngrohtë, familjar',
+    descriptor: 'Për restorante familjare, dyqane lagjeje. E ngrohtë, e thjeshtë.',
     fits: ['restaurant', 'beauty_salon', 'clinic'],
     palette: {
       bgColor: '#fdf6ee',
@@ -147,7 +147,7 @@ export const ARCHETYPES = {
   },
   'elegant-rafinuar': {
     nameAlb: 'Elegant & i Rafinuar',
-    descriptor: 'I sofistikuar, premium, me klasë',
+    descriptor: 'Për produkte premium, evente luksoze, biznese me klasë. Hijeshi e qetë, ari mat.',
     fits: ['events', 'restaurant', 'beauty_salon'],
     palette: {
       bgColor: '#0c0a08',

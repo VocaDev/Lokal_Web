@@ -98,6 +98,10 @@ interface PostProcessCtx {
   userHasServicePhotos: boolean;
   userHasGalleryPhotos: boolean;
   userHasHeroPhoto: boolean;
+  // Layouts saved on the previous generation (if any), used to bias the
+  // random pool pick away from repetition. Undefined on first generation.
+  previousHeroLayout?: string;
+  previousStoryLayout?: string;
   language: string;
   tone: string;
   // Detected business shape — drives services section header label.
@@ -120,6 +124,44 @@ interface PostProcessCtx {
 
 function nonEmptyString(v: any): string {
   return typeof v === 'string' && v.trim().length > 0 ? v.trim() : '';
+}
+
+// Per-archetype hero/story layout pools. The first entry mirrors the
+// archetype's preferredHeroLayout / preferredStoryLayout (src/lib/archetypes.ts)
+// and is therefore the "default lean", but pickFromPool randomizes among the
+// full list so each regen has a real chance of producing a different shape.
+// Compatibility is hand-curated: every layout in a pool reads cleanly with
+// the archetype's palette + fonts.
+const HERO_LAYOUT_POOL: Record<ArchetypeKey, string[]> = {
+  'i-ngrohte':         ['editorial', 'centered', 'split'],
+  'erresi-karakter':   ['fullbleed', 'asymmetric'],
+  'besim-qartesi':     ['split', 'centered'],
+  'gjalleri-moderne':  ['asymmetric', 'fullbleed', 'split'],
+  'leter-stil':        ['editorial', 'centered'],
+  'studioja':          ['fullbleed', 'asymmetric', 'split'],
+  'familjar-mirprites':['split', 'centered'],
+  'elegant-rafinuar':  ['centered', 'editorial'],
+};
+
+const STORY_LAYOUT_POOL: Record<ArchetypeKey, string[]> = {
+  'i-ngrohte':         ['centered-quote', 'two-column'],
+  'erresi-karakter':   ['pull-quote', 'long-form'],
+  'besim-qartesi':     ['two-column', 'long-form'],
+  'gjalleri-moderne':  ['long-form', 'pull-quote'],
+  'leter-stil':        ['long-form', 'centered-quote'],
+  'studioja':          ['pull-quote', 'long-form'],
+  'familjar-mirprites':['two-column', 'centered-quote'],
+  'elegant-rafinuar':  ['centered-quote', 'two-column'],
+};
+
+// Pick a layout from a pool, excluding `exclude` when there is more than one
+// candidate. Falls back to a uniform pick over the full pool if filtering
+// would empty it (i.e. the previous layout is the *only* compatible one).
+function pickFromPool<T>(pool: T[], exclude: T | undefined): T {
+  if (pool.length === 1) return pool[0];
+  const filtered = exclude !== undefined ? pool.filter(x => x !== exclude) : pool;
+  const choices = filtered.length > 0 ? filtered : pool;
+  return choices[Math.floor(Math.random() * choices.length)];
 }
 
 // Coerce a wizard-supplied price/duration (which may be string or number)
@@ -237,6 +279,44 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
     sections = sections.map(s => (
       s?.kind === 'hero' ? { ...s, imageStyle: 'photo' } : s
     ));
+  }
+
+  // 2d. Random-pick hero+story layout from a per-archetype pool when the user
+  //     left it on 'ai'. Why a pool instead of a single preferred layout:
+  //     owners regenerate to *see options* — if every Studioja regen produced
+  //     'fullbleed', the wizard felt stuck. Pool-pick gives real variety per
+  //     try while staying inside the archetype's visual register.
+  //
+  //     Each pool is hand-curated: layouts that match the archetype's
+  //     palette/font feel. preferredHeroLayout from src/lib/archetypes.ts is
+  //     always the first entry, so it's still the "default" weight without
+  //     being the only possibility.
+  //
+  //     We also exclude the previously-saved layout (read from the existing
+  //     website_customization.ai_sections row, if any) so a regen is
+  //     guaranteed different from the current site when the pool has >1 entry.
+  //
+  //     User-locked layouts (ctx.heroLayout !== 'ai') beat all of this — the
+  //     prompt already pinned them, we don't override here.
+  if (isArchetypeKey(effectiveArchetypeKey)) {
+    if (ctx.heroLayout === 'ai') {
+      const pool = HERO_LAYOUT_POOL[effectiveArchetypeKey];
+      if (pool && pool.length > 0) {
+        const picked = pickFromPool(pool, ctx.previousHeroLayout);
+        sections = sections.map(s => (
+          s?.kind === 'hero' ? { ...s, layout: picked } : s
+        ));
+      }
+    }
+    if (ctx.storyLayout === 'ai') {
+      const pool = STORY_LAYOUT_POOL[effectiveArchetypeKey];
+      if (pool && pool.length > 0) {
+        const picked = pickFromPool(pool, ctx.previousStoryLayout);
+        sections = sections.map(s => (
+          s?.kind === 'story' ? { ...s, layout: picked } : s
+        ));
+      }
+    }
   }
 
   // 2d. Shape-aware section header. Attach the resolved header label
@@ -470,6 +550,10 @@ export async function POST(request: NextRequest) {
     let userHasGalleryPhotos = false;
     let userHasServicePhotos = false;
     let userHasHeroPhoto = false;
+    // Previous hero/story layouts feed the pool-pick anti-repeat. Undefined
+    // on first generation (no customization row yet).
+    let previousHeroLayout: string | undefined;
+    let previousStoryLayout: string | undefined;
     if (typeof businessId === 'string' && businessId.length > 0) {
       const { data: galleryRows } = await supabase
         .from('gallery_items')
@@ -479,6 +563,19 @@ export async function POST(request: NextRequest) {
       userHasGalleryPhotos = rows.some(r => r.section_key === 'gallery');
       userHasServicePhotos = rows.some(r => r.section_key === 'services');
       userHasHeroPhoto = rows.some(r => r.section_key === 'hero');
+
+      const { data: prevCustom } = await supabase
+        .from('website_customization')
+        .select('ai_sections')
+        .eq('business_id', businessId)
+        .maybeSingle();
+      const prevSections = Array.isArray(prevCustom?.ai_sections)
+        ? prevCustom!.ai_sections as any[]
+        : [];
+      const prevHero = prevSections.find(s => s?.kind === 'hero');
+      const prevStory = prevSections.find(s => s?.kind === 'story');
+      previousHeroLayout = typeof prevHero?.layout === 'string' ? prevHero.layout : undefined;
+      previousStoryLayout = typeof prevStory?.layout === 'string' ? prevStory.layout : undefined;
     }
 
     const args: GenerateThemeArgs = {
@@ -532,6 +629,8 @@ export async function POST(request: NextRequest) {
       userHasServicePhotos,
       userHasGalleryPhotos,
       userHasHeroPhoto,
+      previousHeroLayout,
+      previousStoryLayout,
       language: args.language,
       tone: args.tone,
       businessShape: args.businessShape as BusinessShape,

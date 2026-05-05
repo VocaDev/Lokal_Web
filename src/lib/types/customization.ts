@@ -128,6 +128,11 @@ export interface WizardInput {
   // wizard just lets users set them upfront.
   instagramUrl?: string;
   tiktokUrl?: string;
+  // Optional business phone (WhatsApp / direct call). When present, the
+  // public site's contact CTAs and the booking confirmation's "Send to
+  // WhatsApp" button are wired to this number; when absent, those CTAs
+  // are hidden so customers don't hit broken wa.me links.
+  phoneNumber?: string;
 }
 
 // ----------------------------------------------------------------

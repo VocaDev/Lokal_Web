@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
       wizardServices,
       instagramUrl,
       tiktokUrl,
+      phoneNumber,
     } = await request.json();
     if (!businessId || !theme) {
       return NextResponse.json({ error: 'businessId and theme required' }, { status: 400 });
@@ -51,6 +52,13 @@ export async function POST(request: NextRequest) {
       website_builder_completed: true,
     };
     if (mergedSocialLinks) businessUpdatePayload.social_links = mergedSocialLinks;
+
+    // Wizard-supplied phone goes to businesses.phone — used by the public
+    // contact CTAs and the booking confirmation's "Send to WhatsApp"
+    // button. Empty/whitespace stays out so we don't overwrite a value
+    // the owner already set via /dashboard/profile.
+    const trimmedPhone = typeof phoneNumber === 'string' ? phoneNumber.trim() : '';
+    if (trimmedPhone.length > 0) businessUpdatePayload.phone = trimmedPhone;
     const { data: bizUpdated, error: bizErr } = await supabase
       .from('businesses')
       .update(businessUpdatePayload)

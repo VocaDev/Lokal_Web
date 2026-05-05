@@ -432,6 +432,7 @@ export default function WizardV2({ businessId, subdomain, businessName, bookingE
           // overwrite values the user already set via /dashboard/profile.
           instagramUrl: input.instagramUrl?.trim() || undefined,
           tiktokUrl: input.tiktokUrl?.trim() || undefined,
+          phoneNumber: input.phoneNumber?.trim() || undefined,
         }),
       });
       const body = await res.json().catch(() => ({}));
@@ -775,6 +776,23 @@ function Step1({
             placeholder="tiktok.com/@biznesi_jot"
           />
         </div>
+      </div>
+
+      {/* Business phone / WhatsApp — optional. When present, the public
+          site shows a "Send to WhatsApp" button after a booking and wires
+          the contact CTAs to it. When absent, those CTAs are hidden so
+          customers don't hit a broken wa.me link with no recipient. */}
+      <div className="space-y-2">
+        <FieldLabel hint="Numri ku t'kontaktojnë klientët — për butonin 'Send to WhatsApp' pas rezervimit. Pa këtë, butoni nuk shfaqet fare.">
+          Numri i biznesit (WhatsApp / telefon) <span className="text-muted-foreground font-normal">(opsionale)</span>
+        </FieldLabel>
+        <TextInput
+          type="tel"
+          inputMode="tel"
+          value={input.phoneNumber ?? ''}
+          onChange={(e) => update({ phoneNumber: e.target.value })}
+          placeholder="p.sh. +38344123456 ose 044123456"
+        />
       </div>
     </div>
   );

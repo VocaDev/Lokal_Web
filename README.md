@@ -4,7 +4,7 @@
 
 **SaaS Platform (Website-as-a-Service) për Bizneset Lokale në Kosovë.**
 
-*Përshkruaje biznesin tënd me fjalë të thjeshta — AI gjeneron faqen e plotë profesionale në më pak se një minutë.*
+_Përshkruaje biznesin tënd me fjalë të thjeshta — AI gjeneron faqen e plotë profesionale në më pak se një minutë._
 
 [![Next.js](https://img.shields.io/badge/Next.js-14+-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)](https://typescriptlang.org)
@@ -26,7 +26,6 @@ Shumë biznese lokale në Kosovë — barberë, klinika, restorante, sallone buk
 **LokalWeb** e zgjidh këtë duke ofruar:
 
 - **Gjenerim me AI**: Përshkruaje biznesin tënd në pak fjalë, dhe sistemi gjeneron faqen e plotë — tekst, layout, ngjyra, përmbajtje — bazuar në regjistrin autentik të Kosovës.
-- **Subdomain Unik**: Çdo biznes merr `biznesi.lokalweb.com` automatikisht.
 - **Sistem Rezervimesh**: Klientët rezervojnë termin online, 24/7.
 - **Dashboard Menaxhimi**: Pronari mund të editoj tekstet, të ngarkojë foto, dhe të ndryshojë stilin pa kod.
 
@@ -38,11 +37,11 @@ Shumë biznese lokale në Kosovë — barberë, klinika, restorante, sallone buk
 
 Pronari i biznesit kalon nëpër një wizard 5-hapësh ku përshkruan biznesin me fjalët e veta. AI-i ndërton faqen mbi këtë informacion.
 
-| **Hapi 1: Të dhënat bazë** | **Hapi 2: Përshkrimi & Shërbimet** |
-|:---:|:---:|
-| ![Wizard Step 1](docs/screenshots/wizard-step1-business.png) | ![Wizard Step 2](docs/screenshots/wizard-step2-services.png) |
-| **Hapi 4: Stili Vizual** | |
-| ![Wizard Step 4](docs/screenshots/wizard-step4-archetype.png) | |
+|                  **Hapi 1: Të dhënat bazë**                   |              **Hapi 2: Përshkrimi & Shërbimet**              |
+| :-----------------------------------------------------------: | :----------------------------------------------------------: |
+| ![Wizard Step 1](docs/screenshots/wizard-step1-business.png)  | ![Wizard Step 2](docs/screenshots/wizard-step2-services.png) |
+|                   **Hapi 4: Stili Vizual**                    |                                                              |
+| ![Wizard Step 4](docs/screenshots/wizard-step4-archetype.png) |                                                              |
 
 > [!NOTE]
 > Wizard-i mbledh inputet (industria, qyteti, përshkrimi, shërbimet, toni i komunikimit, gjuha). AI-i përkthen këto inpute në një faqe profesionale me përmbajtje të personalizuar për tregun kosovar.
@@ -53,16 +52,16 @@ Pronari i biznesit kalon nëpër një wizard 5-hapësh ku përshkruan biznesin m
 
 Çdo biznes që përfundon wizard-in merr një faqe publike unike në subdomain-in e vet:
 
-| **Hero — Faqja Publike** | **Shërbimet — Faqja Publike** |
-|:---:|:---:|
+|                  **Hero — Faqja Publike**                  |                   **Shërbimet — Faqja Publike**                    |
+| :--------------------------------------------------------: | :----------------------------------------------------------------: |
 | ![Public Site Hero](docs/screenshots/public-site-hero.png) | ![Public Site Services](docs/screenshots/public-site-services.png) |
 
 Çdo faqe është:
 
 - **Plotësisht responsive** — punon në desktop, tablet, mobile
-- **E lokalizuar** — tekst në regjistrin kosovar (`tash`, `çka`, `te`, `kojshi`)
+- **E lokalizuar** — tekst në regjistrin kosovar
 - **Faktualisht e saktë** — çmimet dhe shërbimet vijnë drejtpërdrejt nga inputet e përdoruesit, AI nuk shpik
-- **E dizajnuar** — paleta, fontet dhe layout-i vijnë nga stile vizuale të para-validuar (WCAG compliant)
+- **E dizajnuar** — paleta, fontet dhe layout-i vijnë nga stile vizuale të para-definuara (WCAG compliant)
 
 ---
 
@@ -70,8 +69,8 @@ Pronari i biznesit kalon nëpër një wizard 5-hapësh ku përshkruan biznesin m
 
 Pas gjenerimit, pronari menaxhon faqen përmes një dashboard intuitiv:
 
-| **Overview** | **Customization (Editim teksti & stili)** |
-|:---:|:---:|
+|                          **Overview**                          |                **Customization (Editim teksti & stili)**                 |
+| :------------------------------------------------------------: | :----------------------------------------------------------------------: |
 | ![Dashboard Overview](docs/screenshots/dashboard-overview.png) | ![Dashboard Customization](docs/screenshots/dashboard-customization.png) |
 
 ---
@@ -147,7 +146,7 @@ Më shumë detaje teknike: [docs/architecture.md](docs/architecture.md)
 ### Data Flow Pattern
 
 ```text
-Request (subdomain.lokalweb.com) 
+Request (subdomain.lokalweb.com)
     → Next.js Middleware (subdomain detection)
     → Rewrite to /[subdomain] route
     → SSR Page Component
@@ -179,7 +178,6 @@ Vendos variablat në `.env.local`:
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 ANTHROPIC_API_KEY=your_anthropic_key
-GROQ_API_KEY=your_groq_key
 ```
 
 ### 3. Serveri i Zhvillimit

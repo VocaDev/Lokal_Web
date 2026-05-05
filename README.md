@@ -40,11 +40,14 @@ Pronari i biznesit kalon nëpër një wizard 5-hapësh ku përshkruan biznesin m
 |                  **Hapi 1: Të dhënat bazë**                   |              **Hapi 2: Përshkrimi & Shërbimet**              |
 | :-----------------------------------------------------------: | :----------------------------------------------------------: |
 | ![Wizard Step 1](docs/screenshots/wizard-step1-business.png)  | ![Wizard Step 2](docs/screenshots/wizard-step2-services.png) |
-|                   **Hapi 4: Stili Vizual**                    |                                                              |
-| ![Wizard Step 4](docs/screenshots/wizard-step4-archetype.png) |                                                              |
+|                    **Hapi 3: Struktura**                      |                  **Hapi 4: Stili Vizual**                    |
+| ![Wizard Step 3](docs/screenshots/wizard-step3-structure.png) | ![Wizard Step 4](docs/screenshots/wizard-step4-archetype.png) |
 
 > [!NOTE]
-> Wizard-i mbledh inputet (industria, qyteti, përshkrimi, shërbimet, toni i komunikimit, gjuha). AI-i përkthen këto inpute në një faqe profesionale me përmbajtje të personalizuar për tregun kosovar.
+> Hapi 5 (toni, gjuha, përmbledhja e zgjedhjeve) është një ekran i shkurtër pickeri — nuk është paraqitur këtu.
+
+> [!NOTE]
+> Wizard-i mbledh inputet (industria, qyteti, numri i biznesit, përshkrimi, shërbimet, toni i komunikimit, gjuha). AI-i përkthen këto inpute në një faqe profesionale me përmbajtje të personalizuar për tregun kosovar.
 
 ---
 

@@ -20,21 +20,21 @@ export default function BarbershopMinimal({ business, services, hours }: {
 
   return (
     <div className="bg-background text-foreground min-h-screen font-light">
-      <nav className="p-8 flex justify-between items-center border-b border-white/5">
-        <span className="tracking-[0.3em] font-bold text-sm uppercase">{business.name}</span>
-        <button onClick={() => openBooking()} className="text-xs tracking-widest border border-white/20 px-6 py-2 hover:bg-white hover:text-black transition-colors">
+      <nav className="px-4 py-5 md:p-8 flex justify-between items-center border-b border-white/5 gap-3">
+        <span className="tracking-[0.3em] font-bold text-sm uppercase truncate min-w-0">{business.name}</span>
+        <button onClick={() => openBooking()} className="shrink-0 inline-flex items-center min-h-[44px] text-xs tracking-widest border border-white/20 px-5 py-3 hover:bg-white hover:text-black transition-colors">
           {(business.ctaPrimary || 'BOOK NOW').toUpperCase()}
         </button>
       </nav>
 
-      <section className="relative overflow-hidden py-32 px-8 max-w-4xl mx-auto text-center">
+      <section className="relative overflow-hidden py-20 md:py-32 px-4 md:px-8 max-w-4xl mx-auto text-center">
         {heroImg && (
           <>
             <img src={heroImg} alt={business.name} className="absolute inset-0 w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/60" />
           </>
         )}
-        <h1 className="relative z-10 text-5xl md:text-7xl font-bold tracking-tighter mb-8 uppercase">
+        <h1 className="relative z-10 text-4xl sm:text-5xl md:text-7xl font-bold tracking-tighter mb-8 uppercase">
           {business.heroHeadline || business.name}
         </h1>
         <p className="relative z-10 text-white/40 max-w-lg mx-auto leading-relaxed">
@@ -42,20 +42,20 @@ export default function BarbershopMinimal({ business, services, hours }: {
         </p>
       </section>
 
-      <section className="py-24 px-8 max-w-4xl mx-auto border-t border-white/5">
-        <h2 className="text-xs tracking-[0.5em] text-white/30 mb-16 uppercase">SERVICES</h2>
-        <div className="space-y-12">
+      <section className="py-16 md:py-24 px-4 md:px-8 max-w-4xl mx-auto border-t border-white/5">
+        <h2 className="text-xs tracking-[0.5em] text-white/30 mb-12 md:mb-16 uppercase">SERVICES</h2>
+        <div className="space-y-10 md:space-y-12">
           {services.map((s, i) => (
-            <div key={s.id} className="flex justify-between items-start group cursor-pointer" onClick={() => openBooking(s)}>
-              <div className="flex gap-8">
-                <span className="text-white/10 text-xl font-mono">{String(i + 1).padStart(2, '0')}</span>
-                <div>
-                  <h3 className="text-lg uppercase tracking-wider mb-2 group-hover:translate-x-2 transition-transform">{s.name}</h3>
+            <div key={s.id} className="flex justify-between items-start gap-4 sm:gap-8 group cursor-pointer min-h-[44px]" onClick={() => openBooking(s)}>
+              <div className="flex gap-3 sm:gap-8 min-w-0">
+                <span className="text-white/10 text-xl font-mono shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-lg uppercase tracking-wider mb-2 group-hover:translate-x-2 transition-transform">{s.name}</h3>
                   <p className="text-sm text-white/30">{s.description}</p>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-xl mb-1">€{s.price}</div>
+              <div className="text-right shrink-0">
+                <div className="text-lg sm:text-xl mb-1">€{s.price}</div>
                 <div className="text-[10px] tracking-widest text-white/20 uppercase">{s.durationMinutes} MIN</div>
               </div>
             </div>
@@ -63,7 +63,7 @@ export default function BarbershopMinimal({ business, services, hours }: {
         </div>
       </section>
 
-      <section className="py-24 px-8 max-w-4xl mx-auto border-t border-white/5 grid md:grid-cols-2 gap-20">
+      <section className="py-16 md:py-24 px-4 md:px-8 max-w-4xl mx-auto border-t border-white/5 grid md:grid-cols-2 gap-12 md:gap-20">
         <div>
           <h2 className="text-xs tracking-[0.5em] text-white/30 mb-12 uppercase">OPENING HOURS</h2>
           <div className="space-y-4">
@@ -84,7 +84,7 @@ export default function BarbershopMinimal({ business, services, hours }: {
         </div>
       </section>
 
-      <footer className="p-12 text-center border-t border-white/5">
+      <footer className="px-4 py-10 md:p-12 text-center border-t border-white/5">
         <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">© 2026 {business.name} — POWERED BY LOKALWEB</p>
       </footer>
 

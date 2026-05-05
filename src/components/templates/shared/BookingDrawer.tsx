@@ -6,6 +6,7 @@ import { Business, Service, BusinessHours } from '@/lib/types'
 import { addBooking } from '@/lib/store'
 import { createClient } from '@/lib/supabase/client'
 import { validateKosovoPhone } from '@/lib/validators'
+import { useIsMobile } from '@/hooks/use-mobile'
 import {
   AvailableSlot,
   BookedSlot,
@@ -47,6 +48,17 @@ export default function BookingDrawer({
 
   const tz = business.timezone || DEFAULT_TIMEZONE
   const supabase = useMemo(() => createClient(), [])
+  const isMobile = useIsMobile()
+
+  useEffect(() => {
+    if (!isOpen || !isMobile) return
+    const root = document.documentElement
+    const previous = root.style.overflow
+    root.style.overflow = 'hidden'
+    return () => {
+      root.style.overflow = previous
+    }
+  }, [isOpen, isMobile])
 
   const handleClose = () => {
     setStep(1)
@@ -167,10 +179,21 @@ export default function BookingDrawer({
         onClick={handleClose}
       />
 
-      {/* Drawer Panel */}
+      {/* Drawer Panel — bottom sheet on mobile, side drawer on desktop */}
       <div
-        className={`fixed right-0 top-0 h-full w-[360px] z-50 bg-card border-l border-border flex flex-col transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={[
+          'fixed z-50 bg-card flex flex-col transition-transform duration-300 transform',
+          // Mobile: bottom sheet
+          'inset-x-0 bottom-0 h-[90dvh] w-full rounded-t-2xl border-t border-border',
+          isOpen ? 'translate-y-0' : 'translate-y-full',
+          // Desktop overrides: side drawer at md+
+          'md:inset-x-auto md:bottom-auto md:right-0 md:top-0 md:h-full md:w-[400px] md:rounded-none md:border-t-0 md:border-l md:border-border',
+          isOpen ? 'md:translate-x-0 md:translate-y-0' : 'md:translate-y-0 md:translate-x-full',
+        ].join(' ')}
       >
+        {/* Drag handle (mobile only, decorative) */}
+        <div className="md:hidden mx-auto mt-3 mb-1 h-1 w-10 rounded-full bg-foreground/20" aria-hidden="true" />
+
         {/* Header */}
         <div className="px-5 py-4 border-b border-border">
           <div className="flex justify-between items-center mb-4">
@@ -250,7 +273,7 @@ export default function BookingDrawer({
             <div className="space-y-6">
               <div>
                 <label className="text-[10px] text-muted-foreground uppercase tracking-[0.07em] mb-3 block">Select Date</label>
-                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar snap-x snap-mandatory scroll-px-5">
                   {next7Days.map((date, idx) => {
                     // Day-of-week interpreted in business timezone
                     const { y, m, d } = ymdInTz(date, tz)
@@ -267,7 +290,7 @@ export default function BookingDrawer({
                           setSelectedSlot(null)
                           setSlotConflict(false)
                         }}
-                        className="flex flex-col items-center justify-center min-w-[54px] h-[64px] rounded-[10px] border transition-all duration-200 shrink-0"
+                        className="flex flex-col items-center justify-center min-w-[60px] h-[68px] rounded-[10px] border transition-all duration-200 shrink-0 snap-start"
                         style={{
                           opacity: isOpenDay ? 1 : 0.35,
                           cursor: isOpenDay ? 'pointer' : 'not-allowed',
@@ -299,7 +322,7 @@ export default function BookingDrawer({
                   )}
 
                   {availableSlots.length > 0 ? (
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 xs:grid-cols-3 gap-2">
                       {availableSlots.map((slot) => {
                         const isSelected = selectedSlot?.startUtc.getTime() === slot.startUtc.getTime()
                         return (
@@ -310,7 +333,7 @@ export default function BookingDrawer({
                               setSelectedSlot(slot)
                               setSlotConflict(false)
                             }}
-                            className="py-3 px-2 rounded-[10px] border text-center transition-all duration-200 bg-muted text-foreground"
+                            className="min-h-[44px] py-3 px-3 rounded-[10px] border text-center transition-all duration-200 bg-muted text-foreground"
                             style={{
                               opacity: slot.isBooked ? 0.35 : 1,
                               cursor: slot.isBooked ? 'not-allowed' : 'pointer',
@@ -350,7 +373,7 @@ export default function BookingDrawer({
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="John Doe"
-                    className="w-full bg-muted border border-border rounded-[9px] px-4 py-3 text-foreground focus:outline-none focus:border-primary transition-colors"
+                    className="w-full bg-muted border border-border rounded-[9px] px-4 py-3 text-base text-foreground focus:outline-none focus:border-primary transition-colors"
                   />
                 </div>
                 <div className="space-y-2">
@@ -363,7 +386,7 @@ export default function BookingDrawer({
                       if (phoneError) setPhoneError(null)
                     }}
                     placeholder="+383 44 000 000"
-                    className="w-full bg-muted border border-border rounded-[9px] px-4 py-3 text-foreground focus:outline-none focus:border-primary transition-colors"
+                    className="w-full bg-muted border border-border rounded-[9px] px-4 py-3 text-base text-foreground focus:outline-none focus:border-primary transition-colors"
                   />
                   {phoneError && (
                     <p className="text-destructive text-[12px]">{phoneError}</p>
@@ -405,17 +428,26 @@ export default function BookingDrawer({
               </div>
 
               <div className="w-full space-y-3">
-                <a
-                  href={`https://wa.me/${(business.phone ?? '').replace(/\D/g, '')}?text=${encodeURIComponent(
-                    `Hi! I just booked a ${selectedService.name} on ${formatDisplayDate(selectedDate)} at ${selectedSlot.label}. My name is ${customerName}.`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-4 rounded-[9px] font-semibold border bg-success/10 border-success/25 text-success transition-all hover:bg-success/20"
-                >
-                  <MessageCircle size={20} />
-                  Send to WhatsApp
-                </a>
+                {/* Only render the WhatsApp CTA when the business actually
+                    has a phone — otherwise the wa.me URL has no recipient
+                    and the link opens an empty WhatsApp picker, leaving the
+                    customer guessing where to send the message. */}
+                {(() => {
+                  const phoneDigits = (business.phone ?? '').replace(/\D/g, '');
+                  if (!phoneDigits) return null;
+                  const message = `Hi! I just booked a ${selectedService.name} on ${formatDisplayDate(selectedDate)} at ${selectedSlot.label}. My name is ${customerName}.`;
+                  return (
+                    <a
+                      href={`https://wa.me/${phoneDigits}?text=${encodeURIComponent(message)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full py-4 rounded-[9px] font-semibold border bg-success/10 border-success/25 text-success transition-all hover:bg-success/20"
+                    >
+                      <MessageCircle size={20} />
+                      Send to WhatsApp
+                    </a>
+                  );
+                })()}
                 <button
                   onClick={handleClose}
                   className="w-full py-4 text-muted-foreground hover:text-foreground font-medium"
@@ -429,7 +461,7 @@ export default function BookingDrawer({
 
         {/* Footer */}
         {step < 4 && (
-          <div className="px-5 pb-5 pt-3 border-t border-border flex gap-3">
+          <div className="px-5 pt-3 pb-[max(env(safe-area-inset-bottom),1.25rem)] border-t border-border flex gap-3">
             {step > 1 && (
               <button
                 onClick={() => setStep(step - 1)}

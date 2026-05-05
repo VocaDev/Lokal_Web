@@ -78,16 +78,16 @@ export default function BusinessHoursPage() {
           <CardTitle className="text-lg">Weekly Schedule</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {hours.map(h => (
-              <div key={h.dayOfWeek} className="flex items-center gap-4 py-2 border-b last:border-0">
-                <span className="w-24 text-sm font-medium text-foreground">{dayNames[h.dayOfWeek]}</span>
+              <div key={h.dayOfWeek} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2 border-b last:border-0">
+                <span className="w-20 sm:w-24 text-sm font-medium text-foreground">{dayNames[h.dayOfWeek]}</span>
                 <Switch checked={h.isOpen} onCheckedChange={v => update(h.dayOfWeek, 'isOpen', v)} />
                 {h.isOpen ? (
-                  <div className="flex items-center gap-2">
-                    <Input type="time" value={h.openTime} onChange={e => update(h.dayOfWeek, 'openTime', e.target.value)} className="w-32" />
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                    <Input type="time" value={h.openTime} onChange={e => update(h.dayOfWeek, 'openTime', e.target.value)} className="w-28 sm:w-32 text-base sm:text-sm" />
                     <span className="text-muted-foreground text-sm">to</span>
-                    <Input type="time" value={h.closeTime} onChange={e => update(h.dayOfWeek, 'closeTime', e.target.value)} className="w-32" />
+                    <Input type="time" value={h.closeTime} onChange={e => update(h.dayOfWeek, 'closeTime', e.target.value)} className="w-28 sm:w-32 text-base sm:text-sm" />
                   </div>
                 ) : (
                   <span className="text-sm text-muted-foreground">Closed</span>
@@ -95,7 +95,7 @@ export default function BusinessHoursPage() {
               </div>
             ))}
           </div>
-          <Button className="mt-6" onClick={handleSave}>Save Hours</Button>
+          <Button className="mt-6 min-h-[44px]" onClick={handleSave}>Save Hours</Button>
         </CardContent>
       </Card>
     </div>

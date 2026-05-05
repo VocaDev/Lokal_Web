@@ -121,7 +121,7 @@ export function SiteNavbar({ business, payload, sections, bookingEnabled }: Navb
 
               <button
                 type="button"
-                className="md:hidden p-1.5"
+                className="md:hidden p-3 -mr-3 inline-flex items-center justify-center min-h-[44px] min-w-[44px]"
                 style={{ color: payload.textColor }}
                 onClick={() => setMobileOpen(v => !v)}
                 aria-label={mobileOpen ? 'Mbyll menunë' : 'Hap menunë'}
@@ -146,7 +146,7 @@ export function SiteNavbar({ business, payload, sections, bookingEnabled }: Navb
               <a
                 key={link.href}
                 href={link.href}
-                className="block text-sm font-medium py-2 tracking-wide"
+                className="block text-sm font-medium py-3 tracking-wide"
                 style={{ color: payload.mutedTextColor }}
                 onClick={handleMobileLinkClick}
               >

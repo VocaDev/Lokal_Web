@@ -103,7 +103,7 @@ export default function CustomizationHub({ businessId }: CustomizationHubProps) 
         <div className="flex flex-col items-start sm:items-end">
           <button
             onClick={handleRegenerateWebsite}
-            className="border border-blue-400 text-blue-400 rounded-lg px-5 py-2.5 hover:bg-blue-400/10 font-semibold transition-all duration-200"
+            className="min-h-[44px] inline-flex items-center justify-center border border-blue-400 text-blue-400 rounded-lg px-5 py-3 hover:bg-blue-400/10 font-semibold transition-all duration-200"
           >
             Regenerate Website
           </button>
@@ -172,35 +172,25 @@ export default function CustomizationHub({ businessId }: CustomizationHubProps) 
             </div>
           </div>
 
-          {/* Gallery Section - Full Width Below on Mobile */}
-          <div className="lg:hidden">
-            <div className="bg-card border border-border rounded-xl p-6">
-              <h2 className="text-xl font-bold text-foreground mb-6">Gallery</h2>
-              <GallerySection businessId={businessId} />
-            </div>
-          </div>
-
-          {/* Gallery Section - Inside the Grid on Desktop */}
-          <div className="col-span-1 lg:col-span-2">
-            <div className="bg-card border border-border rounded-xl p-6">
-              <h2 className="text-xl font-bold text-foreground mb-6">Photo Gallery</h2>
-              <GallerySection businessId={businessId} />
-            </div>
+          {/* Gallery Section — single instance, full width on all sizes */}
+          <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
+            <h2 className="text-xl font-bold text-foreground mb-4 sm:mb-6">Photo Gallery</h2>
+            <GallerySection businessId={businessId} />
           </div>
 
           {/* Save Button - Sticky at Bottom */}
-          <div className="sticky bottom-0 bg-background border-t border-border py-4 flex gap-3">
+          <div className="sticky bottom-0 bg-background border-t border-border pt-4 pb-[max(env(safe-area-inset-bottom),1rem)] flex gap-3">
             <Button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-1 bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold py-2 rounded-lg hover:opacity-90 transition-opacity"
+              className="flex-1 min-h-[44px] bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity"
             >
               {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
             <Button
               variant="outline"
               onClick={() => setFormData(customization || {})}
-              className="px-6"
+              className="px-6 min-h-[44px]"
             >
               Cancel
             </Button>

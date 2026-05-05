@@ -22,7 +22,7 @@ export default function PreviewPane({
   const [device, setDevice] = useState<DeviceType>('desktop');
 
   const containerWidth =
-    device === 'desktop' ? 'w-full max-w-5xl' : 'w-[375px]';
+    device === 'desktop' ? 'w-full max-w-5xl' : 'w-full max-w-[375px]';
 
   /*
    * Scoped theme overrides — same shadcn names + HSL component format as
@@ -56,7 +56,7 @@ export default function PreviewPane({
   return (
     <div className="space-y-6 flex flex-col items-center">
       {/* Device Switcher — chrome UI, uses chrome tokens */}
-      <div className="flex gap-2 p-1 bg-card rounded-lg border border-border">
+      <div className="flex flex-wrap gap-2 p-1 bg-card rounded-lg border border-border">
         <Button
           onClick={() => setDevice('desktop')}
           variant="ghost"
@@ -86,7 +86,7 @@ export default function PreviewPane({
       </div>
 
       {/* Preview Container — scope overrides to children */}
-      <div className="w-full flex justify-center bg-background/60 p-4 lg:p-8 rounded-2xl border border-border overflow-auto max-h-[800px]">
+      <div className="w-full flex justify-center bg-background/60 p-3 sm:p-4 lg:p-8 rounded-2xl border border-border overflow-auto max-h-[80vh] lg:max-h-[800px]">
         <div
           className={`mx-auto ${containerWidth} transition-all duration-300 bg-background rounded-xl border border-border overflow-hidden shadow-2xl origin-top`}
           style={previewStyle}

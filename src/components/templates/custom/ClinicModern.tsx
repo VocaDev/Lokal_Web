@@ -21,20 +21,20 @@ export default function ClinicModern({ business, services, hours }: {
   return (
     <div className="bg-background text-slate-200 min-h-screen font-sans antialiased">
       {/* NAVBAR */}
-      <nav className="fixed top-0 inset-x-0 z-50 p-6 flex justify-between items-center bg-background/80 backdrop-blur-xl border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary p-2 rounded-2xl rotate-3 shadow-lg shadow-primary/20">
+      <nav className="fixed top-0 inset-x-0 z-50 px-4 py-4 md:p-6 flex justify-between items-center bg-background/80 backdrop-blur-xl border-b border-white/5 gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="bg-primary p-2 rounded-2xl rotate-3 shadow-lg shadow-primary/20 shrink-0">
              <Activity className="h-5 w-5 text-white" />
           </div>
-          <span className="font-black tracking-tight text-xl text-white uppercase">{business.name}</span>
+          <span className="font-black tracking-tight text-base sm:text-xl text-white uppercase truncate">{business.name}</span>
         </div>
-        <button onClick={() => openBooking()} className="bg-primary text-white px-8 py-3 rounded-2xl text-xs font-bold tracking-widest uppercase hover:bg-primary/90 transition-all shadow-xl shadow-primary/10">
+        <button onClick={() => openBooking()} className="shrink-0 min-h-[44px] inline-flex items-center bg-primary text-white px-4 sm:px-8 py-3 rounded-2xl text-xs font-bold tracking-widest uppercase hover:bg-primary/90 transition-all shadow-xl shadow-primary/10">
           {(business.ctaPrimary || 'RESERVE CONSULTATION').toUpperCase()}
         </button>
       </nav>
 
       {/* HERO */}
-      <section className="relative min-h-screen flex items-center pt-24 px-8 md:px-24">
+      <section className="relative min-h-[80svh] md:min-h-screen flex items-center pt-24 px-4 md:px-24">
         {heroImg ? (
           <img  src={heroImg!} 
           alt="Clinic"
@@ -46,14 +46,14 @@ export default function ClinicModern({ business, services, hours }: {
         
         <div className="relative z-10 max-w-2xl">
           <span className="text-primary font-black tracking-[0.3em] uppercase text-xs mb-6 block">NEXT-GEN MEDICAL CENTER</span>
-          <h1 className="text-6xl md:text-8xl font-black text-white leading-[0.85] mb-8 uppercase italic tracking-tighter">
+          <h1 className="text-5xl sm:text-6xl md:text-8xl font-black text-white leading-[0.85] mb-8 uppercase italic tracking-tighter">
             {business.heroHeadline ? business.heroHeadline : <>ADVANCED<br />HEALTHCARE.</>}
           </h1>
           <p className="text-slate-400 text-lg leading-relaxed mb-10 max-w-lg">
             {business.heroSubheadline || business.description || "State-of-the-art medical facility combining technology with compassion for your total wellness."}
           </p>
           <div className="flex flex-wrap gap-4">
-             <button onClick={() => document.getElementById('treatments')?.scrollIntoView({behavior: 'smooth'})} className="bg-white text-foreground px-10 py-4 rounded-2xl text-xs font-bold tracking-widest uppercase hover:bg-slate-200 transition-all">
+             <button onClick={() => document.getElementById('treatments')?.scrollIntoView({behavior: 'smooth'})} className="min-h-[44px] inline-flex items-center bg-white text-foreground px-7 sm:px-10 py-3 sm:py-4 rounded-2xl text-xs font-bold tracking-widest uppercase hover:bg-slate-200 transition-all">
                {(business.ctaSecondary || 'VIEW TREATMENTS').toUpperCase()}
              </button>
           </div>
@@ -61,7 +61,7 @@ export default function ClinicModern({ business, services, hours }: {
       </section>
 
       {/* TREATMENTS */}
-      <section id="treatments" className="py-32 px-8 max-w-6xl mx-auto">
+      <section id="treatments" className="py-20 md:py-32 px-4 md:px-8 max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-baseline mb-20 gap-8">
            <div>
               <h2 className="text-5xl font-black text-white tracking-tighter uppercase italic">TREATMENTS</h2>
@@ -70,9 +70,9 @@ export default function ClinicModern({ business, services, hours }: {
            <p className="max-w-xs text-slate-500 text-sm font-medium">All our procedures are performed by certified specialists using the latest medical standards.</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-10">
+        <div className="grid md:grid-cols-2 gap-6 md:gap-10">
           {services.map((s) => (
-            <div key={s.id} className="group relative cursor-pointer bg-slate-900/50 p-10 rounded-[3rem] border border-white/5 hover:bg-primary/10 hover:border-primary/20 transition-all" onClick={() => openBooking(s)}>
+            <div key={s.id} className="group relative cursor-pointer bg-slate-900/50 p-6 md:p-10 rounded-[3rem] border border-white/5 hover:bg-primary/10 hover:border-primary/20 transition-all" onClick={() => openBooking(s)}>
               <span className="absolute top-8 right-8 bg-primary text-white px-4 py-2 rounded-2xl font-black text-xl shadow-lg shadow-primary/30 group-hover:scale-110 transition-transform">
                 €{s.price}
               </span>
@@ -87,8 +87,8 @@ export default function ClinicModern({ business, services, hours }: {
       </section>
 
       {/* FOOTER-INFO */}
-      <section className="bg-slate-950 py-32 px-8 border-t border-white/5">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20">
+      <section className="bg-slate-950 py-20 md:py-32 px-4 md:px-8 border-t border-white/5">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 md:gap-20">
           <div>
             <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter mb-12">CONNECT</h2>
             <div className="space-y-8">
@@ -119,7 +119,7 @@ export default function ClinicModern({ business, services, hours }: {
         </div>
       </section>
 
-      <footer className="p-12 text-center text-slate-800 font-black uppercase tracking-[0.5em] text-[8px] bg-slate-950">
+      <footer className="px-4 py-10 md:p-12 text-center text-slate-800 font-black uppercase tracking-[0.5em] text-[8px] bg-slate-950">
         © 2026 {business.name} — POWERED BY LOKALWEB
       </footer>
 

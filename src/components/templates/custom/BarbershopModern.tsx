@@ -30,17 +30,17 @@ const BarbershopModern = ({ business, services, hours }: {
   return (
     <div className="bg-background min-h-screen text-white font-sans">
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 bg-background border-b border-white/[0.06] h-14 flex items-center justify-between px-6 md:px-10">
-        <div className="flex items-center gap-3">
-          <div className="w-4 h-4 border border-white/40" />
-          <span className="text-white text-xs tracking-[0.2em] uppercase font-light">{business.name}</span>
+      <nav className="sticky top-0 z-50 bg-background border-b border-white/[0.06] h-14 flex items-center justify-between px-4 md:px-10 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-4 h-4 border border-white/40 shrink-0" />
+          <span className="text-white text-xs tracking-[0.2em] uppercase font-light truncate">{business.name}</span>
         </div>
         <div className="hidden md:flex items-center gap-10">
           {['Services', 'Story', 'Hours'].map((item) => (
             <button
               key={item}
               onClick={() => scrollTo(item.toLowerCase())}
-              className="text-white/40 text-xs tracking-widest uppercase hover:text-white transition-colors font-light"
+              className="text-white/40 text-xs tracking-widest uppercase hover:text-white transition-colors font-light min-h-[44px] inline-flex items-center"
             >
               {item}
             </button>
@@ -48,29 +48,29 @@ const BarbershopModern = ({ business, services, hours }: {
         </div>
         <button
           onClick={() => openBooking()}
-          className="text-white text-xs tracking-[0.3em] uppercase font-light underline underline-offset-4 decoration-white/30 hover:decoration-white transition-colors"
+          className="shrink-0 text-white text-xs tracking-[0.3em] uppercase font-light underline underline-offset-4 decoration-white/30 hover:decoration-white transition-colors min-h-[44px] inline-flex items-center px-1"
         >
           {business.ctaPrimary || 'Book'}
         </button>
       </nav>
 
       {/* HERO */}
-      <section className="min-h-screen grid grid-cols-1 md:grid-cols-[1fr_1.4fr]">
-        <div className="bg-background flex flex-col justify-end pb-20 pl-6 md:pl-10 pr-8 pt-32 relative">
-          <span className="absolute top-32 left-6 md:left-10 text-white/25 text-xs tracking-[0.3em] uppercase">
+      <section className="min-h-[80svh] md:min-h-screen grid grid-cols-1 md:grid-cols-[1fr_1.4fr]">
+        <div className="bg-background flex flex-col justify-end pb-12 md:pb-20 px-4 md:pl-10 md:pr-8 pt-20 md:pt-32 relative">
+          <span className="absolute top-20 md:top-32 left-4 md:left-10 text-white/25 text-xs tracking-[0.3em] uppercase">
             No. 01 — Barbershop
           </span>
           <div className="w-8 h-px bg-white/20 mb-8" />
           {business.heroHeadline ? (
-            <h1 className="font-light text-5xl md:text-7xl tracking-[0.15em] uppercase text-white">
+            <h1 className="font-light text-4xl sm:text-5xl md:text-7xl tracking-[0.15em] uppercase text-white">
               {business.heroHeadline}
             </h1>
           ) : (
             <>
-              <h1 className="font-light text-5xl md:text-7xl tracking-[0.15em] uppercase text-white">
+              <h1 className="font-light text-4xl sm:text-5xl md:text-7xl tracking-[0.15em] uppercase text-white">
                 PRECISION
               </h1>
-              <h1 className="font-light text-5xl md:text-7xl tracking-[0.15em] uppercase text-white/40 -mt-2">
+              <h1 className="font-light text-4xl sm:text-5xl md:text-7xl tracking-[0.15em] uppercase text-white/40 -mt-2">
                 & CRAFT
               </h1>
             </>
@@ -122,12 +122,12 @@ const BarbershopModern = ({ business, services, hours }: {
       </section>
 
       {/* SERVICES */}
-      <section id="services" className="bg-background py-32 px-6 md:px-10">
+      <section id="services" className="bg-background py-20 md:py-32 px-4 md:px-10">
         <div className="max-w-5xl mx-auto">
-          <div className="flex justify-between items-end mb-20">
+          <div className="flex justify-between items-end mb-12 md:mb-20 gap-4">
             <div>
               <p className="text-white/20 text-[10px] tracking-[0.4em] uppercase mb-3">02 — Services</p>
-              <h2 className="text-white font-light text-4xl tracking-wide">What We Do</h2>
+              <h2 className="text-white font-light text-3xl sm:text-4xl tracking-wide">What We Do</h2>
             </div>
             <p className="text-white/20 text-[10px] tracking-widest uppercase text-right max-w-[8rem] hidden md:block">
               All services include consultation
@@ -136,28 +136,28 @@ const BarbershopModern = ({ business, services, hours }: {
           {services.map((s, i) => (
             <div
               key={s.id}
-              className="flex items-center justify-between py-8 border-b border-white/[0.06] group cursor-pointer"
+              className="flex items-center justify-between py-6 md:py-8 border-b border-white/[0.06] group cursor-pointer gap-3 sm:gap-4"
               onClick={() => openBooking(s)}
             >
-              <div className="flex items-center">
-                <span className="text-white/15 text-xs tracking-widest mr-8 font-mono shrink-0">
+              <div className="flex items-center min-w-0">
+                <span className="text-white/15 text-xs tracking-widest mr-4 sm:mr-8 font-mono shrink-0">
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                <span className="text-white font-light text-xl tracking-wide group-hover:text-white/60 transition-colors">
+                <span className="text-white font-light text-base sm:text-xl tracking-wide group-hover:text-white/60 transition-colors truncate">
                   {s.name}
                 </span>
               </div>
               <span className="text-white/30 text-sm font-light hidden md:block flex-1 mx-8">
                 {s.description ?? ''}
               </span>
-              <div className="flex items-center gap-8">
+              <div className="flex items-center gap-3 sm:gap-8 shrink-0">
                 <span className="text-white/25 text-xs tracking-widest font-mono hidden sm:inline">
                   {s.durationMinutes} MIN
                 </span>
-                <span className="text-white font-light text-xl">
+                <span className="text-white font-light text-base sm:text-xl">
                   €{s.price}
                 </span>
-                <span className="text-white/0 group-hover:text-white/40 transition-colors text-sm">→</span>
+                <span className="text-white/0 group-hover:text-white/40 transition-colors text-sm hidden sm:inline">→</span>
               </div>
             </div>
           ))}
@@ -165,8 +165,8 @@ const BarbershopModern = ({ business, services, hours }: {
       </section>
 
       {/* STORY */}
-      <section id="story" className="bg-card py-32 px-6 md:px-10">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-[1.2fr_1fr] gap-16 md:gap-24 items-center">
+      <section id="story" className="bg-card py-20 md:py-32 px-4 md:px-10">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-[1.2fr_1fr] gap-10 md:gap-24 items-center">
           <div className="aspect-[3/4] overflow-hidden">
             {storyImg ? (
               <img
@@ -211,8 +211,8 @@ const BarbershopModern = ({ business, services, hours }: {
       </section>
 
       {/* HOURS */}
-      <section id="hours" className="bg-background py-32 px-6 md:px-10">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 md:gap-32">
+      <section id="hours" className="bg-background py-20 md:py-32 px-4 md:px-10">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 md:gap-32">
           <div>
             <p className="text-white/20 text-[10px] tracking-[0.4em] uppercase mb-6">04 — Hours</p>
             <h2 className="text-white font-light text-3xl tracking-wide mb-12">When We're Open</h2>
@@ -282,8 +282,8 @@ const BarbershopModern = ({ business, services, hours }: {
       />
 
       {/* FOOTER */}
-      <footer className="border-t border-white/[0.05] py-10 px-6 md:px-10">
-        <div className="max-w-5xl mx-auto flex justify-between items-center">
+      <footer className="border-t border-white/[0.05] py-8 md:py-10 px-4 md:px-10">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center text-center sm:text-left">
           <span className="text-white/15 text-[10px] tracking-widest uppercase font-light">
             © {new Date().getFullYear()} {business.name}
           </span>

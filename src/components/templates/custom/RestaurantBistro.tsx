@@ -25,14 +25,14 @@ const RestaurantBistro = ({ business, services, hours }: {
   return (
     <div className="bg-background text-white min-h-screen">
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border h-16 flex items-center justify-between px-8 md:px-12">
-        <span className="font-black text-sm tracking-[0.25em] uppercase">{business.name.toUpperCase()}</span>
+      <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border h-16 flex items-center justify-between px-4 md:px-12 gap-3">
+        <span className="font-black text-sm tracking-[0.25em] uppercase truncate min-w-0">{business.name.toUpperCase()}</span>
         <div className="hidden md:flex gap-10">
           {['Menu', 'Story', 'Hours'].map((item) => (
             <button
               key={item}
               onClick={() => scrollTo(item.toLowerCase())}
-              className="text-white/40 text-xs tracking-widest uppercase hover:text-white transition-colors"
+              className="text-white/40 text-xs tracking-widest uppercase hover:text-white transition-colors min-h-[44px] inline-flex items-center"
             >
               {item}
             </button>
@@ -40,14 +40,14 @@ const RestaurantBistro = ({ business, services, hours }: {
         </div>
         <button
           onClick={openReservation}
-          className="bg-primary text-black font-bold text-xs tracking-widest uppercase px-5 py-2.5 hover:bg-primary/90 transition-colors"
+          className="shrink-0 min-h-[44px] inline-flex items-center bg-primary text-black font-bold text-xs tracking-widest uppercase px-4 sm:px-5 py-3 hover:bg-primary/90 transition-colors"
         >
           {business.ctaPrimary || 'Reserve a Table'}
         </button>
       </nav>
 
       {/* HERO */}
-      <section className="min-h-screen relative flex flex-col items-center justify-center">
+      <section className="min-h-[80svh] md:min-h-screen relative flex flex-col items-center justify-center">
         {heroImg ? (
           <img
             src={heroImg!}
@@ -80,16 +80,16 @@ const RestaurantBistro = ({ business, services, hours }: {
               {business.heroSubheadline || business.tagline || business.description}
             </p>
           )}
-          <div className="mt-12 flex gap-4 justify-center flex-wrap">
+          <div className="mt-12 flex gap-3 sm:gap-4 justify-center flex-wrap">
             <button
               onClick={() => scrollTo('menu')}
-              className="border-2 border-white text-white font-bold text-xs tracking-widest uppercase px-8 py-4 hover:bg-white hover:text-black transition-colors"
+              className="min-h-[44px] inline-flex items-center border-2 border-white text-white font-bold text-xs tracking-widest uppercase px-6 sm:px-8 py-3 sm:py-4 hover:bg-white hover:text-black transition-colors"
             >
               {(business.ctaSecondary || 'VIEW MENU').toUpperCase()}
             </button>
             <button
               onClick={openReservation}
-              className="bg-primary text-black font-bold text-xs tracking-widest uppercase px-8 py-4 hover:bg-primary/90 transition-colors"
+              className="min-h-[44px] inline-flex items-center bg-primary text-black font-bold text-xs tracking-widest uppercase px-6 sm:px-8 py-3 sm:py-4 hover:bg-primary/90 transition-colors"
             >
               {(business.ctaPrimary || 'RESERVE A TABLE').toUpperCase()}
             </button>
@@ -102,7 +102,7 @@ const RestaurantBistro = ({ business, services, hours }: {
       </section>
 
       {/* MENU */}
-      <section id="menu" className="bg-background py-28 px-8 md:px-12">
+      <section id="menu" className="bg-background py-20 md:py-28 px-4 md:px-12">
         <div className="max-w-4xl mx-auto mb-16 flex justify-between items-end">
           <div>
             <p className="text-primary text-xs tracking-[0.4em] uppercase mb-3">— The Menu</p>
@@ -143,8 +143,8 @@ const RestaurantBistro = ({ business, services, hours }: {
       </section>
 
       {/* ABOUT */}
-      <section id="story" className="bg-card py-28 px-8 md:px-12">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-[1fr_1.2fr] gap-16 items-center">
+      <section id="story" className="bg-card py-20 md:py-28 px-4 md:px-12">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-[1fr_1.2fr] gap-10 md:gap-16 items-center">
           <div>
             <p className="text-primary text-xs tracking-[0.4em] uppercase mb-6">— Our Story</p>
             <h2 className="font-heading font-black text-3xl md:text-4xl leading-tight mb-8" style={{ letterSpacing: '-0.02em' }}>
@@ -189,8 +189,8 @@ const RestaurantBistro = ({ business, services, hours }: {
       </section>
 
       {/* HOURS & CONTACT */}
-      <section id="hours" className="bg-background py-28 px-8 md:px-12">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-20">
+      <section id="hours" className="bg-background py-20 md:py-28 px-4 md:px-12">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-10 md:gap-20">
           <div>
             <p className="text-primary text-xs tracking-[0.4em] uppercase mb-6">— Kitchen Hours</p>
             <h2 className="font-black text-2xl mb-10">WHEN WE'RE OPEN</h2>
@@ -258,8 +258,8 @@ const RestaurantBistro = ({ business, services, hours }: {
       />
 
       {/* FOOTER */}
-      <footer className="border-t border-white/[0.07] py-10 px-8 md:px-12">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      <footer className="border-t border-white/[0.07] py-10 px-4 md:px-12">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
           <span className="font-black text-sm tracking-[0.2em]">{business.name.toUpperCase()}</span>
           <span className="text-white/20 text-[10px] tracking-widest uppercase">© {new Date().getFullYear()} All rights reserved</span>
           <span className="text-white/15 text-[10px] tracking-widest uppercase">Powered by LokalWeb</span>

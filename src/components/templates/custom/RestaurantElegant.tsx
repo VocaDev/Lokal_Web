@@ -21,15 +21,15 @@ export default function RestaurantElegant({ business, services, hours }: {
   return (
     <div className="bg-background text-foreground min-h-screen font-serif">
       {/* NAVBAR */}
-      <nav className="fixed top-0 inset-x-0 z-50 p-6 flex justify-between items-center bg-background/80 backdrop-blur-md border-b border-primary/10">
-        <span className="text-xl font-bold tracking-widest text-primary uppercase">{business.name}</span>
-        <button onClick={() => openBooking()} className="bg-primary text-black px-6 py-2 text-xs font-bold tracking-widest uppercase hover:bg-primary/90 transition-colors">
+      <nav className="fixed top-0 inset-x-0 z-50 px-4 py-4 md:p-6 flex justify-between items-center bg-background/80 backdrop-blur-md border-b border-primary/10 gap-3">
+        <span className="text-base sm:text-xl font-bold tracking-widest text-primary uppercase truncate min-w-0">{business.name}</span>
+        <button onClick={() => openBooking()} className="shrink-0 min-h-[44px] inline-flex items-center bg-primary text-black px-5 py-3 text-xs font-bold tracking-widest uppercase hover:bg-primary/90 transition-colors">
           {(business.ctaPrimary || 'RESERVE A TABLE').toUpperCase()}
         </button>
       </nav>
 
       {/* HERO */}
-      <section className="relative h-screen flex items-center justify-center pt-20 overflow-hidden">
+      <section className="relative min-h-[80svh] md:min-h-screen flex items-center justify-center pt-20 overflow-hidden">
         {heroImg ? (
           <img  src={heroImg!} 
           alt={business.name}
@@ -38,12 +38,12 @@ export default function RestaurantElegant({ business, services, hours }: {
           <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-background to-accent/20" />
         )}
         <div className="absolute inset-0 bg-background/70" />
-        <div className="relative z-10 max-w-3xl text-center px-8">
+        <div className="relative z-10 max-w-3xl text-center px-4 sm:px-8">
           <div className="w-12 h-px bg-primary mx-auto mb-8" />
-          <h1 className="text-5xl md:text-7xl font-bold italic mb-6">{business.heroHeadline || business.name}</h1>
-          <p className="text-lg text-primary/80 tracking-widest uppercase mb-12">{business.heroSubheadline || 'Fine Dining • Excellence • Tradition'}</p>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold italic mb-6">{business.heroHeadline || business.name}</h1>
+          <p className="text-base sm:text-lg text-primary/80 tracking-widest uppercase mb-12">{business.heroSubheadline || 'Fine Dining • Excellence • Tradition'}</p>
           <div className="flex justify-center gap-6">
-            <button onClick={() => document.getElementById('menu')?.scrollIntoView({behavior: 'smooth'})} className="border border-primary text-primary px-8 py-3 text-xs tracking-widest uppercase hover:bg-primary hover:text-black transition-all">
+            <button onClick={() => document.getElementById('menu')?.scrollIntoView({behavior: 'smooth'})} className="min-h-[44px] inline-flex items-center border border-primary text-primary px-7 py-3 text-xs tracking-widest uppercase hover:bg-primary hover:text-black transition-all">
               {(business.ctaSecondary || 'THE MENU').toUpperCase()}
             </button>
           </div>
@@ -51,13 +51,13 @@ export default function RestaurantElegant({ business, services, hours }: {
       </section>
 
       {/* MENU */}
-      <section id="menu" className="py-32 px-8 max-w-5xl mx-auto">
-        <div className="text-center mb-24">
+      <section id="menu" className="py-20 md:py-32 px-4 md:px-8 max-w-5xl mx-auto">
+        <div className="text-center mb-16 md:mb-24">
           <h2 className="text-xs tracking-[0.6em] text-primary mb-4 uppercase">OUR MENU</h2>
-          <div className="text-3xl italic">A Culniary Journey</div>
+          <div className="text-2xl sm:text-3xl italic">A Culinary Journey</div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-x-20 gap-y-16">
+        <div className="grid md:grid-cols-2 gap-x-10 md:gap-x-20 gap-y-12 md:gap-y-16">
           {services.map((s) => (
             <div key={s.id} className="relative group cursor-pointer" onClick={() => openBooking(s)}>
               <div className="flex justify-between items-baseline mb-2 border-b border-primary/20 pb-2">
@@ -71,8 +71,8 @@ export default function RestaurantElegant({ business, services, hours }: {
       </section>
 
       {/* HOURS & INFO */}
-      <section className="bg-card py-32 px-8">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-16">
+      <section className="bg-card py-20 md:py-32 px-4 md:px-8">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-10 md:gap-16">
           <div className="text-center md:text-left">
             <h4 className="text-primary text-xs tracking-widest uppercase mb-8">Location</h4>
             <p className="text-lg leading-relaxed">{business.address}</p>
@@ -101,7 +101,7 @@ export default function RestaurantElegant({ business, services, hours }: {
         </div>
       </section>
 
-      <footer className="p-12 text-center border-t border-primary/10">
+      <footer className="px-4 py-10 md:p-12 text-center border-t border-primary/10">
         <p className="text-[10px] tracking-[0.4em] text-primary/40 uppercase">© 2026 {business.name} — Designed by LokalWeb</p>
       </footer>
 

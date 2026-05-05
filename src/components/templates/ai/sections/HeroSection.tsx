@@ -170,7 +170,7 @@ function HeroCtas({
         <button
           type="button"
           onClick={onPrimary}
-          className="px-6 py-3 rounded-md text-sm font-semibold tracking-wide transition-opacity hover:opacity-90"
+          className="min-h-[44px] px-6 py-3 rounded-md text-sm font-semibold tracking-wide transition-opacity hover:opacity-90"
           style={ctaButtonStyle(payload, 'primary')}
         >
           {section.ctaPrimary}
@@ -180,7 +180,7 @@ function HeroCtas({
         <button
           type="button"
           onClick={onSecondary}
-          className="px-6 py-3 rounded-md text-sm font-semibold tracking-wide transition-opacity hover:opacity-90"
+          className="min-h-[44px] px-6 py-3 rounded-md text-sm font-semibold tracking-wide transition-opacity hover:opacity-90"
           style={ctaButtonStyle(payload, 'secondary')}
         >
           {section.ctaSecondary}
@@ -254,7 +254,7 @@ function SplitHero({ section, business, payload, heroImageUrl, previewMode, onPr
   return (
     <section className={`grid grid-cols-1 md:grid-cols-2 ${previewMode ? 'min-h-[420px]' : 'min-h-[520px] md:min-h-[640px]'} relative overflow-hidden`}>
       <div
-        className="relative min-h-[260px] md:min-h-full"
+        className="relative aspect-[4/3] md:aspect-auto md:min-h-full"
         style={backgroundStyle(payload, imageStyle, heroImageUrl)}
       >
         {showPlaceholder && (
@@ -262,7 +262,7 @@ function SplitHero({ section, business, payload, heroImageUrl, previewMode, onPr
         )}
       </div>
       <div
-        className="flex flex-col justify-center px-8 md:px-14 py-16 md:py-20"
+        className="flex flex-col justify-center px-6 sm:px-8 md:px-14 py-12 md:py-20"
         style={{ background: payload.surfaceColor }}
       >
         <div className="max-w-lg">
@@ -339,7 +339,7 @@ function FullbleedHero({ section, business, payload, heroImageUrl, previewMode, 
 
   return (
     <section
-      className={`${SECTION_PADDING_X} ${previewMode ? 'min-h-[460px]' : 'min-h-[700px]'} relative overflow-hidden flex ${positionClasses}`}
+      className={`${SECTION_PADDING_X} ${previewMode ? 'min-h-[460px]' : 'min-h-[80svh] md:min-h-[700px]'} relative overflow-hidden flex ${positionClasses}`}
       style={backgroundStyle(payload, imageStyle, heroImageUrl)}
     >
       <div className="absolute inset-0 pointer-events-none" style={{ background: scrim }} />
@@ -468,7 +468,7 @@ function AsymmetricHero({ section, business, payload, heroImageUrl, previewMode,
         style={{ background: payload.accentColor }}
       />
 
-      <div className={`relative ${SECTION_PADDING_X} flex flex-col h-full ${previewMode ? 'min-h-[460px] pb-12 pt-24' : 'min-h-[600px] pb-16 md:pb-24 pt-28 md:pt-40'} justify-end max-w-6xl`}>
+      <div className={`relative ${SECTION_PADDING_X} flex flex-col h-full ${previewMode ? 'min-h-[460px] pb-12 pt-24' : 'min-h-[600px] pb-16 md:pb-24 pt-20 md:pt-40'} justify-end max-w-6xl`}>
         <div
           className="text-[10px] uppercase tracking-[0.4em] mb-6"
           style={{ color: payload.mutedTextColor }}

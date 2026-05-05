@@ -49,31 +49,31 @@ const ClinicPremium = ({ business, services, hours }: {
   return (
     <div className="bg-background min-h-screen">
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 bg-card border-b border-border h-16 flex items-center justify-between px-8 md:px-16">
-        <div className="flex items-center">
+      <nav className="sticky top-0 z-50 bg-card border-b border-border h-16 flex items-center justify-between px-4 md:px-16 gap-3">
+        <div className="flex items-center min-w-0">
           <BlueCross />
-          <span className="text-foreground text-sm font-semibold tracking-wide ml-3">{business.name}</span>
+          <span className="text-foreground text-sm font-semibold tracking-wide ml-3 truncate">{business.name}</span>
         </div>
         <div className="hidden md:flex gap-10">
           {[["services", "Services"], ["team", "Our Team"], ["hours", "Hours"], ["contact", "Contact"]].map(([id, label]) => (
-            <button key={id} onClick={() => scrollTo(id)} className="text-muted-foreground text-sm hover:text-foreground transition-colors">
+            <button key={id} onClick={() => scrollTo(id)} className="text-muted-foreground text-sm hover:text-foreground transition-colors min-h-[44px] inline-flex items-center">
               {label}
             </button>
           ))}
         </div>
-        <button onClick={() => openBooking()} className="bg-primary text-white text-sm font-medium px-5 py-2 rounded-md hover:bg-primary/90 transition-colors">
+        <button onClick={() => openBooking()} className="shrink-0 min-h-[44px] inline-flex items-center bg-primary text-white text-sm font-medium px-5 py-3 rounded-md hover:bg-primary/90 transition-colors">
           {business.ctaPrimary || 'Book Consultation'}
         </button>
       </nav>
 
       {/* HERO */}
-      <section className="min-h-[88vh] grid grid-cols-1 md:grid-cols-2 bg-background">
-        <div className="flex flex-col justify-center px-8 md:px-16 py-20">
+      <section className="min-h-[80svh] md:min-h-[88vh] grid grid-cols-1 md:grid-cols-2 bg-background">
+        <div className="flex flex-col justify-center px-4 md:px-16 py-16 md:py-20">
           <div className="inline-flex items-center gap-2 mb-8 bg-primary/10 border border-primary/20 rounded-full px-4 py-1.5 w-fit">
             <div className="w-2 h-2 rounded-full bg-primary" />
             <span className="text-primary text-xs font-medium">Accepting New Patients</span>
           </div>
-          <h1 className="text-foreground font-semibold leading-tight mb-6" style={{ fontSize: "3rem", lineHeight: "1.15" }}>
+          <h1 className="text-foreground font-semibold leading-tight mb-6 text-4xl sm:text-5xl">
             {business.heroHeadline || 'Your Health Deserves Expert Care'}
           </h1>
           <p className="text-muted-foreground text-lg font-normal leading-relaxed max-w-md mb-10">
@@ -88,16 +88,16 @@ const ClinicPremium = ({ business, services, hours }: {
               </div>
             ))}
           </div>
-          <div className="flex gap-3">
-            <button onClick={() => openBooking()} className="bg-primary text-white font-medium text-sm px-6 py-3 rounded-md hover:bg-primary/90 transition-colors">
+          <div className="flex gap-3 flex-wrap">
+            <button onClick={() => openBooking()} className="min-h-[44px] inline-flex items-center bg-primary text-white font-medium text-sm px-6 py-3 rounded-md hover:bg-primary/90 transition-colors">
               {business.ctaPrimary || 'Book Consultation'}
             </button>
-            <button onClick={() => scrollTo("services")} className="border border-border text-foreground font-medium text-sm px-6 py-3 rounded-md hover:border-primary transition-colors">
+            <button onClick={() => scrollTo("services")} className="min-h-[44px] inline-flex items-center border border-border text-foreground font-medium text-sm px-6 py-3 rounded-md hover:border-primary transition-colors">
               {business.ctaSecondary || 'View Services'}
             </button>
           </div>
         </div>
-        <div className="relative overflow-hidden min-h-[400px]">
+        <div className="relative overflow-hidden min-h-[280px] md:min-h-[400px] aspect-[4/3] md:aspect-auto">
           {heroImg ? (
             <img
               src={heroImg!}
@@ -112,7 +112,7 @@ const ClinicPremium = ({ business, services, hours }: {
 
       {/* STATS — only shown when we have real numbers to back them. */}
       {clinicStats.length > 0 && (
-        <section className="bg-card border-y border-border py-10 px-8 md:px-16">
+        <section className="bg-card border-y border-border py-10 px-4 md:px-16">
           <div className={`max-w-5xl mx-auto grid ${clinicStats.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-8 text-center`}>
             {clinicStats.map((s) => (
               <div key={s.label}>
@@ -125,7 +125,7 @@ const ClinicPremium = ({ business, services, hours }: {
       )}
 
       {/* SERVICES */}
-      <section id="services" className="bg-background py-24 px-8 md:px-16">
+      <section id="services" className="bg-background py-20 md:py-24 px-4 md:px-16">
         <div className="max-w-5xl mx-auto mb-14 text-center">
           <span className="bg-primary/10 text-primary text-xs font-medium px-3 py-1 rounded-full inline-block mb-4">Medical Services</span>
           <h2 className="text-foreground font-semibold text-3xl mb-4">What We Treat</h2>
@@ -180,9 +180,9 @@ const ClinicPremium = ({ business, services, hours }: {
           Bring it back once tenants can upload team members from the dashboard. */}
 
       {/* HOURS & CONTACT */}
-      <section className="bg-background py-24 px-8 md:px-16">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-16">
-          <div id="hours" className="bg-card rounded-xl p-8 border border-border">
+      <section className="bg-background py-20 md:py-24 px-4 md:px-16">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-10 md:gap-16">
+          <div id="hours" className="bg-card rounded-xl p-6 md:p-8 border border-border">
             <span className="bg-primary/10 text-primary text-xs font-medium px-3 py-1 rounded-full inline-block mb-4">Schedule</span>
             <h2 className="text-foreground font-semibold text-2xl mb-6">Clinic Hours</h2>
             {(() => {
@@ -225,7 +225,7 @@ const ClinicPremium = ({ business, services, hours }: {
                 })
             })()}
           </div>
-          <div id="contact" className="bg-card rounded-xl p-8 border border-border">
+          <div id="contact" className="bg-card rounded-xl p-6 md:p-8 border border-border">
             <span className="bg-primary/10 text-primary text-xs font-medium px-3 py-1 rounded-full inline-block mb-4">Contact</span>
             <h2 className="text-foreground font-semibold text-2xl mb-6">Book an Appointment</h2>
             <p className="text-muted-foreground text-sm leading-relaxed mb-4">{business.address}</p>
@@ -244,8 +244,8 @@ const ClinicPremium = ({ business, services, hours }: {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-card border-t border-border py-8 px-8 md:px-16">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      <footer className="bg-card border-t border-border py-8 px-4 md:px-16">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
           <div className="flex items-center gap-3">
             <BlueCross size={5} />
             <span className="text-foreground text-sm font-semibold">{business.name}</span>

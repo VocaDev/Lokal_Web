@@ -111,14 +111,14 @@ export default function BookingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6 lg:p-8 text-foreground font-sans">
-      <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8 text-foreground font-sans">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
         <h1 className="text-2xl font-bold">Rezervimet</h1>
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-col items-stretch sm:items-end gap-2">
           <button
             onClick={handleExportReport}
             disabled={exportLoading}
-            className="bg-muted border border-border hover:border-border text-muted-foreground hover:text-foreground rounded-lg px-4 py-2 text-sm transition-all duration-150 disabled:opacity-50"
+            className="bg-muted border border-border hover:border-border text-muted-foreground hover:text-foreground rounded-lg px-4 py-2 text-sm transition-all duration-150 disabled:opacity-50 min-h-[44px]"
           >
             {exportLoading ? 'Duke gjeneruar...' : 'Eksporto Raportin (.txt)'}
           </button>
@@ -264,7 +264,7 @@ export default function BookingsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex items-center gap-3 text-muted-foreground">
                   <div className="p-3 rounded-xl bg-muted">
                     <Calendar size={18} className="text-muted-foreground" />
@@ -274,7 +274,7 @@ export default function BookingsPage() {
                     <p className="font-medium text-foreground">{new Date(selectedBooking.appointmentAt).toLocaleDateString()}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3 text-muted-foreground">
                   <div className="p-3 rounded-xl bg-muted">
                     <Clock size={18} className="text-muted-foreground" />
@@ -303,14 +303,14 @@ export default function BookingsPage() {
                   <button
                     onClick={() => handleAction(selectedBooking, confirmBooking)}
                     disabled={actionLoading}
-                    className="w-full py-2.5 rounded-lg bg-green-400/15 text-green-400 font-semibold text-sm hover:bg-green-400/25 transition-all duration-150 disabled:opacity-50"
+                    className="w-full min-h-[44px] py-3 rounded-lg bg-green-400/15 text-green-400 font-semibold text-sm hover:bg-green-400/25 transition-all duration-150 disabled:opacity-50"
                   >
                     {actionLoading ? "Duke u procesuar..." : "✓ Konfirmo Rezervimin"}
                   </button>
                   <button
                     onClick={() => handleAction(selectedBooking, cancelBooking)}
                     disabled={actionLoading}
-                    className="w-full py-2.5 rounded-lg bg-red-400/10 text-red-400 font-semibold text-sm hover:bg-red-400/20 transition-all duration-150 disabled:opacity-50"
+                    className="w-full min-h-[44px] py-3 rounded-lg bg-red-400/10 text-red-400 font-semibold text-sm hover:bg-red-400/20 transition-all duration-150 disabled:opacity-50"
                   >
                     {actionLoading ? "..." : "✗ Refuzo"}
                   </button>
@@ -322,14 +322,14 @@ export default function BookingsPage() {
                   <button
                     onClick={() => handleAction(selectedBooking, completeBooking)}
                     disabled={actionLoading}
-                    className="w-full py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-violet-600 text-white font-semibold text-sm hover:opacity-90 transition-all duration-150 disabled:opacity-50"
+                    className="w-full min-h-[44px] py-3 rounded-lg bg-gradient-to-r from-blue-500 to-violet-600 text-white font-semibold text-sm hover:opacity-90 transition-all duration-150 disabled:opacity-50"
                   >
                     {actionLoading ? "Duke u procesuar..." : "✓ Shëno si Kompletuar"}
                   </button>
                   <button
                     onClick={() => handleAction(selectedBooking, cancelBooking)}
                     disabled={actionLoading}
-                    className="w-full py-2.5 rounded-lg bg-red-400/10 text-red-400 font-semibold text-sm hover:bg-red-400/20 transition-all duration-150 disabled:opacity-50"
+                    className="w-full min-h-[44px] py-3 rounded-lg bg-red-400/10 text-red-400 font-semibold text-sm hover:bg-red-400/20 transition-all duration-150 disabled:opacity-50"
                   >
                     {actionLoading ? "..." : "Anulo Rezervimin"}
                   </button>

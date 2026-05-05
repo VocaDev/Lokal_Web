@@ -105,11 +105,11 @@ export default function ServicesPage() {
   }
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <h1 className="text-2xl font-bold text-foreground">Services</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditing(emptyService)} size="sm">
+            <Button onClick={() => setEditing(emptyService)} size="sm" className="min-h-[44px] w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-1" /> Add Service
             </Button>
           </DialogTrigger>

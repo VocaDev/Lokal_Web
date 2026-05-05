@@ -62,7 +62,7 @@ function TwoColumn({ section, payload, storyImageUrl }: LayoutProps) {
   return (
     <section className={`${SECTION_PADDING_X} ${SECTION_PADDING_Y}`} style={{ background: payload.bgColor }}>
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-14 items-center">
-        <div className="relative w-full h-[280px] md:h-[420px] overflow-hidden rounded-md" style={{ background: payload.surfaceColor }}>
+        <div className="relative w-full aspect-[4/3] md:aspect-auto md:h-[420px] overflow-hidden rounded-md" style={{ background: payload.surfaceColor }}>
           {storyImageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={storyImageUrl} alt="" className="w-full h-full object-cover" />
@@ -128,6 +128,7 @@ function LongForm({ section, payload, storyImageUrl }: LayoutProps) {
           {useDropCap ? (
             <>
               <span
+                className="hidden sm:inline-block"
                 style={{
                   float: 'left',
                   fontSize: '4.5rem',
@@ -141,6 +142,7 @@ function LongForm({ section, payload, storyImageUrl }: LayoutProps) {
               >
                 {firstChar}
               </span>
+              <span className="sm:hidden">{firstChar}</span>
               {restBody}
             </>
           ) : (

@@ -21,18 +21,18 @@ export default function BeautyLuxury({ business, services, hours }: {
   return (
     <div className="bg-background text-foreground min-h-screen font-serif antialiased">
       {/* NAVBAR */}
-      <nav className="fixed top-0 inset-x-0 z-50 p-8 flex justify-between items-center bg-background/60 backdrop-blur-xl border-b border-primary/5">
-        <div className="flex items-center gap-3">
-          <Sparkles className="h-6 w-6 text-primary" />
-          <span className="font-black tracking-[0.3em] text-sm text-white uppercase">{business.name}</span>
+      <nav className="fixed top-0 inset-x-0 z-50 px-4 py-4 md:p-8 flex justify-between items-center bg-background/60 backdrop-blur-xl border-b border-primary/5 gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Sparkles className="h-6 w-6 text-primary shrink-0" />
+          <span className="font-black tracking-[0.3em] text-xs sm:text-sm text-white uppercase truncate">{business.name}</span>
         </div>
-        <button onClick={() => openBooking()} className="bg-white text-foreground px-8 py-3 rounded-full text-[10px] font-black tracking-widest uppercase hover:bg-primary hover:text-white transition-all shadow-xl shadow-primary/10">
+        <button onClick={() => openBooking()} className="shrink-0 min-h-[44px] inline-flex items-center bg-white text-foreground px-5 sm:px-8 py-3 rounded-full text-[10px] font-black tracking-widest uppercase hover:bg-primary hover:text-white transition-all shadow-xl shadow-primary/10">
           {(business.ctaPrimary || 'BOOK EXPERIENCE').toUpperCase()}
         </button>
       </nav>
 
       {/* HERO */}
-      <section className="relative h-screen flex items-center justify-center pt-24 overflow-hidden">
+      <section className="relative min-h-[80svh] md:min-h-screen flex items-center justify-center pt-24 overflow-hidden">
         {heroImg ? (
           <img  src={heroImg!} 
           alt={business.name}
@@ -42,31 +42,31 @@ export default function BeautyLuxury({ business, services, hours }: {
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
         
-        <div className="relative z-10 max-w-4xl text-center px-8">
+        <div className="relative z-10 max-w-4xl text-center px-4 sm:px-8">
           <span className="text-primary font-black tracking-[0.6em] uppercase text-[10px] mb-8 block">THE PINNACLE OF BEAUTY</span>
-          <h1 className="text-6xl md:text-8xl font-black text-white leading-[0.9] mb-12 tracking-tighter uppercase italic">
+          <h1 className="text-5xl sm:text-6xl md:text-8xl font-black text-white leading-[0.9] mb-12 tracking-tighter uppercase italic">
             {business.heroHeadline ? business.heroHeadline : <>REFINED.<br />ELEGANCE.</>}
           </h1>
           <div className="w-20 h-px bg-primary/30 mx-auto mb-12" />
-          <p className="text-white/60 text-lg leading-relaxed mb-12 max-w-xl mx-auto font-sans italic">
+          <p className="text-white/60 text-base sm:text-lg leading-relaxed mb-12 max-w-xl mx-auto font-sans italic">
              {business.heroSubheadline || business.description || "Indulge in an atmosphere of pure luxury where expert hands transform your beauty and well-being."}
           </p>
-          <button onClick={() => document.getElementById('treatments')?.scrollIntoView({behavior: 'smooth'})} className="border border-primary text-primary px-12 py-4 rounded-full text-[10px] font-black tracking-[0.4em] uppercase hover:bg-primary hover:text-white transition-all shadow-2xl shadow-primary/5">
+          <button onClick={() => document.getElementById('treatments')?.scrollIntoView({behavior: 'smooth'})} className="min-h-[44px] inline-flex items-center border border-primary text-primary px-7 sm:px-12 py-3 sm:py-4 rounded-full text-[10px] font-black tracking-[0.4em] uppercase hover:bg-primary hover:text-white transition-all shadow-2xl shadow-primary/5">
             {(business.ctaSecondary || 'THE TREATMENTS').toUpperCase()}
           </button>
         </div>
       </section>
 
       {/* TREATMENTS */}
-      <section id="treatments" className="py-32 px-8 max-w-7xl mx-auto">
-        <div className="text-center mb-28">
+      <section id="treatments" className="py-20 md:py-32 px-4 md:px-8 max-w-7xl mx-auto">
+        <div className="text-center mb-16 md:mb-28">
            <h2 className="text-xs tracking-[0.8em] text-primary mb-6 uppercase italic font-bold">OUR TREATMENTS</h2>
-           <div className="text-4xl md:text-5xl font-black italic tracking-tighter text-white uppercase">Curated For You</div>
+           <div className="text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tighter text-white uppercase">Curated For You</div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-12">
           {services.map((s) => (
-            <div key={s.id} className="group relative cursor-pointer bg-white/[0.02] p-12 overflow-hidden rounded-[3rem] border border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all shadow-2xl" onClick={() => openBooking(s)}>
+            <div key={s.id} className="group relative cursor-pointer bg-white/[0.02] p-6 md:p-12 overflow-hidden rounded-[3rem] border border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all shadow-2xl" onClick={() => openBooking(s)}>
               <div className="absolute top-0 right-0 p-8">
                  <span className="bg-primary text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase shadow-lg shadow-primary/30 group-hover:scale-110 transition-transform">{s.durationMinutes} MIN</span>
               </div>
@@ -79,8 +79,8 @@ export default function BeautyLuxury({ business, services, hours }: {
       </section>
 
       {/* HOURS & INFO */}
-      <section className="bg-card py-40 px-8 border-y border-white/5">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-24 items-center">
+      <section className="bg-card py-20 md:py-40 px-4 md:px-8 border-y border-white/5">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-12 md:gap-24 items-center">
           <div className="space-y-12">
              <div className="text-center md:text-left">
                 <h2 className="text-primary text-[10px] tracking-[0.5em] uppercase italic font-black mb-8 underline underline-offset-8">THE SALON</h2>
@@ -111,7 +111,7 @@ export default function BeautyLuxury({ business, services, hours }: {
         </div>
       </section>
 
-      <footer className="p-16 text-center italic text-white/10 font-bold uppercase tracking-[1em] text-[8px] bg-background">
+      <footer className="px-4 py-10 md:p-16 text-center italic text-white/10 font-bold uppercase tracking-[0.5em] md:tracking-[1em] text-[8px] bg-background">
         © 2026 {business.name} — THE LOKALWEB COLLECTION
       </footer>
 

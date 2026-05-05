@@ -108,9 +108,9 @@ function Showcase({ images, section, payload }: { images: string[]; section: AiG
           <div className="md:col-span-8 rounded-xl overflow-hidden" style={{ background: payload.surfaceColor }}>
             {hero ? (
               /* eslint-disable-next-line @next/next/no-img-element */
-              <img src={hero} alt="" className="w-full h-72 md:h-[480px] object-cover" />
+              <img src={hero} alt="" className="w-full aspect-[4/3] md:aspect-auto md:h-[480px] object-cover" />
             ) : (
-              <div className="relative w-full h-72 md:h-[480px]">
+              <div className="relative w-full aspect-[4/3] md:aspect-auto md:h-[480px]">
                 <PhotoPlaceholder payload={payload} shape="gallery" label="HERO PHOTO" fill />
               </div>
             )}
@@ -140,10 +140,10 @@ function Strip({ images, section, payload }: { images: string[]; section: AiGall
       <div className={`${SECTION_PADDING_X} max-w-6xl mx-auto`}>
         <GalleryHeader section={section} payload={payload} />
       </div>
-      <div className="overflow-x-auto pb-4">
+      <div className="overflow-x-auto pb-4 snap-x snap-mandatory scroll-px-6 md:scroll-px-12">
         <div className={`${SECTION_PADDING_X} flex gap-3 min-w-max`}>
           {slots.map((src, i) => (
-            <div key={i} className="relative w-72 h-48 md:w-96 md:h-64 rounded-lg overflow-hidden shrink-0" style={{ background: payload.surfaceColor }}>
+            <div key={i} className="relative w-[80vw] max-w-[18rem] aspect-[3/2] md:w-96 md:h-64 md:aspect-auto md:max-w-none rounded-lg overflow-hidden shrink-0 snap-start" style={{ background: payload.surfaceColor }}>
               {src ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />

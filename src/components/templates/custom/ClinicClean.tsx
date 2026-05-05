@@ -21,23 +21,23 @@ export default function ClinicClean({ business, services, hours }: {
   return (
     <div className="bg-white text-slate-900 min-h-screen font-sans antialiased">
       {/* NAVBAR */}
-      <nav className="fixed top-0 inset-x-0 z-50 p-6 flex justify-between items-center bg-white/90 backdrop-blur-md border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <div className="bg-blue-600 p-1.5 rounded-lg shadow-lg shadow-blue-600/10">
+      <nav className="fixed top-0 inset-x-0 z-50 px-4 py-4 md:p-6 flex justify-between items-center bg-white/90 backdrop-blur-md border-b border-slate-100 gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="bg-blue-600 p-1.5 rounded-lg shadow-lg shadow-blue-600/10 shrink-0">
              <Heart className="h-5 w-5 text-white" />
           </div>
-          <span className="font-bold tracking-tight text-xl text-slate-800 uppercase">{business.name}</span>
+          <span className="font-bold tracking-tight text-base sm:text-xl text-slate-800 uppercase truncate">{business.name}</span>
         </div>
-        <button onClick={() => openBooking()} className="bg-blue-600 text-white px-8 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20">
+        <button onClick={() => openBooking()} className="shrink-0 min-h-[44px] inline-flex items-center bg-blue-600 text-white px-5 sm:px-8 py-3 rounded-full text-xs font-bold tracking-widest uppercase hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20">
           {(business.ctaPrimary || 'BOOK APPOINTMENT').toUpperCase()}
         </button>
       </nav>
 
       {/* HERO */}
-      <section className="min-h-[80vh] flex flex-col md:flex-row items-stretch pt-24">
-        <div className="flex-1 flex flex-col justify-center px-12 md:px-24 py-20 bg-slate-50">
+      <section className="min-h-[80svh] md:min-h-[80vh] flex flex-col md:flex-row items-stretch pt-24">
+        <div className="flex-1 flex flex-col justify-center px-6 md:px-24 py-16 md:py-20 bg-slate-50">
           <span className="bg-blue-100 text-blue-600 px-4 py-1 rounded-full text-[10px] font-bold tracking-[0.2em] uppercase mb-8 self-start">PROFESSIONAL CARE</span>
-          <h1 className="text-5xl md:text-6xl font-black tracking-tighter text-slate-900 mb-8 leading-[0.95] uppercase">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter text-slate-900 mb-8 leading-[0.95] uppercase">
             {business.heroHeadline ? business.heroHeadline : <>Your Health Is<br />Our Priority.</>}
           </h1>
           <p className="text-lg text-slate-500 leading-relaxed mb-10 max-w-lg">
@@ -63,15 +63,15 @@ export default function ClinicClean({ business, services, hours }: {
       </section>
 
       {/* SERVICES */}
-      <section id="services" className="py-32 px-8 max-w-6xl mx-auto">
-        <div className="text-center mb-24">
+      <section id="services" className="py-20 md:py-32 px-4 md:px-8 max-w-6xl mx-auto">
+        <div className="text-center mb-16 md:mb-24">
           <h2 className="text-xs tracking-[0.6em] text-blue-600 mb-4 uppercase font-bold">OUR SERVICES</h2>
           <div className="w-16 h-1 bg-blue-600 mx-auto" />
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {services.map((s) => (
-            <div key={s.id} className="group cursor-pointer bg-white p-10 rounded-2xl border border-slate-100 border-l-4 border-l-blue-600 hover:shadow-2xl hover:shadow-blue-600/5 transition-all" onClick={() => openBooking(s)}>
+            <div key={s.id} className="group cursor-pointer bg-white p-6 md:p-10 rounded-2xl border border-slate-100 border-l-4 border-l-blue-600 hover:shadow-2xl hover:shadow-blue-600/5 transition-all" onClick={() => openBooking(s)}>
               <h3 className="text-xl font-bold text-slate-800 mb-4 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{s.name}</h3>
               <p className="text-slate-400 text-sm leading-relaxed mb-8">{s.description || "Expert medical consultation and diagnostic care."}</p>
               <div className="flex justify-between items-center pt-6 border-t border-slate-50">
@@ -84,8 +84,8 @@ export default function ClinicClean({ business, services, hours }: {
       </section>
 
       {/* INFO */}
-      <section className="bg-slate-900 py-32 px-8 text-white rounded-t-[4rem]">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-20">
+      <section className="bg-slate-900 py-20 md:py-32 px-4 md:px-8 text-white rounded-t-[4rem]">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-12 md:gap-20">
           <div className="space-y-6">
             <h2 className="text-2xl font-bold uppercase tracking-tight">Visit Us</h2>
             <div className="flex gap-4">
@@ -117,7 +117,7 @@ export default function ClinicClean({ business, services, hours }: {
         </div>
       </section>
 
-      <footer className="p-12 text-center border-t border-slate-100">
+      <footer className="px-4 py-10 md:p-12 text-center border-t border-slate-100">
         <p className="text-[10px] tracking-[0.4em] text-slate-400 uppercase">© 2026 {business.name} — POWERED BY LOKALWEB</p>
       </footer>
 

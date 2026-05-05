@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Business, BusinessHours } from '@/lib/types'
 import { addBooking } from '@/lib/store'
 import { validateKosovoPhone } from '@/lib/validators'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { X, Check } from 'lucide-react'
 import {
   AvailableSlot,
@@ -44,6 +45,17 @@ export default function RestaurantBookingDrawer({
 
   const tz = business.timezone || DEFAULT_TIMEZONE
   const supabase = useMemo(() => createClient(), [])
+  const isMobile = useIsMobile()
+
+  useEffect(() => {
+    if (!isOpen || !isMobile) return
+    const root = document.documentElement
+    const previous = root.style.overflow
+    root.style.overflow = 'hidden'
+    return () => {
+      root.style.overflow = previous
+    }
+  }, [isOpen, isMobile])
 
   const handleClose = () => {
     setStep(1)
@@ -155,8 +167,17 @@ export default function RestaurantBookingDrawer({
       )}
 
       <div
-        className={`fixed right-0 top-0 h-full w-[360px] z-50 bg-card border-l border-border flex flex-col transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={[
+          'fixed z-50 bg-card flex flex-col transform transition-transform duration-300 ease-in-out',
+          'inset-x-0 bottom-0 h-[90dvh] w-full rounded-t-2xl border-t border-border',
+          isOpen ? 'translate-y-0' : 'translate-y-full',
+          'md:inset-x-auto md:bottom-auto md:right-0 md:top-0 md:h-full md:w-[400px] md:rounded-none md:border-t-0 md:border-l md:border-border',
+          isOpen ? 'md:translate-x-0 md:translate-y-0' : 'md:translate-y-0 md:translate-x-full',
+        ].join(' ')}
       >
+        {/* Drag handle (mobile only, decorative) */}
+        <div className="md:hidden mx-auto mt-3 mb-1 h-1 w-10 rounded-full bg-foreground/20" aria-hidden="true" />
+
         {/* Header */}
         <div className="px-5 py-4 border-b border-border">
           <div className="flex justify-between items-center mb-4">
@@ -205,7 +226,7 @@ export default function RestaurantBookingDrawer({
                       key={num}
                       type="button"
                       onClick={() => setPartySize(num)}
-                      className={`rounded-lg py-4 text-center text-sm transition-colors ${
+                      className={`min-h-[44px] rounded-lg py-4 text-center text-sm transition-colors ${
                         isSelected
                           ? 'border border-primary bg-primary/10 text-primary'
                           : 'bg-muted border border-border text-muted-foreground hover:border-foreground/40'
@@ -225,7 +246,7 @@ export default function RestaurantBookingDrawer({
           {step === 2 && (
             <div>
               <p className="text-muted-foreground text-[10px] tracking-widest uppercase mb-4">Select a date</p>
-              <div className="flex overflow-x-auto pb-4 gap-2 no-scrollbar">
+              <div className="flex overflow-x-auto pb-4 gap-2 no-scrollbar snap-x snap-mandatory scroll-px-5">
                 {next7Days.map((date, idx) => {
                   const { y, m, d } = ymdInTz(date, tz)
                   const probe = new Date(Date.UTC(y, m - 1, d, 12))
@@ -242,7 +263,7 @@ export default function RestaurantBookingDrawer({
                         setSelectedSlot(null)
                         setSlotConflict(false)
                       }}
-                      className={`min-w-[60px] flex-shrink-0 flex flex-col items-center justify-center rounded-lg py-3 border transition-colors ${
+                      className={`min-w-[60px] min-h-[68px] flex-shrink-0 flex flex-col items-center justify-center rounded-lg py-3 border transition-colors snap-start ${
                         !isOpenDay
                           ? 'opacity-35 cursor-not-allowed border-border bg-muted'
                           : isSelected
@@ -272,7 +293,7 @@ export default function RestaurantBookingDrawer({
                   )}
 
                   {availableSlots.length > 0 ? (
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 xs:grid-cols-3 gap-2">
                       {availableSlots.map((slot) => {
                         const isSelected = selectedSlot?.startUtc.getTime() === slot.startUtc.getTime()
                         return (
@@ -284,7 +305,7 @@ export default function RestaurantBookingDrawer({
                               setSelectedSlot(slot)
                               setSlotConflict(false)
                             }}
-                            className={`rounded-lg py-3 text-center text-sm border transition-colors ${
+                            className={`min-h-[44px] rounded-lg py-3 px-3 text-center text-sm border transition-colors ${
                               slot.isBooked
                                 ? 'opacity-30 line-through text-muted-foreground cursor-not-allowed border-border bg-muted'
                                 : isSelected
@@ -334,7 +355,7 @@ export default function RestaurantBookingDrawer({
                   placeholder="Your name"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full bg-muted border border-border rounded-lg px-4 py-3 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
+                  className="w-full bg-muted border border-border rounded-lg px-4 py-3 text-base text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
                 />
                 <input
                   type="tel"
@@ -344,7 +365,7 @@ export default function RestaurantBookingDrawer({
                     setCustomerPhone(e.target.value)
                     if (phoneError) setPhoneError(null)
                   }}
-                  className="w-full bg-muted border border-border rounded-lg px-4 py-3 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
+                  className="w-full bg-muted border border-border rounded-lg px-4 py-3 text-base text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
                 />
                 {phoneError && (
                   <p className="text-destructive text-[12px]">{phoneError}</p>
@@ -407,7 +428,7 @@ export default function RestaurantBookingDrawer({
         </div>
 
         {step < 4 && (
-          <div className="px-5 pb-5 pt-3 border-t border-border">
+          <div className="px-5 pt-3 pb-[max(env(safe-area-inset-bottom),1.25rem)] border-t border-border">
             {step === 1 && (
               <button
                 disabled={!partySize}

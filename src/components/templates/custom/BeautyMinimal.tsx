@@ -21,15 +21,15 @@ export default function BeautyMinimal({ business, services, hours }: {
   return (
     <div className="bg-background text-primary/80 min-h-screen font-light antialiased">
       {/* NAVBAR */}
-      <nav className="p-10 flex justify-between items-center border-b border-white/5">
-        <span className="tracking-[0.5em] font-black text-xs text-white uppercase">{business.name}</span>
-        <button onClick={() => openBooking()} className="text-[10px] tracking-[0.3em] font-black border border-primary/20 px-8 py-3 rounded-full hover:bg-primary hover:text-white hover:border-transparent transition-all uppercase">
+      <nav className="px-4 py-5 md:p-10 flex justify-between items-center border-b border-white/5 gap-3">
+        <span className="tracking-[0.3em] sm:tracking-[0.5em] font-black text-xs text-white uppercase truncate min-w-0">{business.name}</span>
+        <button onClick={() => openBooking()} className="shrink-0 min-h-[44px] inline-flex items-center text-[10px] tracking-[0.3em] font-black border border-primary/20 px-5 sm:px-8 py-3 rounded-full hover:bg-primary hover:text-white hover:border-transparent transition-all uppercase">
           {(business.ctaPrimary || 'RESERVE').toUpperCase()}
         </button>
       </nav>
 
       {/* HERO */}
-      <section className="py-40 px-8 max-w-4xl mx-auto text-center relative overflow-hidden">
+      <section className="py-24 md:py-40 px-4 md:px-8 max-w-4xl mx-auto text-center relative overflow-hidden">
         {heroImg && (
           <>
             <img src={heroImg} alt={business.name} className="absolute inset-0 w-full h-full object-cover" />
@@ -47,27 +47,27 @@ export default function BeautyMinimal({ business, services, hours }: {
       </section>
 
       {/* TREATMENTS */}
-      <section id="treatments" className="py-32 px-8 max-w-5xl mx-auto">
-        <h2 className="text-[10px] tracking-[0.8em] text-primary/30 mb-20 uppercase font-black text-center">TREATMENTS</h2>
-        
+      <section id="treatments" className="py-20 md:py-32 px-4 md:px-8 max-w-5xl mx-auto">
+        <h2 className="text-[10px] tracking-[0.8em] text-primary/30 mb-12 md:mb-20 uppercase font-black text-center">TREATMENTS</h2>
+
         <div className="border-t border-white/5">
           {services.map((s) => (
-            <div key={s.id} className="flex justify-between items-center py-10 border-b border-white/5 group cursor-pointer hover:bg-white/[0.01] px-4 transition-all" onClick={() => openBooking(s)}>
-              <div className="space-y-2">
-                <h3 className="text-xl text-white tracking-widest font-black uppercase group-hover:text-primary transition-colors">{s.name}</h3>
+            <div key={s.id} className="flex justify-between items-center gap-3 py-8 md:py-10 border-b border-white/5 group cursor-pointer hover:bg-white/[0.01] px-2 sm:px-4 transition-all min-h-[44px]" onClick={() => openBooking(s)}>
+              <div className="space-y-2 min-w-0">
+                <h3 className="text-base sm:text-xl text-white tracking-widest font-black uppercase group-hover:text-primary transition-colors truncate">{s.name}</h3>
                 <div className="flex gap-4 items-center">
                    <div className="w-8 h-px bg-primary/20" />
                    <span className="text-[10px] tracking-widest uppercase text-primary/40">{s.durationMinutes} MIN</span>
                 </div>
               </div>
-              <div className="text-2xl font-black text-white italic">€{s.price}</div>
+              <div className="text-xl sm:text-2xl font-black text-white italic shrink-0">€{s.price}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* INFO */}
-      <section className="py-40 px-8 max-w-5xl mx-auto grid md:grid-cols-2 gap-32 border-t border-white/5">
+      <section className="py-20 md:py-40 px-4 md:px-8 max-w-5xl mx-auto grid md:grid-cols-2 gap-12 md:gap-32 border-t border-white/5">
         <div>
            <div className="flex items-center gap-4 mb-20">
               <div className="h-10 w-10 flex items-center justify-center rounded-full border border-primary/20 text-primary"><Sparkles size={18}/></div>
@@ -96,7 +96,7 @@ export default function BeautyMinimal({ business, services, hours }: {
         </div>
       </section>
 
-      <footer className="p-20 text-center border-t border-white/5 bg-card">
+      <footer className="px-4 py-12 md:p-20 text-center border-t border-white/5 bg-card">
         <p className="text-[8px] tracking-[1em] text-white/10 uppercase font-black">© 2026 {business.name} — POWERED BY LOKALWEB</p>
       </footer>
 

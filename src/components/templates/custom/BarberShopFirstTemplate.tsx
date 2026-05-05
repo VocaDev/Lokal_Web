@@ -49,23 +49,23 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
     >
       {/* NAVBAR */}
       <nav
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-5 transition-transform duration-300 bg-black/20 backdrop-blur-sm"
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-8 py-4 md:py-5 transition-transform duration-300 bg-black/20 backdrop-blur-sm gap-3"
         style={{ transform: navVisible ? "translateY(0)" : "translateY(-100%)" }}
       >
-        <span className="text-sm font-black tracking-[0.15em] uppercase">{business.name.toUpperCase()}</span>
+        <span className="text-sm font-black tracking-[0.15em] uppercase truncate min-w-0">{business.name.toUpperCase()}</span>
         <button
           onClick={() => openBooking()}
-          className="border border-white text-white bg-transparent px-6 py-2.5 text-xs font-bold tracking-widest uppercase transition-colors hover:bg-white hover:text-black"
+          className="shrink-0 inline-flex items-center min-h-[44px] border border-white text-white bg-transparent px-5 py-3 text-xs font-bold tracking-widest uppercase transition-colors hover:bg-white hover:text-black"
         >
           {(business.ctaPrimary || 'BOOK NOW').toUpperCase()}
         </button>
       </nav>
 
       {/* HERO */}
-      <section 
+      <section
         className="relative flex items-center justify-center transition-all duration-700"
-        style={{ 
-          minHeight: business.heroHeight === 'small' ? '60vh' : business.heroHeight === 'large' ? '100vh' : '85vh' 
+        style={{
+          minHeight: business.heroHeight === 'small' ? '60svh' : business.heroHeight === 'large' ? '100svh' : '85svh'
         }}
       >
         {heroImg ? (
@@ -99,16 +99,16 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
               {tagline}
             </p>
           )}
-          <div className="flex items-center justify-center gap-4 flex-wrap">
+          <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap">
             <button
               onClick={() => scrollTo("services")}
-              className="border-2 border-white text-white px-8 py-4 text-sm font-bold tracking-widest uppercase transition-colors hover:bg-white hover:text-black"
+              className="min-h-[44px] inline-flex items-center border-2 border-white text-white px-6 sm:px-8 py-3 sm:py-4 text-sm font-bold tracking-widest uppercase transition-colors hover:bg-white hover:text-black"
             >
               {(business.ctaSecondary || 'VIEW SERVICES').toUpperCase()}
             </button>
             <button
               onClick={() => openBooking()}
-              className="bg-white text-black px-8 py-4 text-sm font-bold tracking-widest uppercase transition-colors hover:bg-white/90"
+              className="min-h-[44px] inline-flex items-center bg-white text-black px-6 sm:px-8 py-3 sm:py-4 text-sm font-bold tracking-widest uppercase transition-colors hover:bg-white/90"
             >
               {(business.ctaPrimary || 'BOOK APPOINTMENT').toUpperCase()}
             </button>
@@ -122,18 +122,18 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
       {/* SERVICES */}
       <section
         id="services"
-        className="py-32 px-8 bg-background"
+        className="py-20 md:py-32 px-4 md:px-8 bg-background"
       >
         <div className="max-w-6xl mx-auto">
           <p className="text-white/40 text-xs tracking-[0.4em] uppercase mb-4">OUR SERVICES</p>
           <h2 className="font-heading font-black text-white" style={{ fontSize: "clamp(2rem, 5vw, 4rem)" }}>WHAT WE DO</h2>
-          <div className="w-16 h-px bg-white/20 mt-6 mb-16" />
+          <div className="w-16 h-px bg-white/20 mt-6 mb-12 md:mb-16" />
         </div>
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-px bg-border">
           {services.map((s, i) => (
             <div
               key={s.id}
-              className="p-10 cursor-pointer group hover:bg-white/5 transition-colors bg-card"
+              className="p-6 md:p-10 cursor-pointer group hover:bg-white/5 transition-colors bg-card"
               onClick={() => openBooking(s)}
             >
               <span className="text-white/10 text-6xl font-black block mb-4">
@@ -157,8 +157,8 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
       </section>
 
       {/* ABOUT */}
-      <section className="bg-card py-32">
-        <div className="max-w-6xl mx-auto px-8 grid md:grid-cols-2 gap-0">
+      <section className="bg-card py-20 md:py-32">
+        <div className="max-w-6xl mx-auto px-4 md:px-8 grid md:grid-cols-2 gap-0">
           <div className="flex flex-col justify-center pr-0 md:pr-16 mb-12 md:mb-0">
             <p className="text-white/40 text-xs tracking-[0.4em] uppercase mb-6">OUR STORY</p>
             <h2 className="font-heading text-white font-black text-4xl leading-tight mb-6">
@@ -205,8 +205,8 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
 
       {/* HOURS & CONTACT */}
       {business.showContact !== false && (
-        <section className="bg-background py-32 px-8">
-          <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20">
+        <section className="bg-background py-20 md:py-32 px-4 md:px-8">
+          <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 md:gap-20">
             <div>
               <p className="text-white/40 text-xs tracking-[0.4em] uppercase mb-4">HOURS</p>
               <h2 className="font-heading text-white font-black text-4xl mb-10">WHEN WE'RE OPEN</h2>
@@ -253,8 +253,8 @@ const BarberShopFirstTemplate = ({ business, services, hours }: Props) => {
       )}
 
       {/* FOOTER */}
-      <footer className="border-t border-white/[0.08] py-12 px-8">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      <footer className="border-t border-white/[0.08] py-10 md:py-12 px-4 md:px-8">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
           <span className="text-white/30 text-xs tracking-widest">© {currentYear}</span>
           <span className="text-white font-black text-sm tracking-[0.3em]">{business.name.toUpperCase()}</span>
           <span className="text-white/20 text-xs tracking-widest">Powered by LokalWeb</span>

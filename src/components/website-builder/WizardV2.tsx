@@ -549,14 +549,14 @@ export default function WizardV2({ businessId, subdomain, businessName, bookingE
 
       {/* Footer nav (only on form steps 1-5) */}
       {step >= 1 && step <= 5 && (
-        <footer className="border-t border-border bg-background">
-          <div className="max-w-[720px] mx-auto px-7 py-5 flex items-center justify-between">
+        <footer className="sticky bottom-0 z-30 border-t border-border bg-background">
+          <div className="max-w-[720px] mx-auto px-4 sm:px-7 pt-4 pb-[max(env(safe-area-inset-bottom),1rem)] flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => setStep(s => Math.max(1, s - 1))}
               disabled={step === 1}
               className={cn(
-                'text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-2 rounded',
+                'min-h-[44px] inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded',
                 step === 1 && 'invisible',
               )}
             >
@@ -574,7 +574,7 @@ export default function WizardV2({ businessId, subdomain, businessName, bookingE
               }}
               disabled={!canContinue}
               className={cn(
-                'text-sm font-semibold rounded-lg px-6 py-2.5 transition-all',
+                'min-h-[44px] inline-flex items-center text-sm font-semibold rounded-lg px-6 py-3 transition-all',
                 'bg-gradient-to-br from-primary to-accent text-primary-foreground',
                 'shadow-[0_0_24px_-8px_hsl(var(--primary)/0.6)]',
                 'hover:shadow-[0_0_32px_-6px_hsl(var(--primary)/0.8)]',
@@ -598,10 +598,10 @@ function StepShell({
   heading, subtitle, children,
 }: { heading: string; subtitle: string; children: React.ReactNode }) {
   return (
-    <div className="flex-1 px-7 py-10">
-      <div className="max-w-[720px] mx-auto space-y-8">
+    <div className="flex-1 px-4 sm:px-7 py-8 md:py-10">
+      <div className="max-w-[720px] mx-auto space-y-6 md:space-y-8">
         <div className="space-y-2">
-          <h1 className="text-[30px] font-bold tracking-tight leading-tight">{heading}</h1>
+          <h1 className="text-2xl sm:text-[30px] font-bold tracking-tight leading-tight">{heading}</h1>
           <p className="text-[15px] text-muted-foreground">{subtitle}</p>
         </div>
         {children}
@@ -660,7 +660,7 @@ function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
     <input
       {...props}
       className={cn(
-        'w-full bg-card border border-border rounded-lg px-3.5 py-2.5 text-[14px]',
+        'w-full bg-card border border-border rounded-lg px-3.5 py-2.5 text-base sm:text-[14px]',
         'text-foreground placeholder:text-muted-foreground',
         'focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20',
         'transition-all',
@@ -675,7 +675,7 @@ function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
     <textarea
       {...props}
       className={cn(
-        'w-full bg-card border border-border rounded-lg px-3.5 py-2.5 text-[14px]',
+        'w-full bg-card border border-border rounded-lg px-3.5 py-2.5 text-base sm:text-[14px]',
         'text-foreground placeholder:text-muted-foreground min-h-[80px] resize-y',
         'focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20',
         'transition-all',
@@ -866,8 +866,9 @@ function Step2({
           <div className="space-y-3">
             {input.services.map((s, idx) => (
               <div key={idx} className="space-y-1">
-                <div className="grid grid-cols-[1fr_88px_40px] md:grid-cols-[1fr_100px_120px_40px] gap-2 items-center">
+                <div className="grid grid-cols-[1fr_72px_40px] sm:grid-cols-[1fr_88px_88px_40px] md:grid-cols-[1fr_100px_120px_40px] gap-2 items-center">
                   <TextInput
+                    className="col-span-3 sm:col-span-1 min-w-0"
                     value={s.name}
                     onChange={(e) => updateService(idx, { name: e.target.value })}
                     placeholder="p.sh. Prerje + krenim, Pizza Margherita, Konsultë"
@@ -877,9 +878,9 @@ function Step2({
                     onChange={(e) => updateService(idx, { price: e.target.value })}
                     placeholder="p.sh. 12€"
                   />
-                  <div className="relative hidden md:block">
+                  <div className="relative">
                     <TextInput
-                      className="pr-10"
+                      className="pr-9"
                       value={s.durationMinutes !== undefined ? String(s.durationMinutes) : ''}
                       onChange={(e) => {
                         const raw = e.target.value.trim();
@@ -887,6 +888,7 @@ function Step2({
                         updateService(idx, { durationMinutes: Number.isFinite(n) ? (n as number) : undefined });
                       }}
                       placeholder="30"
+                      inputMode="numeric"
                     />
                     <span
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-medium text-muted-foreground pointer-events-none select-none"
@@ -1071,7 +1073,7 @@ function LayoutPicker({
   return (
     <div className="space-y-3">
       <h3 className="text-[15px] font-semibold text-foreground">{title}</h3>
-      <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-3">
         {options.map(opt => (
           <LayoutCard
             key={opt.id}
@@ -1385,7 +1387,7 @@ function Step4({
         Stili i faqes suaj
       </FieldLabel>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-3">
         {(Object.entries(ARCHETYPES) as Array<[ArchetypeKey, Archetype]>).map(([key, arch]) => (
           <ArchetypeCard
             key={key}
@@ -1842,9 +1844,9 @@ function PreviewScreen({
   onApply: () => void;
 }) {
   return (
-    <div className="flex-1 px-6 py-8">
+    <div className="flex-1 px-4 md:px-6 py-6 md:py-8">
       <div className="max-w-5xl mx-auto space-y-5">
-        <div className="sticky top-0 z-30 -mx-2 flex items-center justify-between gap-4 flex-wrap rounded-xl bg-background/95 px-2 py-2 backdrop-blur">
+        <div className="sticky top-0 z-30 -mx-2 flex items-center justify-between gap-3 flex-wrap rounded-xl bg-background/95 px-2 py-3 backdrop-blur">
           <h1 className="text-[26px] md:text-[30px] font-bold tracking-tight">Faqja jote është gati</h1>
           <div className="flex items-center gap-2">
             <button

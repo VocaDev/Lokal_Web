@@ -158,6 +158,44 @@ const STORY_LAYOUT_POOL: Record<ArchetypeKey, string[]> = {
   'elegant-rafinuar':  ['centered-quote', 'two-column'],
 };
 
+// Services layout pool. Photo-dependent layouts (cards, grid-3) are filtered
+// at pick-time when the user hasn't uploaded service photos — they'd render
+// with empty placeholders and look bad. The default lean per archetype mirrors
+// what the AI tended to pick before the pool existed.
+const SERVICES_LAYOUT_POOL: Record<ArchetypeKey, string[]> = {
+  'i-ngrohte':         ['list', 'editorial-rows', 'cards'],
+  'erresi-karakter':   ['editorial-rows', 'list', 'grid-2'],
+  'besim-qartesi':     ['list', 'grid-2', 'cards'],
+  'gjalleri-moderne':  ['cards', 'grid-3', 'grid-2'],
+  'leter-stil':        ['editorial-rows', 'list', 'grid-2'],
+  'studioja':          ['cards', 'grid-2', 'grid-3'],
+  'familjar-mirprites':['list', 'grid-2', 'cards'],
+  'elegant-rafinuar':  ['list', 'editorial-rows', 'grid-2'],
+};
+const PHOTO_DEPENDENT_SERVICES: ReadonlySet<string> = new Set(['cards', 'grid-3']);
+
+const GALLERY_LAYOUT_POOL: Record<ArchetypeKey, string[]> = {
+  'i-ngrohte':         ['masonry', 'grid-uniform'],
+  'erresi-karakter':   ['showcase', 'masonry', 'strip'],
+  'besim-qartesi':     ['grid-uniform', 'masonry'],
+  'gjalleri-moderne':  ['masonry', 'showcase', 'strip'],
+  'leter-stil':        ['grid-uniform', 'showcase'],
+  'studioja':          ['showcase', 'strip', 'masonry'],
+  'familjar-mirprites':['masonry', 'grid-uniform'],
+  'elegant-rafinuar':  ['grid-uniform', 'showcase'],
+};
+
+const FOOTER_LAYOUT_POOL: Record<ArchetypeKey, string[]> = {
+  'i-ngrohte':         ['three-column', 'centered'],
+  'erresi-karakter':   ['editorial', 'minimal'],
+  'besim-qartesi':     ['three-column', 'centered'],
+  'gjalleri-moderne':  ['three-column', 'editorial'],
+  'leter-stil':        ['editorial', 'centered'],
+  'studioja':          ['minimal', 'editorial'],
+  'familjar-mirprites':['three-column', 'centered'],
+  'elegant-rafinuar':  ['editorial', 'centered'],
+};
+
 // Pick a layout from a pool, excluding `exclude` when there is more than one
 // candidate. Falls back to a uniform pick over the full pool if filtering
 // would empty it (i.e. the previous layout is the *only* compatible one).
@@ -346,6 +384,39 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
         const picked = pickFromPool(pool, ctx.previousStoryLayout);
         sections = sections.map(s => (
           s?.kind === 'story' ? { ...s, layout: picked } : s
+        ));
+      }
+    }
+    if (ctx.servicesLayout === 'ai') {
+      // Cards / grid-3 need photos to look right. Without them, the renderer
+      // shows dashed PhotoPlaceholder boxes which look like a broken site.
+      const pool = SERVICES_LAYOUT_POOL[effectiveArchetypeKey].filter(
+        l => ctx.userHasServicePhotos || !PHOTO_DEPENDENT_SERVICES.has(l),
+      );
+      if (pool.length > 0) {
+        const picked = pickFromPool(pool, undefined);
+        sections = sections.map(s => (
+          s?.kind === 'services' ? { ...s, layout: picked } : s
+        ));
+      }
+    }
+    if (ctx.galleryLayout === 'ai') {
+      const pool = GALLERY_LAYOUT_POOL[effectiveArchetypeKey];
+      if (pool && pool.length > 0) {
+        const picked = pickFromPool(pool, undefined);
+        sections = sections.map(s => (
+          s?.kind === 'gallery' ? { ...s, layout: picked } : s
+        ));
+      }
+    }
+    // Footer layout isn't user-pickable in the wizard — always pool-pick it
+    // so it varies per business / per regen instead of converging to "centered".
+    {
+      const pool = FOOTER_LAYOUT_POOL[effectiveArchetypeKey];
+      if (pool && pool.length > 0) {
+        const picked = pickFromPool(pool, undefined);
+        sections = sections.map(s => (
+          s?.kind === 'footer' ? { ...s, layout: picked } : s
         ));
       }
     }

@@ -52,6 +52,30 @@ export default function ColorSection({ formData, onChange }: ColorSectionProps) 
 
       <div>
         <label className="block text-sm font-semibold text-foreground mb-2">
+          Hero Text Color
+        </label>
+        <ColorPicker
+          color={formData.hero_text_color || formData.text_color || '#ffffff'}
+          onChange={(color) => onChange('hero_text_color', color)}
+        />
+        <p className="text-xs text-muted-foreground mt-2">
+          Override for the hero headline + subheadline. Useful when the
+          automatic default (white over a hero photo, theme text otherwise)
+          doesn't read well on your image.
+        </p>
+        {formData.hero_text_color && (
+          <button
+            type="button"
+            onClick={() => onChange('hero_text_color', null)}
+            className="mt-2 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+          >
+            Reset to automatic
+          </button>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-foreground mb-2">
           Muted Text Color
         </label>
         <ColorPicker

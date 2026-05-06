@@ -240,6 +240,7 @@ export default async function PublicBusinessPage({ params }: { params: Promise<{
       textColor: customData!.text_color,
       mutedTextColor: customData!.muted_text_color,
       borderColor: customData!.border_color,
+      heroTextColor: (customData as any)?.hero_text_color ?? null,
       headingFont: customData!.heading_font,
       bodyFont: customData!.body_font,
       metaDescription: customData!.meta_description ?? '',

@@ -203,8 +203,12 @@ function CenteredHero({ section, business, payload, heroImageUrl, previewMode, o
     ? { ...section, ctaCount: 1 }
     : section;
   const hasHeroPhoto = !!heroImageUrl;
-  const textColor = hasHeroPhoto ? '#ffffff' : payload.textColor;
-  const mutedColor = hasHeroPhoto ? '#ffffff' : payload.mutedTextColor;
+  // Owner override (set in Customization Hub > Hero Text Color) wins over the
+  // automatic white-over-photo / theme-text default for both lines so they
+  // can be tuned independently of the rest of the page text.
+  const override = payload.heroTextColor || null;
+  const textColor = override || (hasHeroPhoto ? '#ffffff' : payload.textColor);
+  const mutedColor = override || (hasHeroPhoto ? '#ffffff' : payload.mutedTextColor);
   return (
     <section
       className={`${SECTION_PADDING_X} relative flex items-center justify-center text-center ${previewMode ? 'min-h-[420px] py-20' : 'min-h-[600px] py-28 md:py-44'}`}
@@ -251,6 +255,9 @@ function CenteredHero({ section, business, payload, heroImageUrl, previewMode, o
 function SplitHero({ section, business, payload, heroImageUrl, previewMode, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const showPlaceholder = shouldShowHeroPlaceholder(section, heroImageUrl);
   const imageStyle = heroImageUrl ? 'photo' : section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
+  const override = payload.heroTextColor || null;
+  const textColor = override || payload.textColor;
+  const mutedColor = override || payload.mutedTextColor;
   return (
     <section className={`grid grid-cols-1 md:grid-cols-2 ${previewMode ? 'min-h-[420px]' : 'min-h-[520px] md:min-h-[640px]'} relative overflow-hidden`}>
       <div
@@ -274,14 +281,14 @@ function SplitHero({ section, business, payload, heroImageUrl, previewMode, onPr
           </div>
           <h1
             className="text-3xl md:text-5xl lg:text-6xl font-bold leading-[1.05] mb-5"
-            style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
+            style={{ fontFamily: headingFontFamily(payload.headingFont), color: textColor }}
           >
             {section.headline}
           </h1>
           {section.subheadline && (
             <p
               className="text-base md:text-lg leading-relaxed"
-              style={{ color: payload.mutedTextColor }}
+              style={{ color: mutedColor }}
             >
               {section.subheadline}
             </p>
@@ -308,8 +315,9 @@ function FullbleedHero({ section, business, payload, heroImageUrl, previewMode, 
   const hasRealPhoto = imageStyle === 'photo' && !!heroImageUrl;
   const hasDarkBg = imageStyle === 'gradient' || imageStyle === 'pattern';
   const useWhiteText = hasRealPhoto || hasDarkBg;
-  const textColor = useWhiteText ? '#ffffff' : payload.textColor;
-  const mutedColor = useWhiteText ? '#ffffff' : payload.mutedTextColor;
+  const override = payload.heroTextColor || null;
+  const textColor = override || (useWhiteText ? '#ffffff' : payload.textColor);
+  const mutedColor = override || (useWhiteText ? '#ffffff' : payload.mutedTextColor);
   const positionClasses = (() => {
     switch (position) {
       case 'top':           return 'items-start justify-center text-center pt-20';
@@ -379,8 +387,9 @@ function FullbleedHero({ section, business, payload, heroImageUrl, previewMode, 
 
 function EditorialHero({ section, business, payload, heroImageUrl, previewMode, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const hasHeroPhoto = !!heroImageUrl;
-  const textColor = hasHeroPhoto ? '#ffffff' : payload.textColor;
-  const mutedColor = hasHeroPhoto ? '#ffffff' : payload.mutedTextColor;
+  const override = payload.heroTextColor || null;
+  const textColor = override || (hasHeroPhoto ? '#ffffff' : payload.textColor);
+  const mutedColor = override || (hasHeroPhoto ? '#ffffff' : payload.mutedTextColor);
   const borderColor = hasHeroPhoto ? 'rgba(255,255,255,0.28)' : payload.borderColor;
   return (
     <section
@@ -440,6 +449,9 @@ function EditorialHero({ section, business, payload, heroImageUrl, previewMode, 
 
 function AsymmetricHero({ section, business, payload, heroImageUrl, previewMode, onPrimaryCta, onSecondaryCta }: LayoutProps) {
   const imageStyle = heroImageUrl ? 'photo' : section.imageStyle === 'none' ? 'gradient' : section.imageStyle;
+  const override = payload.heroTextColor || null;
+  const textColor = override || payload.textColor;
+  const mutedColor = override || payload.mutedTextColor;
   return (
     <section
       className={`relative overflow-hidden ${previewMode ? 'min-h-[460px]' : 'min-h-[600px] md:min-h-[640px]'}`}
@@ -477,14 +489,14 @@ function AsymmetricHero({ section, business, payload, heroImageUrl, previewMode,
         </div>
         <h1
           className={`${previewMode ? 'text-4xl md:text-6xl' : 'text-5xl md:text-7xl lg:text-[6.5rem]'} font-bold leading-[0.95] mb-6 max-w-3xl`}
-          style={{ fontFamily: headingFontFamily(payload.headingFont), color: payload.textColor }}
+          style={{ fontFamily: headingFontFamily(payload.headingFont), color: textColor }}
         >
           {section.headline}
         </h1>
         {section.subheadline && (
           <p
             className="text-base md:text-lg max-w-md ml-0 md:ml-32 mt-6"
-            style={{ color: payload.mutedTextColor }}
+            style={{ color: mutedColor }}
           >
             {section.subheadline}
           </p>

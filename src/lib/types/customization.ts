@@ -23,6 +23,10 @@ export interface WebsiteCustomization {
   bg_color: string;
   surface_color: string;
   border_color: string;
+  // Optional override for the hero headline + subheadline color. When null/
+  // undefined the renderer falls back to its automatic logic (white over a
+  // hero photo, theme text_color otherwise). Migration 020.
+  hero_text_color?: string | null;
 
   // Typography
   heading_font: 'dm-sans' | 'inter' | 'poppins' | 'playfair';
@@ -211,6 +215,10 @@ export interface AiSitePayload {
   textColor: string;
   mutedTextColor: string;
   borderColor: string;
+  // Owner-set override for the hero headline + subheadline color. When
+  // present, HeroSection uses it for hero copy and skips the automatic
+  // white-over-photo / theme-text default.
+  heroTextColor?: string | null;
   headingFont: 'dm-sans' | 'playfair' | 'inter' | 'poppins' | 'space-grotesk';
   bodyFont: 'dm-sans' | 'inter' | 'poppins';
   metaDescription: string;

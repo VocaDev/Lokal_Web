@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Globe, Calendar, Smartphone, UserPlus, Palette, Rocket, Check, Menu, X, Sun, Moon } from "lucide-react";
+import { ArrowRight, Globe, Calendar, Smartphone, UserPlus, Palette, Rocket, Menu, X, Sun, Moon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState, useRef } from "react";
@@ -26,22 +26,10 @@ const steps = [
   { icon: Rocket, title: "Go Live", description: "Your website is instantly live with online booking built in.", step: "03" },
 ];
 
-const planFeatures = [
-  "Custom subdomain website",
-  "Online booking system",
-  "Business hours management",
-  "Photo gallery",
-  "Google Maps integration",
-  "Social media links",
-  "Mobile responsive design",
-  "Customer notifications",
-];
-
 const stats = [
   { value: "2min", label: "Setup time" },
   { value: "24/7", label: "Bookings" },
   { value: "100%", label: "No-code" },
-  { value: "€20", label: "Per month" },
 ];
 
 export default function LandingPage() {
@@ -206,7 +194,7 @@ export default function LandingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="mt-16 grid grid-cols-4 gap-px rounded-2xl overflow-hidden border border-border/40 bg-border/20 max-w-lg mx-auto"
+            className="mt-16 grid grid-cols-3 gap-px rounded-2xl overflow-hidden border border-border/40 bg-border/20 max-w-lg mx-auto"
           >
             {stats.map((s) => (
               <div key={s.label} className="bg-background/80 backdrop-blur-sm px-4 py-4 text-center">
@@ -333,64 +321,6 @@ export default function LandingPage() {
                 <p className="text-sm text-muted-foreground leading-relaxed">{feat.description}</p>
               </motion.div>
             ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── PRICING ── */}
-      <section className="py-24 px-6">
-        <div className="max-w-md mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-3">Pricing</p>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-3">Simple, honest pricing</h2>
-            <p className="text-muted-foreground text-sm">One plan. Everything included. No surprises.</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            whileHover={{ scale: 1.01 }}
-            transition={{ duration: 0.3 }}
-            className="relative bg-card rounded-3xl border-2 border-primary p-8 shadow-2xl shadow-primary/10"
-          >
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-              <div className="px-4 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-lg shadow-primary/30">
-                Business Plan
-              </div>
-            </div>
-
-            <div className="text-center pt-2 mb-8">
-              <div className="flex items-end justify-center gap-1.5">
-                <span className="text-6xl font-black tracking-tight">€20</span>
-                <span className="text-muted-foreground mb-2.5 text-sm">/month</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Everything you need to run your business online</p>
-            </div>
-
-            <div className="space-y-3 mb-8">
-              {planFeatures.map((f) => (
-                <div key={f} className="flex items-center gap-3">
-                  <div className="h-5 w-5 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center flex-shrink-0">
-                    <Check className="h-3 w-3 text-primary" />
-                  </div>
-                  <span className="text-sm text-foreground/80">{f}</span>
-                </div>
-              ))}
-            </div>
-
-            <Button
-              className="w-full h-12 text-base font-bold shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-shadow"
-              onClick={() => router.push("/register")}
-            >
-              Get Started Today <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <p className="text-center text-xs text-muted-foreground mt-3">No credit card required to start</p>
           </motion.div>
         </div>
       </section>

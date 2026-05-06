@@ -15,6 +15,10 @@ export async function POST(request: NextRequest) {
       instagramUrl,
       tiktokUrl,
       phoneNumber,
+      // Optional override from the wizard's screen 1. When the user edits
+      // the pre-filled business name, we persist the change back here so
+      // hero copy + browser tab title stay in sync.
+      businessName,
     } = await request.json();
     if (!businessId || !theme) {
       return NextResponse.json({ error: 'businessId and theme required' }, { status: 400 });
@@ -59,6 +63,12 @@ export async function POST(request: NextRequest) {
     // the owner already set via /dashboard/profile.
     const trimmedPhone = typeof phoneNumber === 'string' ? phoneNumber.trim() : '';
     if (trimmedPhone.length > 0) businessUpdatePayload.phone = trimmedPhone;
+
+    // Wizard-supplied business name override (only sent when the user
+    // edited screen 1). Empty/whitespace doesn't overwrite the registration
+    // value — we want a non-trivial change before touching the row.
+    const trimmedName = typeof businessName === 'string' ? businessName.trim() : '';
+    if (trimmedName.length > 0) businessUpdatePayload.name = trimmedName;
     const { data: bizUpdated, error: bizErr } = await supabase
       .from('businesses')
       .update(businessUpdatePayload)

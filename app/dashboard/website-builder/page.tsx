@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import WizardV2 from '@/components/website-builder/WizardV2'
+import Wizard from '@/components/website-builder/Wizard'
 
 export default async function WebsiteBuilderPage() {
   const supabase = await createClient()
@@ -23,7 +23,7 @@ export default async function WebsiteBuilderPage() {
   }
 
   return (
-    <WizardV2
+    <Wizard
       businessId={business.id}
       subdomain={business.subdomain}
       businessName={business.name}

@@ -180,8 +180,10 @@ Migration 011 hardened RLS across the public tables; migration 014 added the wiz
 ### Wizard & dashboard
 | File | Responsibility |
 |---|---|
-| `src/components/website-builder/WizardV2.tsx` | 5-step wizard UI (industry → description/services → layouts → archetype → tone/language) |
-| `app/dashboard/website-builder/page.tsx` | Wizard host page |
+| `src/components/website-builder/Wizard.tsx` | One-question-per-screen wizard UI (11 question screens + summary + generating overlay + preview), localStorage draft persistence under `lokalweb_wizard_draft_v1`. Visual design tracks `docs/wizard-prototype.html`. |
+| `src/components/website-builder/wizard/useWizardDraft.ts` | Debounced localStorage auto-save + restore-prompt hook for the wizard draft. |
+| `app/dashboard/website-builder/page.tsx` | Wizard host page (returning users) |
+| `app/register/website-builder/page.tsx` | Wizard host page (first-time flow after registration) |
 | `app/dashboard/customization/page.tsx` | Customization Hub — direct text editing, colors, typography, gallery |
 | `src/components/dashboard/CustomizationHub/*` | Color, typography, content, gallery sections + live preview |
 | `app/dashboard/bookings/page.tsx` | Bookings list — delegates state changes to `bookingService` |

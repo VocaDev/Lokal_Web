@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LokalWeb — Wizard Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============================================
+     LokalWeb Wizard Prototype — Design Tokens
+     ============================================ */
+  :root {
+    --lw-blue: #4f8ef7;
+    --lw-violet: #8b5cf6;
+    --lw-gradient: linear-gradient(135deg, #4f8ef7, #8b5cf6);
+
+    --lw-bg: #0a0a0f;
+    --lw-bg-2: #0f0f1a;
+    --lw-bg-3: #151522;
+
+    --lw-surface: #151522;
+    --lw-surface-2: #1e1e35;
+
+    --lw-border: rgba(120, 120, 255, 0.12);
+    --lw-border-2: rgba(120, 120, 255, 0.22);
+    --lw-border-strong: rgba(120, 120, 255, 0.35);
+
+    --lw-blue-tint: rgba(79, 142, 247, 0.15);
+    --lw-violet-tint: rgba(139, 92, 246, 0.15);
+    --lw-blue-glow: rgba(79, 142, 247, 0.25);
+
+    --lw-text: #e8e8f0;
+    --lw-muted: #8888aa;
+    --lw-muted-2: #5a5a7a;
+
+    --lw-success-tint: rgba(34, 197, 94, 0.15);
+    --lw-success-text: #4ade80;
+    --lw-warning-tint: rgba(251, 191, 36, 0.15);
+    --lw-warning-text: #fbbf24;
+
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    background: var(--lw-bg);
+    color: var(--lw-text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    position: relative;
+  }
+
+  /* Ambient background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 600px 400px at 20% 10%, rgba(79, 142, 247, 0.08), transparent 60%),
+      radial-gradient(ellipse 500px 600px at 90% 80%, rgba(139, 92, 246, 0.06), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(rgba(120, 120, 255, 0.06) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+
+  /* ============================================
+     Top Bar — Progress
+     ============================================ */
+  .topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(10, 10, 15, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--lw-border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .logo {
+    font-family: 'Instrument Serif', serif;
+    font-size: 24px;
+    font-weight: 400;
+    font-style: italic;
+    background: var(--lw-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.02em;
+  }
+
+  .progress-area {
+    flex: 1;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--lw-muted-2);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .progress-meta span:last-child {
+    color: var(--lw-muted);
+  }
+
+  .progress-track {
+    height: 3px;
+    background: var(--lw-surface-2);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--lw-gradient);
+    border-radius: 999px;
+    width: 10%;
+    transition: width 0.6s var(--ease-out);
+    position: relative;
+  }
+
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translate(50%, -50%);
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--lw-violet);
+    box-shadow: 0 0 12px var(--lw-violet);
+  }
+
+  .topbar-back {
+    background: transparent;
+    border: 1px solid var(--lw-border-2);
+    color: var(--lw-muted);
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s var(--ease-out);
+    font-size: 16px;
+  }
+
+  .topbar-back:hover:not(:disabled) {
+    background: var(--lw-surface-2);
+    color: var(--lw-text);
+    border-color: var(--lw-border-strong);
+  }
+
+  .topbar-back:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  /* ============================================
+     Main Stage
+     ============================================ */
+  .stage {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    padding: 100px 32px 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .screen {
+    width: 100%;
+    max-width: 640px;
+    display: none;
+    animation: screenEnter 0.6s var(--ease-out) both;
+  }
+
+  .screen.active {
+    display: block;
+  }
+
+  @keyframes screenEnter {
+    0% {
+      opacity: 0;
+      transform: translateY(24px) scale(0.99);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes screenExit {
+    0% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-12px) scale(0.99);
+    }
+  }
+
+  .screen.exiting {
+    animation: screenExit 0.3s var(--ease-out) both;
+  }
+
+  .step-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--lw-muted-2);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: fadeInUp 0.7s 0.05s var(--ease-out) both;
+  }
+
+  .step-tag::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--lw-border-strong);
+  }
+
+  .question {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(36px, 5.5vw, 56px);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--lw-text);
+    margin-bottom: 14px;
+    animation: fadeInUp 0.7s 0.1s var(--ease-out) both;
+  }
+
+  .question em {
+    font-style: italic;
+    background: var(--lw-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .question-sub {
+    font-size: 16px;
+    color: var(--lw-muted);
+    margin-bottom: 40px;
+    line-height: 1.6;
+    max-width: 560px;
+    animation: fadeInUp 0.7s 0.15s var(--ease-out) both;
+  }
+
+  @keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(16px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============================================
+     Inputs
+     ============================================ */
+  .input-area {
+    margin-bottom: 32px;
+    animation: fadeInUp 0.7s 0.2s var(--ease-out) both;
+  }
+
+  .text-input {
+    width: 100%;
+    background: var(--lw-surface);
+    border: 1.5px solid var(--lw-border-2);
+    border-radius: 14px;
+    padding: 18px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 18px;
+    color: var(--lw-text);
+    outline: none;
+    transition: all 0.25s var(--ease-out);
+  }
+
+  .text-input::placeholder {
+    color: var(--lw-muted-2);
+  }
+
+  .text-input:hover {
+    border-color: var(--lw-border-strong);
+  }
+
+  .text-input:focus {
+    border-color: var(--lw-blue);
+    background: var(--lw-surface-2);
+    box-shadow: 0 0 0 4px var(--lw-blue-tint);
+  }
+
+  textarea.text-input {
+    min-height: 140px;
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  .input-helper {
+    font-size: 13px;
+    color: var(--lw-muted-2);
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .word-count {
+    transition: color 0.3s ease;
+  }
+
+  .word-count.weak { color: var(--lw-muted-2); }
+  .word-count.good { color: var(--lw-success-text); }
+
+  /* Suggestion chips below an input */
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .suggestion {
+    background: var(--lw-surface);
+    border: 1px solid var(--lw-border);
+    color: var(--lw-muted);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s var(--ease-out);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .suggestion:hover {
+    background: var(--lw-blue-tint);
+    border-color: var(--lw-border-strong);
+    color: var(--lw-text);
+    transform: translateY(-1px);
+  }
+
+  /* ============================================
+     Card Grid (Tone, Visual Style)
+     ============================================ */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .card-grid.three-col {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .option-card {
+    background: var(--lw-surface);
+    border: 1.5px solid var(--lw-border);
+    border-radius: 14px;
+    padding: 22px 20px;
+    cursor: pointer;
+    transition: all 0.25s var(--ease-out);
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .option-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(79,142,247,0.04), rgba(139,92,246,0.04));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .option-card:hover {
+    border-color: var(--lw-border-strong);
+    transform: translateY(-2px);
+  }
+
+  .option-card:hover::before {
+    opacity: 1;
+  }
+
+  .option-card.selected {
+    border-color: var(--lw-blue);
+    background: var(--lw-blue-tint);
+  }
+
+  .option-card.selected::before {
+    opacity: 1;
+  }
+
+  .option-card .label {
+    font-family: 'Instrument Serif', serif;
+    font-size: 22px;
+    font-weight: 400;
+    margin-bottom: 6px;
+    color: var(--lw-text);
+    letter-spacing: -0.01em;
+  }
+
+  .option-card .desc {
+    font-size: 13px;
+    color: var(--lw-muted);
+    line-height: 1.4;
+  }
+
+  .option-card.with-preview .preview {
+    height: 56px;
+    margin-bottom: 14px;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Visual style preview swatches */
+  .preview.warm    { background: linear-gradient(135deg, #b08858, #5a3a26 50%, #2e1d12); }
+  .preview.dark    { background: linear-gradient(135deg, #1a1a2e, #0f0f1a 50%, #1e1e35); }
+  .preview.trust   { background: linear-gradient(135deg, #4f8ef7, #1e3a8a); }
+  .preview.modern  { background: linear-gradient(135deg, #f97316, #fbbf24 50%, #ec4899); }
+  .preview.editorial { background: linear-gradient(135deg, #f4ead4, #d4c4a4 50%, #8a7a52); }
+  .preview.studio  { background: linear-gradient(135deg, #f5f5f0, #d4d4d8 50%, #71717a); }
+  .preview.family  { background: linear-gradient(135deg, #fef3c7, #d97706 50%, #92400e); }
+  .preview.elegant { background: linear-gradient(135deg, #1f2937, #4b5563 50%, #d1d5db); }
+
+  /* ============================================
+     Services Editor (special case, screen 6)
+     ============================================ */
+  .services-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .service-row {
+    background: var(--lw-surface);
+    border: 1px solid var(--lw-border);
+    border-radius: 14px;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 1fr 90px 90px 36px;
+    gap: 10px;
+    align-items: center;
+    animation: serviceRowEnter 0.4s var(--ease-out) both;
+  }
+
+  @keyframes serviceRowEnter {
+    0% { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .service-row .text-input {
+    padding: 10px 12px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  .service-row .remove-btn {
+    background: transparent;
+    border: 1px solid var(--lw-border);
+    color: var(--lw-muted-2);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .service-row .remove-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
+  }
+
+  .add-service-btn {
+    background: transparent;
+    border: 1.5px dashed var(--lw-border-2);
+    color: var(--lw-muted);
+    padding: 14px;
+    border-radius: 14px;
+    width: 100%;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .add-service-btn:hover {
+    background: var(--lw-surface);
+    border-color: var(--lw-blue);
+    color: var(--lw-blue);
+  }
+
+  /* ============================================
+     Layout step (screen 10) — special toggle
+     ============================================ */
+  .layout-default-card {
+    background: var(--lw-surface);
+    border: 2px solid var(--lw-blue);
+    border-radius: 16px;
+    padding: 28px 24px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .layout-default-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(79,142,247,0.08), rgba(139,92,246,0.06));
+    pointer-events: none;
+  }
+
+  .layout-default-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: var(--lw-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .layout-default-icon svg {
+    width: 22px;
+    height: 22px;
+    color: white;
+  }
+
+  .layout-default-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 24px;
+    font-weight: 400;
+    margin-bottom: 6px;
+    position: relative; z-index: 1;
+    letter-spacing: -0.01em;
+  }
+
+  .layout-default-desc {
+    color: var(--lw-muted);
+    font-size: 14px;
+    line-height: 1.5;
+    position: relative; z-index: 1;
+  }
+
+  .advanced-toggle {
+    background: transparent;
+    border: 1px solid var(--lw-border);
+    color: var(--lw-muted);
+    padding: 12px 16px;
+    border-radius: 10px;
+    width: 100%;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .advanced-toggle:hover {
+    border-color: var(--lw-border-strong);
+    color: var(--lw-text);
+  }
+
+  .advanced-toggle .chevron {
+    transition: transform 0.3s ease;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .advanced-toggle.open .chevron {
+    transform: rotate(90deg);
+  }
+
+  .advanced-panel {
+    margin-top: 14px;
+    background: var(--lw-bg-2);
+    border: 1px solid var(--lw-border);
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 13px;
+    color: var(--lw-muted);
+    display: none;
+  }
+
+  .advanced-panel.open {
+    display: block;
+    animation: fadeInUp 0.3s var(--ease-out);
+  }
+
+  /* ============================================
+     Bottom Action Bar
+     ============================================ */
+  .actions {
+    margin-top: 32px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    animation: fadeInUp 0.7s 0.3s var(--ease-out) both;
+  }
+
+  .btn {
+    padding: 14px 28px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s var(--ease-out);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    background: var(--lw-gradient);
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #5a98f8, #9466f7);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .btn-primary span { position: relative; z-index: 1; }
+
+  .btn-primary:hover::before { opacity: 1; }
+
+  .btn-primary:active { transform: scale(0.97); }
+
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-primary:disabled:hover::before { opacity: 0; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--lw-muted);
+    border: 1px solid transparent;
+  }
+
+  .btn-ghost:hover {
+    color: var(--lw-text);
+    background: var(--lw-surface);
+  }
+
+  .keyboard-hint {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--lw-muted-2);
+    font-family: 'DM Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .kbd {
+    background: var(--lw-surface-2);
+    border: 1px solid var(--lw-border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    color: var(--lw-muted);
+  }
+
+  /* ============================================
+     Summary Screen (final)
+     ============================================ */
+  .summary-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 32px;
+    background: var(--lw-surface);
+    border: 1px solid var(--lw-border);
+    border-radius: 16px;
+    padding: 8px;
+    animation: fadeInUp 0.7s 0.2s var(--ease-out) both;
+  }
+
+  .summary-row {
+    display: grid;
+    grid-template-columns: 180px 1fr 32px;
+    gap: 16px;
+    align-items: start;
+    padding: 14px 18px;
+    border-radius: 10px;
+    transition: background 0.2s ease;
+  }
+
+  .summary-row:hover {
+    background: var(--lw-bg-2);
+  }
+
+  .summary-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--lw-muted-2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding-top: 3px;
+  }
+
+  .summary-value {
+    font-size: 15px;
+    color: var(--lw-text);
+    line-height: 1.5;
+    word-wrap: break-word;
+  }
+
+  .summary-value.empty {
+    color: var(--lw-muted-2);
+    font-style: italic;
+  }
+
+  .edit-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--lw-muted-2);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s ease;
+  }
+
+  .summary-row:hover .edit-btn {
+    color: var(--lw-blue);
+  }
+
+  .edit-btn:hover {
+    background: var(--lw-blue-tint);
+    color: var(--lw-blue) !important;
+  }
+
+  /* ============================================
+     Dev panel — shows current state
+     ============================================ */
+  .dev-panel {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--lw-surface);
+    border: 1px solid var(--lw-border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--lw-muted);
+    z-index: 99;
+    max-width: 280px;
+    backdrop-filter: blur(12px);
+    background: rgba(21, 21, 34, 0.85);
+  }
+
+  .dev-panel-title {
+    color: var(--lw-blue);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .dev-panel pre {
+    color: var(--lw-text);
+    white-space: pre-wrap;
+    max-height: 220px;
+    overflow-y: auto;
+    font-size: 10.5px;
+    line-height: 1.5;
+  }
+
+  .dev-toggle {
+    background: transparent;
+    border: none;
+    color: var(--lw-muted);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+  }
+
+  .dev-panel.collapsed pre,
+  .dev-panel.collapsed .dev-panel-divider {
+    display: none;
+  }
+
+  /* ============================================
+     Mobile
+     ============================================ */
+  @media (max-width: 640px) {
+    .topbar { padding: 14px 16px; gap: 12px; }
+    .progress-area { max-width: none; }
+    .stage { padding: 90px 20px 100px; }
+    .question { font-size: 36px; }
+    .card-grid { grid-template-columns: 1fr; }
+    .card-grid.three-col { grid-template-columns: 1fr; }
+    .summary-row { grid-template-columns: 1fr; gap: 4px; }
+    .summary-row .edit-btn { justify-self: end; margin-top: -28px; }
+    .service-row { grid-template-columns: 1fr 70px 70px 32px; gap: 8px; }
+    .keyboard-hint { display: none; }
+    .dev-panel { display: none; }
+  }
+
+  /* Generation modal (final step) */
+  .generating-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 15, 0.92);
+    backdrop-filter: blur(20px);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 32px;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .generating-overlay.active { display: flex; animation: fadeInUp 0.5s var(--ease-out); }
+
+  .gen-spinner {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0%, var(--lw-blue) 30%, var(--lw-violet) 60%, transparent 100%);
+    animation: spin 1.5s linear infinite;
+    position: relative;
+  }
+
+  .gen-spinner::after {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    background: var(--lw-bg);
+    border-radius: 50%;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .gen-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 36px;
+    color: var(--lw-text);
+  }
+
+  .gen-step {
+    font-size: 14px;
+    color: var(--lw-muted);
+    font-family: 'DM Mono', monospace;
+    min-height: 24px;
+  }
+
+  .gen-close {
+    margin-top: 20px;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<header class="topbar">
+  <div class="logo">LokalWeb</div>
+  <div class="progress-area">
+    <div class="progress-meta">
+      <span id="progressLabel">Pyetja 1 nga 11</span>
+      <span id="progressPercent">10%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+  <button class="topbar-back" id="backBtn" disabled aria-label="Kthehu mbrapa">←</button>
+</header>
+
+<!-- Main Stage -->
+<main class="stage" id="stage">
+
+  <!-- Screen 1: Business Name -->
+  <section class="screen active" data-screen="0">
+    <div class="step-tag">Hapi 1</div>
+    <h1 class="question">Si <em>quhet</em> biznesi yt?</h1>
+    <p class="question-sub">Ky është emri që klientët do ta shohin në krye të faqes. Mund ta ndryshosh më vonë.</p>
+    <div class="input-area">
+      <input type="text" class="text-input" id="input-name" placeholder="P.sh. Berberhana e Adem-it" autocomplete="off" />
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" data-next><span>Vazhdo</span> →</button>
+      <div class="keyboard-hint">Shtyp <span class="kbd">Enter</span> për të vazhduar</div>
+    </div>
+  </section>
+
+  <!-- Screen 2: Business Type (free-text) -->
+  <section class="screen" data-screen="1">
+    <div class="step-tag">Hapi 2</div>
+    <h1 class="question">Çfarë <em>lloji</em> biznesi keni?</h1>
+    <p class="question-sub">Përshkruaje me fjalët e tua. Sistemi e kupton.</p>
+    <div class="input-area">
+      <input type="text" class="text-input" id="input-type" placeholder="P.sh. berber, restorant, klinikë dentare..." autocomplete="off" />
+      <div class="suggestions" id="typeSuggestions">
+        <button class="suggestion" data-suggest="Berber">Berber</button>
+        <button class="suggestion" data-suggest="Restorant">Restorant</button>
+        <button class="suggestion" data-suggest="Klinikë dentare">Klinikë dentare</button>
+        <button class="suggestion" data-suggest="Sallon bukurie">Sallon bukurie</button>
+        <button class="suggestion" data-suggest="Rrobaqepëse">Rrobaqepëse</button>
+        <button class="suggestion" data-suggest="Palestër">Palestër</button>
+        <button class="suggestion" data-suggest="Dyqan">Dyqan</button>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" data-next><span>Vazhdo</span> →</button>
+    </div>
+  </section>
+
+  <!-- Screen 3: City / Neighborhood -->
+  <section class="screen" data-screen="2">
+    <div class="step-tag">Hapi 3</div>
+    <h1 class="question">Ku <em>ndodhet</em> biznesi?</h1>
+    <p class="question-sub">Qyteti dhe lagjja, nëse e di. Kjo ndihmon klientët të të gjejnë.</p>
+    <div class="input-area">
+      <input type="text" class="text-input" id="input-city" placeholder="P.sh. Prishtinë, te Shadërvani" autocomplete="off" />
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" data-next><span>Vazhdo</span> →</button>
+    </div>
+  </section>
+
+  <!-- Screen 4: Uniqueness -->
+  <section class="screen" data-screen="3">
+    <div class="step-tag">Hapi 4</div>
+    <h1 class="question">Çfarë e bën <em>ndryshe</em> biznesin tënd?</h1>
+    <p class="question-sub">Mendoje këtë: pse klientët vijnë te ti dhe jo te dikush tjetër? Shkruaj me fjalët e tua.</p>
+    <div class="input-area">
+      <textarea class="text-input" id="input-unique" placeholder="P.sh. Punoj vetëm me termin, jo me walk-in. Çdo qethje 30 minuta — pa ngut. Klientët më shkruajnë në WhatsApp natën, e gjej termin për të nesërmen."></textarea>
+      <div class="input-helper">
+        <span>Sa më shumë detaje, aq më e mirë faqja</span>
+        <span class="word-count weak" id="uniqueCount">0 fjalë</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" data-next><span>Vazhdo</span> →</button>
+    </div>
+  </section>
+
+  <!-- Screen 5: Description -->
+  <section class="screen" data-screen="4">
+    <div class="step-tag">Hapi 5</div>
+    <h1 class="question">Përshkruaje <em>shkurt</em> biznesin.</h1>
+    <p class="question-sub">2–4 fjali që tregojnë çfarë bën, kush vjen tek ti, dhe si punon.</p>
+    <div class="input-area">
+      <textarea class="text-input" id="input-desc" placeholder="P.sh. Berber n'lagjen Lakrishte. Jam vetëm unë — pa staf, pa pritje. Klientët më njohin me emër. Punoj me termin që ta kesh kohën që meriton, jo me ngut."></textarea>
+      <div class="input-helper">
+        <span>2–4 fjali është mirë</span>
+        <span class="word-count weak" id="descCount">0 fjalë</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" data-next><span>Vazhdo</span> →</button>
+    </div>
+  </section>
+
+  <!-- Screen 6: Services (special: list editor) -->
+  <section class="screen" data-screen="5">
+    <div class="step-tag">Hapi 6</div>
+    <h1 class="question">Cilat <em>shërbime</em> ofron?</h1>
+    <p class="question-sub">Shto secilin shërbim që ofron, me çmimin dhe kohëzgjatjen mesatare. Mund t'i editosh më vonë.</p>
+    <div class="input-area">
+      <div class="services-list" id="servicesList">
+        <!-- Service rows injected by JS -->
+      </div>
+      <button class="add-service-btn" id="addServiceBtn">+ Shto një shërbim</button>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" data-next><span>Vazhdo</span> →</button>
+    </div>
+  </section>
+
+  <!-- Screen 7: Language -->
+  <section class="screen" data-screen="6">
+    <div class="step-tag">Hapi 7</div>
+    <h1 class="question">Në cilën <em>gjuhë</em> do të jetë faqja?</h1>
+    <p class="question-sub">Mund të zgjedhësh vetëm një tani. Shtimi i gjuhëve të tjera vjen në të ardhmen.</p>
+    <div class="input-area">
+      <div class="card-grid">
+        <button class="option-card" data-option="language" data-value="sq">
+          <div class="label">Shqip</div>
+          <div class="desc">Albanian — për tregun kosovar dhe shqiptar</div>
+        </button>
+        <button class="option-card" data-option="language" data-value="en">
+          <div class="label">English</div>
+          <div class="desc">Për turistë ose klientë ndërkombëtarë</div>
+        </button>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" data-next disabled><span>Vazhdo</span> →</button>
+    </div>
+  </section>
+
+  <!-- Screen 8: Tone -->
+  <section class="screen" data-screen="7">
+    <div class="step-tag">Hapi 8</div>
+    <h1 class="question">Si do të <em>flasë</em> faqja jote?</h1>
+    <p class="question-sub">Toni i komunikimit. Zgjidh atë që të përshtatet biznesit tënd më shumë.</p>
+    <div class="input-area">
+      <div class="card-grid">
+        <button class="option-card" data-option="tone" data-value="miqesor">
+          <div class="label">Miqësor</div>
+          <div class="desc">I ngrohtë, i afërt, si t'i flasësh një shoku</div>
+        </button>
+        <button class="option-card" data-option="tone" data-value="profesional">
+          <div class="label">Profesional</div>
+          <div class="desc">Serioz, formal, fokusuar në kompetencë</div>
+        </button>
+        <button class="option-card" data-option="tone" data-value="bisedor">
+          <div class="label">Bisedor</div>
+          <div class="desc">Casual, me regjistër kosovar (tash, n', çka)</div>
+        </button>
+        <button class="option-card" data-option="tone" data-value="i-fuqishem">
+          <div class="label">I fuqishëm</div>
+          <div class="desc">I drejtpërdrejtë, energjik, pa lulëzime</div>
+        </button>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" data-next disabled><span>Vazhdo</span> →</button>
+    </div>
+  </section>
+
+  <!-- Screen 9: Visual Style -->
+  <section class="screen" data-screen="8">
+    <div class="step-tag">Hapi 9</div>
+    <h1 class="question">Cili <em>stil vizual</em> të pëlqen?</h1>
+    <p class="question-sub">Paleta e ngjyrave dhe ndjesia e përgjithshme e faqes.</p>
+    <div class="input-area">
+      <div class="card-grid three-col">
+        <button class="option-card with-preview" data-option="visual" data-value="warm">
+          <div class="preview warm"></div>
+          <div class="label">I Ngrohtë</div>
+          <div class="desc">Tradicionale, familjare, drurë e krem</div>
+        </button>
+        <button class="option-card with-preview" data-option="visual" data-value="dark">
+          <div class="preview dark"></div>
+          <div class="label">Errësi & Karakter</div>
+          <div class="desc">Moderne, urbane, kontrast i fortë</div>
+        </button>
+        <button class="option-card with-preview" data-option="visual" data-value="trust">
+          <div class="preview trust"></div>
+          <div class="label">Besim & Qartësi</div>
+          <div class="desc">Profesionale, klinike, blu e qetë</div>
+        </button>
+        <button class="option-card with-preview" data-option="visual" data-value="modern">
+          <div class="preview modern"></div>
+          <div class="label">Gjallëri</div>
+          <div class="desc">Energjike, e gjallë, e re</div>
+        </button>
+        <button class="option-card with-preview" data-option="visual" data-value="editorial">
+          <div class="preview editorial"></div>
+          <div class="label">Letër & Stil</div>
+          <div class="desc">Si revistë, akademik, klasik</div>
+        </button>
+        <button class="option-card with-preview" data-option="visual" data-value="family">
+          <div class="preview family"></div>
+          <div class="label">Familjar</div>
+          <div class="desc">Mirëpritës, e thjeshtë, e ngrohtë</div>
+        </button>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" data-next disabled><span>Vazhdo</span> →</button>
+    </div>
+  </section>
+
+  <!-- Screen 10: Layout -->
+  <section class="screen" data-screen="9">
+    <div class="step-tag">Hapi 10</div>
+    <h1 class="question"><em>Layout</em> — si do organizohet faqja?</h1>
+    <p class="question-sub">Më e thjeshta është të lësh AI-n të vendosë. Por mund të zgjedhësh vetë nëse do.</p>
+    <div class="input-area">
+      <div class="layout-default-card">
+        <div class="layout-default-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="layout-default-title">AI do të vendosë layout-in më të mirë</div>
+        <div class="layout-default-desc">Bazuar në llojin e biznesit tënd, përmbajtjen, dhe stilin vizual që zgjodhe. Rekomanduar për shumicën.</div>
+      </div>
+      <button class="advanced-toggle" id="advancedToggle">
+        <span>Po preferoj të zgjedh vetë (e avancuar)</span>
+        <span class="chevron">›</span>
+      </button>
+      <div class="advanced-panel" id="advancedPanel">
+        Këtu do të shfaqen opsione për layout-in e secilit seksion (hero, shërbime, histori, footer).
+        Për shumicën e përdoruesve, "AI vendos" jep rezultate më të mira.
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" data-next><span>Vazhdo</span> →</button>
+    </div>
+  </section>
+
+  <!-- Screen 11: Summary -->
+  <section class="screen" data-screen="10">
+    <div class="step-tag">Përmbledhje</div>
+    <h1 class="question">Le ta <em>kontrollojmë</em> së bashku.</h1>
+    <p class="question-sub">Para se të gjenerojmë faqen, sigurohu që gjithçka është siç duhet. Mund t'i editosh të gjitha.</p>
+    <div class="summary-grid" id="summaryGrid">
+      <!-- Filled by JS -->
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" id="generateBtn"><span>✨ Gjenero faqen</span></button>
+      <button class="btn btn-ghost" id="restartBtn">Fillo nga e para</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- Generating overlay -->
+<div class="generating-overlay" id="generatingOverlay">
+  <div class="gen-spinner"></div>
+  <div>
+    <div class="gen-title">Po gjenerohet faqja jote...</div>
+    <div class="gen-step" id="genStep">Po analizojmë inputet...</div>
+  </div>
+  <button class="btn btn-ghost gen-close" id="closeGen">Mbylle prototipin</button>
+</div>
+
+<!-- Dev panel - shows current state -->
+<div class="dev-panel" id="devPanel">
+  <div class="dev-panel-title">
+    <span>Prototype State</span>
+    <button class="dev-toggle" id="devToggle">[hide]</button>
+  </div>
+  <pre id="devState">{}</pre>
+</div>
+
+<script>
+/* ============================================
+   State
+   ============================================ */
+const state = {
+  name: '',
+  type: '',
+  city: '',
+  unique: '',
+  desc: '',
+  services: [
+    { name: '', price: '', duration: '' }
+  ],
+  language: '',
+  tone: '',
+  visual: '',
+  layout: 'ai'
+};
+
+const SCREEN_LABELS = [
+  'Emri',
+  'Lloji',
+  'Lokacioni',
+  'Çfarë e bën ndryshe',
+  'Përshkrimi',
+  'Shërbimet',
+  'Gjuha',
+  'Toni',
+  'Stili vizual',
+  'Layout',
+  'Përmbledhje'
+];
+
+const TOTAL = SCREEN_LABELS.length;
+let current = 0;
+
+/* ============================================
+   DOM helpers
+   ============================================ */
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+const screens = $$('.screen');
+const progressFill = $('#progressFill');
+const progressLabel = $('#progressLabel');
+const progressPercent = $('#progressPercent');
+const backBtn = $('#backBtn');
+const devState = $('#devState');
+
+/* ============================================
+   Navigation
+   ============================================ */
+function updateProgress() {
+  const pct = Math.round(((current + 1) / TOTAL) * 100);
+  progressFill.style.width = pct + '%';
+  progressLabel.textContent = `Pyetja ${current + 1} nga ${TOTAL}`;
+  progressPercent.textContent = pct + '%';
+  backBtn.disabled = current === 0;
+}
+
+function goToScreen(idx, direction = 'forward') {
+  if (idx < 0 || idx >= TOTAL) return;
+
+  const currentScreen = screens[current];
+  const nextScreen = screens[idx];
+
+  currentScreen.classList.add('exiting');
+
+  setTimeout(() => {
+    currentScreen.classList.remove('active', 'exiting');
+    nextScreen.classList.add('active');
+    current = idx;
+    updateProgress();
+    updateDevPanel();
+    if (idx === TOTAL - 1) renderSummary();
+    // Auto-focus first input on new screen
+    setTimeout(() => {
+      const firstInput = nextScreen.querySelector('input[type="text"], textarea');
+      if (firstInput) firstInput.focus();
+    }, 100);
+  }, 300);
+}
+
+function next() {
+  if (current < TOTAL - 1) goToScreen(current + 1, 'forward');
+}
+
+function back() {
+  if (current > 0) goToScreen(current - 1, 'backward');
+}
+
+backBtn.addEventListener('click', back);
+
+// Keyboard
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey && e.target.tagName !== 'TEXTAREA') {
+    const activeScreen = screens[current];
+    const nextBtn = activeScreen.querySelector('[data-next]');
+    if (nextBtn && !nextBtn.disabled) {
+      e.preventDefault();
+      next();
+    }
+  } else if (e.key === 'Escape') {
+    back();
+  }
+});
+
+/* ============================================
+   Inputs binding
+   ============================================ */
+function bindInput(id, key, validateFn) {
+  const el = $('#' + id);
+  if (!el) return;
+  el.addEventListener('input', () => {
+    state[key] = el.value;
+    updateDevPanel();
+    if (validateFn) validateFn(el);
+  });
+}
+
+bindInput('input-name', 'name');
+bindInput('input-type', 'type');
+bindInput('input-city', 'city');
+bindInput('input-unique', 'unique', (el) => {
+  const wc = el.value.trim().split(/\s+/).filter(Boolean).length;
+  const counter = $('#uniqueCount');
+  counter.textContent = `${wc} fjalë`;
+  counter.className = 'word-count ' + (wc >= 15 ? 'good' : 'weak');
+});
+bindInput('input-desc', 'desc', (el) => {
+  const wc = el.value.trim().split(/\s+/).filter(Boolean).length;
+  const counter = $('#descCount');
+  counter.textContent = `${wc} fjalë`;
+  counter.className = 'word-count ' + (wc >= 15 ? 'good' : 'weak');
+});
+
+/* Suggestion chips */
+$$('.suggestion').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const val = btn.dataset.suggest;
+    const input = $('#input-type');
+    input.value = val;
+    state.type = val;
+    input.focus();
+    updateDevPanel();
+  });
+});
+
+/* Option cards (language, tone, visual) */
+$$('.option-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const opt = card.dataset.option;
+    const val = card.dataset.value;
+    if (!opt) return; // skip non-option cards
+    // deselect siblings
+    $$(`.option-card[data-option="${opt}"]`).forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    state[opt] = val;
+    // enable continue button on this screen
+    const screen = card.closest('.screen');
+    const nextBtn = screen.querySelector('[data-next]');
+    if (nextBtn) nextBtn.disabled = false;
+    updateDevPanel();
+    // auto-advance for single-select cards (small delay)
+    setTimeout(() => {
+      if (current === parseInt(screen.dataset.screen)) next();
+    }, 350);
+  });
+});
+
+/* Next buttons */
+$$('[data-next]').forEach(btn => {
+  btn.addEventListener('click', next);
+});
+
+/* ============================================
+   Services list (screen 6)
+   ============================================ */
+const servicesList = $('#servicesList');
+const addServiceBtn = $('#addServiceBtn');
+
+function renderServices() {
+  servicesList.innerHTML = '';
+  state.services.forEach((svc, idx) => {
+    const row = document.createElement('div');
+    row.className = 'service-row';
+    row.innerHTML = `
+      <input type="text" class="text-input svc-name" placeholder="Emri i shërbimit" value="${escapeHtml(svc.name)}" />
+      <input type="text" class="text-input svc-price" placeholder="€" value="${escapeHtml(svc.price)}" />
+      <input type="text" class="text-input svc-dur" placeholder="min" value="${escapeHtml(svc.duration)}" />
+      <button class="remove-btn" aria-label="Hiq këtë shërbim" data-idx="${idx}">×</button>
+    `;
+    servicesList.appendChild(row);
+
+    row.querySelector('.svc-name').addEventListener('input', (e) => { state.services[idx].name = e.target.value; updateDevPanel(); });
+    row.querySelector('.svc-price').addEventListener('input', (e) => { state.services[idx].price = e.target.value; updateDevPanel(); });
+    row.querySelector('.svc-dur').addEventListener('input', (e) => { state.services[idx].duration = e.target.value; updateDevPanel(); });
+    row.querySelector('.remove-btn').addEventListener('click', () => {
+      if (state.services.length > 1) {
+        state.services.splice(idx, 1);
+        renderServices();
+        updateDevPanel();
+      }
+    });
+  });
+}
+
+addServiceBtn.addEventListener('click', () => {
+  state.services.push({ name: '', price: '', duration: '' });
+  renderServices();
+  updateDevPanel();
+});
+
+renderServices();
+
+/* ============================================
+   Layout advanced toggle
+   ============================================ */
+const advancedToggle = $('#advancedToggle');
+const advancedPanel = $('#advancedPanel');
+advancedToggle.addEventListener('click', () => {
+  advancedToggle.classList.toggle('open');
+  advancedPanel.classList.toggle('open');
+});
+
+/* ============================================
+   Summary screen
+   ============================================ */
+function renderSummary() {
+  const grid = $('#summaryGrid');
+  const visualLabels = {
+    warm: 'I Ngrohtë',
+    dark: 'Errësi & Karakter',
+    trust: 'Besim & Qartësi',
+    modern: 'Gjallëri',
+    editorial: 'Letër & Stil',
+    family: 'Familjar'
+  };
+  const toneLabels = {
+    miqesor: 'Miqësor',
+    profesional: 'Profesional',
+    bisedor: 'Bisedor',
+    'i-fuqishem': 'I fuqishëm'
+  };
+  const langLabels = { sq: 'Shqip', en: 'English' };
+
+  const items = [
+    { label: 'Emri', value: state.name, screen: 0 },
+    { label: 'Lloji', value: state.type, screen: 1 },
+    { label: 'Lokacioni', value: state.city, screen: 2 },
+    { label: 'Çfarë e bën ndryshe', value: state.unique, screen: 3 },
+    { label: 'Përshkrimi', value: state.desc, screen: 4 },
+    { label: 'Shërbimet', value: state.services.filter(s => s.name).map(s => `${s.name}${s.price ? ' — ' + s.price + '€' : ''}${s.duration ? ' (' + s.duration + ' min)' : ''}`).join('<br>') || '', screen: 5 },
+    { label: 'Gjuha', value: langLabels[state.language] || '', screen: 6 },
+    { label: 'Toni', value: toneLabels[state.tone] || '', screen: 7 },
+    { label: 'Stili vizual', value: visualLabels[state.visual] || '', screen: 8 },
+    { label: 'Layout', value: state.layout === 'ai' ? 'AI do të vendosë' : 'I personalizuar', screen: 9 }
+  ];
+
+  grid.innerHTML = items.map(item => `
+    <div class="summary-row" data-edit="${item.screen}">
+      <div class="summary-label">${item.label}</div>
+      <div class="summary-value ${item.value ? '' : 'empty'}">${item.value || '— pa përgjigje —'}</div>
+      <button class="edit-btn" aria-label="Edito">✎</button>
+    </div>
+  `).join('');
+
+  $$('#summaryGrid .summary-row').forEach(row => {
+    row.addEventListener('click', () => {
+      goToScreen(parseInt(row.dataset.edit), 'backward');
+    });
+  });
+}
+
+/* ============================================
+   Generate
+   ============================================ */
+const generatingOverlay = $('#generatingOverlay');
+const genStep = $('#genStep');
+$('#generateBtn').addEventListener('click', () => {
+  generatingOverlay.classList.add('active');
+  const steps = [
+    'Po analizojmë inputet...',
+    'Po krijojmë brand brief-in...',
+    'Po gjenerojmë temën dhe layout-in...',
+    'Po aplikojmë stilet kosovare...',
+    '(Ky është prototip — gjenerimi real ndodh në sistemin e plotë)'
+  ];
+  let i = 0;
+  genStep.textContent = steps[0];
+  const iv = setInterval(() => {
+    i++;
+    if (i >= steps.length) { clearInterval(iv); return; }
+    genStep.textContent = steps[i];
+  }, 1100);
+});
+
+$('#closeGen').addEventListener('click', () => {
+  generatingOverlay.classList.remove('active');
+});
+
+$('#restartBtn').addEventListener('click', () => {
+  if (confirm('A je i sigurt që do të rifillosh? Të dhënat do të humbasin.')) {
+    Object.keys(state).forEach(k => {
+      if (Array.isArray(state[k])) state[k] = [{ name: '', price: '', duration: '' }];
+      else state[k] = '';
+    });
+    state.layout = 'ai';
+    $$('input[type="text"], textarea').forEach(el => el.value = '');
+    $$('.option-card').forEach(c => c.classList.remove('selected'));
+    $$('[data-next]').forEach(b => {
+      const screen = b.closest('.screen');
+      const screenIdx = parseInt(screen.dataset.screen);
+      // disable continue on screens 7, 8, 9 (option-card screens) until selection made
+      if ([6, 7, 8].includes(screenIdx)) b.disabled = true;
+    });
+    renderServices();
+    goToScreen(0, 'backward');
+  }
+});
+
+/* ============================================
+   Dev panel
+   ============================================ */
+function updateDevPanel() {
+  devState.textContent = JSON.stringify(state, null, 2);
+}
+
+const devPanel = $('#devPanel');
+const devToggle = $('#devToggle');
+devToggle.addEventListener('click', () => {
+  devPanel.classList.toggle('collapsed');
+  devToggle.textContent = devPanel.classList.contains('collapsed') ? '[show]' : '[hide]';
+});
+
+updateDevPanel();
+updateProgress();
+
+// Auto-focus first input on load
+setTimeout(() => {
+  $('#input-name').focus();
+}, 600);
+
+/* ============================================
+   Helpers
+   ============================================ */
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+</script>
+
+</body>
+</html>

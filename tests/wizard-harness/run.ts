@@ -180,9 +180,9 @@ async function fillWizard(page: Page, f: WizardFixture): Promise<void> {
   }
 
   await page.getByPlaceholder(/Prishtinë, Sunny Hill/).fill(f.city);
-  // Uniqueness placeholder rewritten to Kosovar register: "p.sh. Vetmi n'lagje
-  // që e mbaj emrin e klientit pa pyt'. Babai im e ka hap dyqanin n'87."
-  await page.getByPlaceholder(/Vetmi n'lagje/).fill(f.uniqueness);
+  // Uniqueness placeholder (trait-listing style):
+  // "p.sh. Kujdesi i mirë ndaj klientit dhe shërbimi profesional i bëjnë klientët të vijnë prapë."
+  await page.getByPlaceholder(/Kujdesi i mir/).fill(f.uniqueness);
   await page.getByRole('button', { name: 'Vazhdo →' }).click();
 
   // ----- Step 2 -----

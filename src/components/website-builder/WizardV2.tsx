@@ -754,7 +754,7 @@ function Step1({
         <TextArea
           value={input.uniqueness ?? ''}
           onChange={(e) => update({ uniqueness: e.target.value })}
-          placeholder="p.sh. Vetmi n'lagje që e mbaj emrin e klientit pa pyt'. Babai im e ka hap dyqanin n'87."
+          placeholder="p.sh. Kujdesi i mirë ndaj klientit dhe shërbimi profesional i bëjnë klientët të vijnë prapë."
         />
         <div className="mt-2 p-3 rounded-lg bg-[#1e1e35] border border-[rgba(120,120,255,0.12)] space-y-1.5">
           <p className="text-xs text-[#5a5a7a]">💡 Nëse s&apos;din nga ku me fillu, plotëso njërin:</p>

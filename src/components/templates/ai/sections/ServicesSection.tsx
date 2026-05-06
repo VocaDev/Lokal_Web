@@ -18,15 +18,33 @@ type Item = {
   durationLabel?: string;
 };
 
+// Live services table is the source of truth for what's listed (so that
+// services added/edited/deleted from the dashboard show up immediately on
+// the public site). AI items are used only to look up AI-curated fields
+// — description fallback and durationLabel — that the services table
+// doesn't store. Match is by case/trim-normalized name.
+//
+// Fallback: if the DB has zero services but the AI snapshot has items
+// (legacy sites generated before apply-theme started inserting services),
+// render the snapshot so we don't blank the page.
 function resolveItems(section: AiServicesSection, dbServices: Service[]): Item[] {
-  const items = Array.isArray(section.items) ? section.items.filter(Boolean) : [];
-  if (items.length > 0) return items;
-  return dbServices.map(s => ({
-    name: s.name,
-    description: s.description,
-    price: s.price,
-    durationMinutes: s.durationMinutes,
-  }));
+  const aiItems = Array.isArray(section.items) ? section.items.filter(Boolean) : [];
+
+  if (dbServices.length === 0) return aiItems;
+
+  const norm = (name: string) => name.trim().toLowerCase();
+  const aiByName = new Map(aiItems.map(it => [norm(it.name), it]));
+
+  return dbServices.map(s => {
+    const matched = aiByName.get(norm(s.name));
+    return {
+      name: s.name,
+      description: s.description || matched?.description,
+      price: s.price,
+      durationMinutes: s.durationMinutes,
+      durationLabel: matched?.durationLabel,
+    };
+  });
 }
 
 export function ServicesSection({ section, business, services, payload }: Props) {

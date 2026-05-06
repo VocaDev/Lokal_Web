@@ -102,6 +102,10 @@ interface PostProcessCtx {
   // random pool pick away from repetition. Undefined on first generation.
   previousHeroLayout?: string;
   previousStoryLayout?: string;
+  // Order of middle sections (services, story, gallery) on the previous
+  // generation. Lets reorderSections bias the new shuffle away from an exact
+  // repeat so each regen feels visibly different.
+  previousMiddleOrder?: string[];
   language: string;
   tone: string;
   // Detected business shape — drives services section header label.
@@ -197,20 +201,48 @@ function isPublicAcademicContext(ctx: PostProcessCtx): boolean {
   return hasAcademicSignal && hasPublicFreeSignal;
 }
 
-function reorderSections(sections: any[]): any[] {
-  // Fixed standard order: hero -> services -> story -> gallery -> footer.
+// Hero is always first, footer is always last. The middle sections (services,
+// story, gallery) are shuffled per generation so two businesses — and two
+// regens of the same business — feel structurally distinct. The prior order
+// is passed in to bias the shuffle away from an exact repeat.
+function reorderSections(sections: any[], previousMiddleOrder?: string[]): any[] {
   const hero = sections.find(s => s.kind === 'hero');
   const footer = sections.find(s => s.kind === 'footer');
-  const services = sections.find(s => s.kind === 'services');
-  const story = sections.find(s => s.kind === 'story');
-  const gallery = sections.find(s => s.kind === 'gallery');
+  const middle = sections.filter(s => s.kind !== 'hero' && s.kind !== 'footer');
+
+  const shuffled = shuffleMiddle(middle, previousMiddleOrder);
 
   const result: any[] = [];
   if (hero) result.push(hero);
-  if (services) result.push(services);
-  if (story) result.push(story);
-  if (gallery) result.push(gallery);
+  result.push(...shuffled);
   if (footer) result.push(footer);
+  return result;
+}
+
+// Fisher-Yates shuffle. If the result happens to land on the exact previous
+// order (1-in-N chance) and another order exists, retry once. We don't loop
+// forever because for N=2 the "different" order is forced and for N=3 the odds
+// of two consecutive collisions are 1/36 — not worth the extra code.
+function shuffleMiddle(middle: any[], previousOrder?: string[]): any[] {
+  if (middle.length <= 1) return middle;
+
+  const tryShuffle = () => {
+    const arr = [...middle];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
+
+  let result = tryShuffle();
+  if (previousOrder && previousOrder.length > 1) {
+    const currentKinds = result.map(s => s?.kind);
+    const sameAsPrev =
+      currentKinds.length === previousOrder.length &&
+      currentKinds.every((k, i) => k === previousOrder[i]);
+    if (sameAsPrev) result = tryShuffle();
+  }
   return result;
 }
 
@@ -442,7 +474,7 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
   });
 
   // 7. Final ordering — hero -> services -> story -> gallery -> footer.
-  sections = reorderSections(sections);
+  sections = reorderSections(sections, ctx.previousMiddleOrder);
 
   // 8. Kosovo lexical substitution — rewrite Tirana defaults (tani, tek,
   // çfarë, fqinj, makinë, shtëpia) to Kosovo equivalents (tash, te, çka,
@@ -554,6 +586,7 @@ export async function POST(request: NextRequest) {
     // on first generation (no customization row yet).
     let previousHeroLayout: string | undefined;
     let previousStoryLayout: string | undefined;
+    let previousMiddleOrder: string[] | undefined;
     if (typeof businessId === 'string' && businessId.length > 0) {
       const { data: galleryRows } = await supabase
         .from('gallery_items')
@@ -576,6 +609,13 @@ export async function POST(request: NextRequest) {
       const prevStory = prevSections.find(s => s?.kind === 'story');
       previousHeroLayout = typeof prevHero?.layout === 'string' ? prevHero.layout : undefined;
       previousStoryLayout = typeof prevStory?.layout === 'string' ? prevStory.layout : undefined;
+      // The order of middle sections from the previous generation. Drives
+      // reorderSections's anti-repeat shuffle so each regen feels visibly
+      // distinct.
+      const prevMiddle = prevSections
+        .filter(s => s?.kind && s.kind !== 'hero' && s.kind !== 'footer')
+        .map(s => s.kind as string);
+      previousMiddleOrder = prevMiddle.length > 0 ? prevMiddle : undefined;
     }
 
     const args: GenerateThemeArgs = {
@@ -631,6 +671,7 @@ export async function POST(request: NextRequest) {
       userHasHeroPhoto,
       previousHeroLayout,
       previousStoryLayout,
+      previousMiddleOrder,
       language: args.language,
       tone: args.tone,
       businessShape: args.businessShape as BusinessShape,

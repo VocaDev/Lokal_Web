@@ -162,14 +162,22 @@ THIS IS HOW SECTIONS WORK:
 
 You output a sections[] array. Each section has a 'kind' and parameters specific to that kind. The renderer composes the page from these — you are NOT picking from a fixed catalog of designs.
 
-REQUIRED SECTIONS (in this exact order):
-1. hero
-2. services
-3. story
-4. gallery (only if relevant — see below)
-5. footer
+REQUIRED SECTIONS:
+- hero (always first)
+- services
+- story
+- gallery (only if relevant — see below)
+- footer (always last)
 
 Total sections: 4 to 5 (gallery is optional).
+
+ORDER NOTE: hero is always rendered first and footer always last. The
+order of the MIDDLE sections (services, story, gallery) is decided by
+post-processing — it shuffles per generation so two businesses, and two
+regens of the same business, feel structurally distinct. You can output
+the middle sections in any order. Each section's COPY must stand on its
+own — do NOT write things like "as you saw above" or "in the gallery
+below" because the reader may encounter them in a different sequence.
 
 ABSOLUTELY NO testimonials section. NO FAQ section. Do not output them.
 

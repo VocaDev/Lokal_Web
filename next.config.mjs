@@ -5,6 +5,12 @@ const withPWA = withPWAInit({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  // Served by the service worker when the user is fully offline and the
+  // requested document isn't in the cache. The page itself is precached
+  // because it's part of the build output.
+  fallbacks: {
+    document: '/offline',
+  },
 });
 
 /** @type {import('next').NextConfig} */

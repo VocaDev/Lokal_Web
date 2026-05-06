@@ -178,8 +178,13 @@ export default function CustomizationHub({ businessId }: CustomizationHubProps) 
             <GallerySection businessId={businessId} />
           </div>
 
-          {/* Save Button - Sticky at Bottom */}
-          <div className="sticky bottom-0 bg-background border-t border-border pt-4 pb-[max(env(safe-area-inset-bottom),1rem)] flex gap-3">
+          {/* Save Button — non-sticky (the dashboard layout uses
+              overflow-auto which trips iOS Safari's sticky-inside-overflow-
+              auto bug and made buttons untappable on phones). */}
+          <div
+            className="bg-background border-t border-border pt-4 flex gap-3"
+            style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
+          >
             <Button
               onClick={handleSave}
               disabled={isSaving}

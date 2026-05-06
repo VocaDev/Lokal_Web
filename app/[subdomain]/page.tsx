@@ -15,13 +15,41 @@ export async function generateMetadata({ params }: { params: Promise<{ subdomain
   const supabase = await createClient();
   const { data } = await supabase
     .from("businesses")
-    .select("name, description")
+    .select("name, description, accent_color")
     .eq("subdomain", subdomain)
     .maybeSingle();
   if (!data) return { title: "Business Not Found" };
   return {
     title: `${data.name} — Book Online`,
     description: data.description ?? "",
+    // Per-tenant Web App Manifest — when a visitor installs this subdomain to
+    // their home screen, the OS reads `manifest.webmanifest` and shows the
+    // business's name and theme color, not "LokalWeb". The route handler at
+    // app/[subdomain]/manifest.webmanifest/route.ts builds it from the same
+    // business row.
+    manifest: '/manifest.webmanifest',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'black-translucent' as const,
+      title: data.name,
+    },
+  };
+}
+
+export async function generateViewport({ params }: { params: Promise<{ subdomain: string }> }) {
+  const { subdomain } = await params;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("businesses")
+    .select("accent_color")
+    .eq("subdomain", subdomain)
+    .maybeSingle();
+  return {
+    themeColor: data?.accent_color ?? '#4f8ef7',
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    viewportFit: 'cover' as const,
   };
 }
 

@@ -547,10 +547,19 @@ export default function WizardV2({ businessId, subdomain, businessName, bookingE
         )}
       </main>
 
-      {/* Footer nav (only on form steps 1-5) */}
+      {/* Footer nav (only on form steps 1-5).
+       *
+       * NOT sticky — tried `sticky bottom-0` once and the wizard's parent in
+       * the dashboard layout uses `overflow-auto`, which trips iOS Safari's
+       * sticky-inside-overflow-auto bug and prevented the "Gjenero faqen"
+       * button from being tappable on phones. Plain bottom-of-flow with
+       * safe-area inline style is reliable everywhere. */}
       {step >= 1 && step <= 5 && (
-        <footer className="sticky bottom-0 z-30 border-t border-border bg-background">
-          <div className="max-w-[720px] mx-auto px-4 sm:px-7 pt-4 pb-[max(env(safe-area-inset-bottom),1rem)] flex items-center justify-between gap-3">
+        <footer
+          className="border-t border-border bg-background"
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0px)' }}
+        >
+          <div className="max-w-[720px] mx-auto px-4 sm:px-7 py-5 flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => setStep(s => Math.max(1, s - 1))}

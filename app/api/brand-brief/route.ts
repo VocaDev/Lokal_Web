@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, bumpAiUsage } from '@/lib/api-auth';
+import { requireUser, claimWebsiteGeneration } from '@/lib/api-auth';
 import { emitProgress } from '@/lib/ai-progress';
 import { runBrandBrief } from '@/lib/ai/brand-brief';
 import { applyKosovoSubstitutions } from '@/lib/kosovo-substitutions';
@@ -25,8 +25,6 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     const userOrResponse = await requireUser(supabase);
     if (userOrResponse instanceof NextResponse) return userOrResponse;
-    const limited = await bumpAiUsage(supabase, userOrResponse.id);
-    if (limited) return limited;
 
     const {
       businessName,
@@ -43,6 +41,24 @@ export async function POST(request: NextRequest) {
       businessId,
     } = await request.json();
 
+    if (!businessName || !industry || !city) {
+      return NextResponse.json(
+        { error: 'businessName, industry, and city are required' },
+        { status: 400 },
+      );
+    }
+
+    if (typeof businessId !== 'string' || businessId.length === 0) {
+      return NextResponse.json({ error: 'businessId is required for AI generation' }, { status: 400 });
+    }
+
+    if (typeof generationId !== 'string' || generationId.length === 0) {
+      return NextResponse.json({ error: 'generationId is required for AI generation' }, { status: 400 });
+    }
+
+    const limited = await claimWebsiteGeneration(supabase, userOrResponse.id, businessId, generationId);
+    if (limited) return limited;
+
     // Optional progress streaming. The wizard passes generationId+businessId
     // and subscribes via Realtime; older callers that omit them still work.
     const canEmit = typeof generationId === 'string' && typeof businessId === 'string';
@@ -52,13 +68,6 @@ export async function POST(request: NextRequest) {
         supabase, userId, businessId, generationId,
         step: 'analyzing_business', status: 'started',
       });
-    }
-
-    if (!businessName || !industry || !city) {
-      return NextResponse.json(
-        { error: 'businessName, industry, and city are required' },
-        { status: 400 },
-      );
     }
 
     const brief = await runBrandBrief({

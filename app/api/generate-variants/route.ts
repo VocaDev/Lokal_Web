@@ -19,7 +19,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { normalizeIndustry } from '@/lib/industries';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, bumpAiUsage } from '@/lib/api-auth';
+import { requireUser, validateWebsiteGenerationThemeCall } from '@/lib/api-auth';
 import { emitProgress } from '@/lib/ai-progress';
 import { contrastRatio, ensureReadableTextColor, relativeLuminance, generatePaletteFromBrandColors } from '@/lib/utils';
 import { ARCHETYPES, isArchetypeKey, type ArchetypeKey } from '@/lib/archetypes';
@@ -602,8 +602,6 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     const userOrResponse = await requireUser(supabase);
     if (userOrResponse instanceof NextResponse) return userOrResponse;
-    const limited = await bumpAiUsage(supabase, userOrResponse.id);
-    if (limited) return limited;
 
     const body = await request.json();
     const {
@@ -634,6 +632,24 @@ export async function POST(request: NextRequest) {
     if (!brief || !businessName || !industry) {
       return NextResponse.json({ error: 'brief, businessName, industry required' }, { status: 400 });
     }
+
+    if (typeof businessId !== 'string' || businessId.length === 0) {
+      return NextResponse.json({ error: 'businessId is required for AI generation' }, { status: 400 });
+    }
+
+    if (regenSeed) {
+      return NextResponse.json(
+        { error: 'AI regeneration is disabled for shared access. This account already has one AI website generation.' },
+        { status: 429 },
+      );
+    }
+
+    if (typeof generationId !== 'string' || generationId.length === 0) {
+      return NextResponse.json({ error: 'generationId is required for AI generation' }, { status: 400 });
+    }
+
+    const limited = await validateWebsiteGenerationThemeCall(supabase, userOrResponse.id, businessId, generationId);
+    if (limited) return limited;
 
     // Optional progress streaming. The wizard passes generationId+businessId
     // and subscribes via Realtime; older callers that omit them still work.

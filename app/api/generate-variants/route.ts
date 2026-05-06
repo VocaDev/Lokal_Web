@@ -324,10 +324,14 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
   // 1. Strip section types we never render.
   sections = sections.filter(s => s?.kind !== 'testimonials' && s?.kind !== 'faq');
 
-  // 2a. Force a gallery section if the user uploaded gallery photos but the
-  //     AI didn't include one.
+  // 2a. Always ensure a gallery section exists in ai_sections. When the
+  //     owner hasn't uploaded photos yet, GallerySection renders dashed
+  //     PhotoPlaceholder slots so the owner can see WHERE photos will land
+  //     once they upload them through the Customization Hub. Removing the
+  //     section entirely (the previous behavior) hid that affordance and
+  //     made owners think the AI had simply forgotten about a gallery.
   const hasGallery = sections.some(s => s?.kind === 'gallery');
-  if (ctx.userHasGalleryPhotos && !hasGallery) {
+  if (!hasGallery) {
     const lockedGallery = ctx.galleryLayout && ctx.galleryLayout !== 'ai'
       ? ctx.galleryLayout
       : 'masonry';
@@ -336,12 +340,6 @@ function postProcessTheme(theme: any, ctx: PostProcessCtx): any {
       layout: lockedGallery,
       caption: undefined,
     });
-  }
-
-  // 2b. Strip the gallery section when the user has NOT uploaded any gallery
-  //     photos. Empty placeholder boxes don't blend with most sites.
-  if (!ctx.userHasGalleryPhotos) {
-    sections = sections.filter(s => s?.kind !== 'gallery');
   }
 
   // 2c. Force hero imageStyle='photo' when the user uploaded a hero photo.

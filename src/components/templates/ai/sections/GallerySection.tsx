@@ -12,11 +12,10 @@ interface Props {
 export function GallerySection({ section, business, payload }: Props) {
   const images = (business.gallerySections?.gallery ?? []).filter(Boolean);
 
-  // No uploaded photos → don't render the section at all. The previous
-  // empty state rendered 5-6 dashed-border "GALLERY PHOTO" placeholder boxes
-  // that didn't blend with most sites. Generation post-processor also strips
-  // empty gallery sections; this guard handles already-persisted themes.
-  if (images.length === 0) return null;
+  // Render placeholder slots when no photos are uploaded yet — the owner
+  // needs to see WHERE images will go so they know to upload them via the
+  // Customization Hub. Each layout's slot loop already handles a `null`
+  // entry by rendering a dashed PhotoPlaceholder.
 
   switch (section.layout) {
     case 'grid-uniform':  return <GridUniform images={images} section={section} payload={payload} />;

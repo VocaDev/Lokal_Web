@@ -2,25 +2,25 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-// Bumping this suffix invalidates older drafts cleanly when the wizard schema
-// changes. Old keys are never read; the prompt just won't appear.
-const STORAGE_KEY = 'lokalweb_wizard_draft_v1';
+// Bumping this suffix invalidates older drafts cleanly when the Liki state
+// schema changes. Old keys are never read; the restore prompt just won't
+// appear. Drafts from the legacy Wizard (`lokalweb_wizard_draft_v1`) are
+// not migrated — they live under a different key and are abandoned.
+const STORAGE_KEY = 'lokalweb_liki_draft_v1';
 const SAVE_DEBOUNCE_MS = 300;
 
-export type WizardDraftPayload = {
+export type LikiDraftPayload = {
   state: unknown;
-  step: number;
 };
 
-export function readDraft(): WizardDraftPayload | null {
+export function readDraft(): LikiDraftPayload | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') return null;
-    if (typeof parsed.step !== 'number') return null;
-    return parsed as WizardDraftPayload;
+    return parsed as LikiDraftPayload;
   } catch {
     return null;
   }
@@ -31,10 +31,10 @@ export function clearDraft() {
   try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
 }
 
-// Debounced auto-save. The hook never reads — call readDraft() once at mount
-// to decide whether to prompt the user. After the prompt is resolved, the
-// caller flips `enabled` on so subsequent state changes start persisting.
-export function useDraftAutoSave(payload: WizardDraftPayload, enabled: boolean) {
+// Debounced auto-save. Never reads — the caller invokes readDraft() once at
+// mount to decide whether to prompt. After the prompt is resolved, `enabled`
+// flips on and subsequent state changes persist.
+export function useDraftAutoSave(payload: LikiDraftPayload, enabled: boolean) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!enabled) return;
@@ -49,12 +49,10 @@ export function useDraftAutoSave(payload: WizardDraftPayload, enabled: boolean) 
   }, [payload, enabled]);
 }
 
-// Returns { hasDraft, decided, restore, discard } — the wizard mounts, calls
-// this once, and renders a modal until `decided` is true.
 export function useDraftPrompt() {
   const [hasDraft, setHasDraft] = useState(false);
   const [decided, setDecided] = useState(true);
-  const [draft, setDraft] = useState<WizardDraftPayload | null>(null);
+  const [draft, setDraft] = useState<LikiDraftPayload | null>(null);
 
   useEffect(() => {
     const found = readDraft();

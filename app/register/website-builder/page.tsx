@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import Wizard from '@/components/website-builder/Wizard'
+import Liki from '@/components/website-builder/liki/Liki'
 
 export default async function RegisterWebsiteBuilderPage() {
   const supabase = await createClient()
@@ -23,7 +23,7 @@ export default async function RegisterWebsiteBuilderPage() {
   }
 
   return (
-    <Wizard
+    <Liki
       businessId={business.id}
       subdomain={business.subdomain}
       businessName={business.name}

@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LokalWeb — Liki v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --lw-blue: #4f8ef7;
+    --lw-violet: #8b5cf6;
+    --liki-gradient: linear-gradient(135deg, #8b5cf6 0%, #ec4899 55%, #f97316 100%);
+    --lw-bg: #0a0a0f;
+    --lw-bg-2: #0f0f1a;
+    --lw-surface: #151522;
+    --lw-surface-2: #1e1e35;
+    --lw-border: rgba(120, 120, 255, 0.12);
+    --lw-border-2: rgba(120, 120, 255, 0.22);
+    --lw-border-strong: rgba(120, 120, 255, 0.35);
+    --lw-blue-tint: rgba(79, 142, 247, 0.15);
+    --lw-violet-tint: rgba(139, 92, 246, 0.15);
+    --lw-text: #e8e8f0;
+    --lw-muted: #8888aa;
+    --lw-muted-2: #5a5a7a;
+    --lw-success-tint: rgba(34, 197, 94, 0.15);
+    --lw-success-text: #4ade80;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    background: var(--lw-bg);
+    color: var(--lw-text);
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 800px 600px at 50% -5%, rgba(139, 92, 246, 0.10), transparent 60%),
+      radial-gradient(ellipse 600px 500px at 90% 100%, rgba(249, 115, 22, 0.05), transparent 55%),
+      radial-gradient(ellipse 500px 500px at 5% 90%, rgba(79, 142, 247, 0.05), transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(rgba(139, 92, 246, 0.04) 1px, transparent 1px);
+    background-size: 36px 36px;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: radial-gradient(ellipse at 50% 40%, black 20%, transparent 65%);
+    -webkit-mask-image: radial-gradient(ellipse at 50% 40%, black 20%, transparent 65%);
+  }
+
+  /* Top bar */
+  .topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px;
+    background: rgba(10, 10, 15, 0.55);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--lw-border);
+  }
+
+  .topbar-left { display: flex; align-items: center; gap: 11px; }
+
+  .tb-avatar {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    background: var(--liki-gradient);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 3px 14px rgba(139, 92, 246, 0.3);
+  }
+
+  .tb-avatar::before {
+    content: '';
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 0 8px rgba(255,255,255,0.5);
+  }
+
+  .tb-name { font-weight: 700; font-size: 14px; letter-spacing: -0.01em; }
+
+  .progress-area { flex: 1; max-width: 380px; margin: 0 28px; }
+  .progress-meta {
+    display: flex; justify-content: space-between;
+    font-size: 10.5px; color: var(--lw-muted-2);
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .progress-track { height: 3px; background: var(--lw-surface-2); border-radius: 999px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--liki-gradient); width: 20%; border-radius: 999px; transition: width 0.6s var(--ease-out); }
+
+  .back-btn {
+    background: transparent;
+    border: 1px solid var(--lw-border-2);
+    color: var(--lw-muted);
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s var(--ease-out);
+    font-size: 15px;
+  }
+  .back-btn:hover:not(:disabled) { background: var(--lw-surface-2); color: var(--lw-text); }
+  .back-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* Stage */
+  .stage {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 110px 24px 70px;
+  }
+
+  .screen {
+    width: 100%;
+    max-width: 600px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .screen.active { display: flex; }
+
+  @keyframes screenIn {
+    0% { opacity: 0; transform: translateY(28px) scale(0.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes screenOut {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-22px) scale(0.97); }
+  }
+  .screen.entering { animation: screenIn 0.55s var(--ease-bounce) both; }
+  .screen.exiting { animation: screenOut 0.3s var(--ease-out) both; }
+
+  /* ============================================
+     THE UNIFIED LIKI BUBBLE
+     Avatar tab sits on top-left, bubble contains
+     the warm line + the question, all as ONE unit
+     ============================================ */
+  .liki-bubble {
+    position: relative;
+    width: 100%;
+    background: linear-gradient(180deg, var(--lw-surface) 0%, #13131f 100%);
+    border: 1px solid var(--lw-border-2);
+    border-radius: 26px;
+    border-top-left-radius: 8px;
+    padding: 32px 34px 30px;
+    margin-top: 26px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.03) inset,
+      0 24px 60px -20px rgba(139, 92, 246, 0.25),
+      0 8px 24px -12px rgba(0,0,0,0.6);
+    animation: bubbleIn 0.65s var(--ease-bounce) both;
+  }
+
+  @keyframes bubbleIn {
+    0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Floating avatar tab — overlaps the bubble's top-left */
+  .liki-tab {
+    position: absolute;
+    top: -22px;
+    left: 26px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: var(--lw-bg-2);
+    border: 1px solid var(--lw-border-2);
+    padding: 6px 14px 6px 7px;
+    border-radius: 999px;
+    box-shadow: 0 8px 20px -8px rgba(0,0,0,0.7);
+    animation: tabIn 0.6s 0.15s var(--ease-bounce) both;
+  }
+
+  @keyframes tabIn {
+    0% { opacity: 0; transform: translateY(-8px) scale(0.7); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .liki-tab .dot {
+    width: 26px; height: 26px;
+    border-radius: 8px;
+    background: var(--liki-gradient);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .liki-tab .dot::before {
+    content: '';
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    transition: transform 0.4s var(--ease-bounce);
+  }
+
+  .liki-tab.thinking .dot::before {
+    animation: likiPulse 1s ease-in-out infinite;
+  }
+
+  @keyframes likiPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(0.6); opacity: 0.5; }
+  }
+
+  .liki-tab .nm {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--lw-text);
+    letter-spacing: -0.01em;
+  }
+
+  /* The warm conversational line */
+  .liki-line {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--lw-muted);
+    margin-bottom: 18px;
+    animation: fadeUp 0.6s 0.2s var(--ease-out) both;
+  }
+
+  .liki-line .accent {
+    background: var(--liki-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 600;
+  }
+
+  .liki-line strong { color: var(--lw-text); font-weight: 600; }
+
+  /* The question — big, part of the same bubble */
+  .question {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(30px, 4.6vw, 46px);
+    font-weight: 400;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    color: var(--lw-text);
+    animation: fadeUp 0.6s 0.28s var(--ease-out) both;
+  }
+
+  .question .accent {
+    font-style: italic;
+    background: var(--liki-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  @keyframes fadeUp {
+    0% { opacity: 0; transform: translateY(14px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Connector — visually ties bubble to the input below */
+  .connector {
+    width: 2px;
+    height: 26px;
+    background: linear-gradient(180deg, var(--lw-border-2), transparent);
+    animation: fadeUp 0.5s 0.35s var(--ease-out) both;
+  }
+
+  /* ============================================
+     CENTERED INPUT — the user's "reply"
+     ============================================ */
+  .reply-zone {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: fadeUp 0.6s 0.4s var(--ease-out) both;
+  }
+
+  .input-shell {
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    background: var(--lw-surface);
+    border: 1.5px solid var(--lw-border-2);
+    border-radius: 18px;
+    padding: 8px 8px 8px 20px;
+    transition: all 0.25s var(--ease-out);
+  }
+
+  .input-shell:focus-within {
+    border-color: var(--lw-violet);
+    background: var(--lw-surface-2);
+    box-shadow: 0 0 0 4px var(--lw-violet-tint);
+  }
+
+  .input-shell .text-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--lw-text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 17px;
+    padding: 13px 0;
+    resize: none;
+    max-height: 160px;
+    line-height: 1.5;
+  }
+
+  .input-shell .text-input::placeholder { color: var(--lw-muted-2); }
+
+  .send-btn {
+    width: 44px; height: 44px;
+    border-radius: 13px;
+    border: none;
+    background: var(--liki-gradient);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s var(--ease-bounce);
+  }
+
+  .send-btn:hover { transform: scale(1.08); }
+  .send-btn:active { transform: scale(0.92); }
+  .send-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+  .send-btn svg { width: 19px; height: 19px; }
+
+  .reply-meta {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--lw-muted-2);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .word-count.good { color: var(--lw-success-text); }
+
+  /* Suggestion chip */
+  .suggestion {
+    width: 100%;
+    margin-top: 16px;
+    animation: fadeUp 0.6s 0.48s var(--ease-out) both;
+  }
+
+  .suggestion-chip {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    background: rgba(139, 92, 246, 0.06);
+    border: 1px dashed var(--lw-border-strong);
+    color: var(--lw-muted);
+    font-size: 13.5px;
+    padding: 13px 18px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.25s var(--ease-out);
+    font-family: 'DM Sans', sans-serif;
+    text-align: left;
+    line-height: 1.45;
+  }
+
+  .suggestion-chip:hover {
+    background: var(--lw-violet-tint);
+    border-color: var(--lw-violet);
+    border-style: solid;
+    color: var(--lw-text);
+  }
+
+  .suggestion-chip .bulb { flex-shrink: 0; }
+
+  /* Footer actions */
+  .actions {
+    width: 100%;
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: fadeUp 0.6s 0.55s var(--ease-out) both;
+  }
+
+  .mini-btn {
+    background: transparent;
+    border: 1px solid var(--lw-border);
+    color: var(--lw-muted-2);
+    font-size: 12.5px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s var(--ease-out);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+  }
+
+  .mini-btn:hover { border-color: var(--lw-border-strong); color: var(--lw-text); }
+
+  .mini-btn.finish {
+    border-color: rgba(34, 197, 94, 0.3);
+    color: var(--lw-success-text);
+    margin-left: auto;
+  }
+  .mini-btn.finish:hover { background: var(--lw-success-tint); }
+
+  .kbd-hint {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--lw-muted-2);
+    font-family: 'DM Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .kbd {
+    background: var(--lw-surface-2);
+    border: 1px solid var(--lw-border);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 11px;
+  }
+
+  /* Transition */
+  .transition-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--lw-bg);
+    z-index: 150;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 40px;
+    text-align: center;
+  }
+  .transition-overlay.active { display: flex; }
+  .t-card { animation: dropIn 0.85s var(--ease-bounce) both; max-width: 470px; }
+
+  @keyframes dropIn {
+    0% { opacity: 0; transform: translateY(-90px) scale(0.75) rotate(-4deg); }
+    55% { opacity: 1; }
+    100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+  }
+
+  .t-avatar {
+    width: 66px; height: 66px;
+    border-radius: 20px;
+    background: var(--liki-gradient);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    box-shadow: 0 12px 40px rgba(139, 92, 246, 0.4);
+    animation: floaty 3s ease-in-out infinite;
+  }
+
+  @keyframes floaty {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-9px); }
+  }
+
+  .t-avatar::before {
+    content: '';
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+  }
+
+  .t-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(30px, 5vw, 44px);
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  .t-title em {
+    font-style: italic;
+    background: var(--liki-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .t-sub { color: var(--lw-muted); font-size: 15px; margin-bottom: 28px; line-height: 1.6; }
+
+  .t-summary {
+    background: var(--lw-surface);
+    border: 1px solid var(--lw-border);
+    border-radius: 16px;
+    padding: 8px;
+    margin-bottom: 26px;
+    text-align: left;
+  }
+
+  .ts-row { display: flex; gap: 14px; padding: 11px 16px; align-items: baseline; }
+  .ts-row + .ts-row { border-top: 1px solid var(--lw-border); }
+  .ts-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--lw-muted-2);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    width: 96px;
+    flex-shrink: 0;
+  }
+  .ts-value { font-size: 13.5px; color: var(--lw-text); line-height: 1.45; }
+
+  .btn-primary {
+    background: var(--liki-gradient);
+    color: white;
+    border: none;
+    border-radius: 13px;
+    padding: 15px 30px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s var(--ease-bounce);
+  }
+  .btn-primary:hover { transform: scale(1.04); }
+  .btn-primary:active { transform: scale(0.97); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--lw-muted);
+    border: 1px solid var(--lw-border-2);
+    border-radius: 13px;
+    padding: 15px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: all 0.2s var(--ease-out);
+  }
+  .btn-ghost:hover { color: var(--lw-text); border-color: var(--lw-border-strong); }
+
+  .dev-panel {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    background: rgba(21, 21, 34, 0.9);
+    border: 1px solid var(--lw-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10.5px;
+    color: var(--lw-muted);
+    z-index: 99;
+    max-width: 250px;
+    backdrop-filter: blur(12px);
+  }
+  .dev-panel-title {
+    color: var(--lw-violet);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .dev-panel pre { color: var(--lw-text); white-space: pre-wrap; max-height: 190px; overflow-y: auto; line-height: 1.5; }
+  .dev-toggle { background: none; border: none; color: var(--lw-muted); cursor: pointer; font-family: inherit; font-size: 10px; }
+  .dev-panel.collapsed pre { display: none; }
+
+  @media (max-width: 640px) {
+    .topbar { padding: 14px 16px; }
+    .progress-area { margin: 0 14px; }
+    .stage { padding: 96px 18px 50px; }
+    .liki-bubble { padding: 28px 22px 26px; }
+    .question { font-size: 28px; }
+    .dev-panel { display: none; }
+    .kbd-hint { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="tb-avatar"></div>
+    <span class="tb-name">Liki</span>
+  </div>
+  <div class="progress-area">
+    <div class="progress-meta">
+      <span id="pLabel">Pyetja 1 nga 5</span>
+      <span id="pPct">20%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="pFill"></div></div>
+  </div>
+  <button class="back-btn" id="backBtn" disabled aria-label="Mbrapa">←</button>
+</header>
+
+<main class="stage" id="stage"></main>
+
+<div class="transition-overlay" id="transitionOverlay">
+  <div class="t-card">
+    <div class="t-avatar"></div>
+    <h1 class="t-title">Mrekulli! Të <em>kuptova</em>.</h1>
+    <p class="t-sub">Ja çfarë mbajta mend nga biseda jonë. Tani le t'i mbarojmë edhe pak gjëra praktike — premtoj, është më shpejt.</p>
+    <div class="t-summary" id="tSummary"></div>
+    <div>
+      <button class="btn-primary" id="continueBtn">Vazhdojmë →</button>
+      <button class="btn-ghost" id="editBtn">Prit, ndrysho diçka</button>
+    </div>
+  </div>
+</div>
+
+<div class="dev-panel" id="devPanel">
+  <div class="dev-panel-title">
+    <span>Liki State</span>
+    <button class="dev-toggle" id="devToggle">[hide]</button>
+  </div>
+  <pre id="devState">{}</pre>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    key: 'name',
+    line: "Përshëndetje! Unë jam <span class='accent'>Liki</span> 👋 Do ta ndërtojmë faqen tënde bashkë — pa nguti, pa terma të vështira.",
+    q: "Si <span class='accent'>quhet</span> biznesi yt?",
+    suggestion: null,
+    placeholder: "P.sh. Berberhana e Adem-it",
+    type: 'text'
+  },
+  {
+    key: 'type',
+    line: (s) => `<strong>${esc(s.name || 'Mirë')}</strong> — më pëlqen. Tash më ndihmo ta kuptoj pak më mirë.`,
+    q: "Çfarë <span class='accent'>pune</span> bën?",
+    suggestion: "Vetëm shkruaj thjesht: berber, restorant, klinikë dentare, rrobaqepëse, dyqan...",
+    placeholder: "P.sh. berber",
+    type: 'text'
+  },
+  {
+    key: 'city',
+    line: "Shkëlqyeshëm. Klientët duhet të dinë ku të të gjejnë.",
+    q: "Ku <span class='accent'>ndodhesh</span>?",
+    suggestion: null,
+    placeholder: "P.sh. Prishtinë, te Shadërvani",
+    type: 'text'
+  },
+  {
+    key: 'unique',
+    line: "Tani vjen pjesa që e dua më shumë. Mos shkruaj si reklamë — fol me mua sikur po ia tregon një shoku te kafja.",
+    q: "Pse vijnë klientët <span class='accent'>pikërisht te ti</span>?",
+    suggestion: "Mendo: çfarë bën më mirë se të tjerët? Je më i shpejtë? I njeh me emër? Çmim më i mirë?",
+    placeholder: "P.sh. Punoj vetëm me termin, pa pritje. Çdo klient e ka kohën e vet.",
+    type: 'textarea'
+  },
+  {
+    key: 'desc',
+    line: "E fundit nga unë, pastaj kalojmë te pjesa e shpejtë. Imagjino dikë që s'e ka dëgjuar kurrë biznesin tënd.",
+    q: "Si do t'ia <span class='accent'>përshkruaje</span>?",
+    suggestion: "2–4 fjali mjaftojnë. Çfarë bën, kush vjen te ti, si i bën gjërat.",
+    placeholder: "P.sh. Berber n'lagjen Lakrishte. Jam vetëm unë, pa staf, pa pritje.",
+    type: 'textarea'
+  }
+];
+
+const MIN_QUESTIONS = 5;
+const state = { name: '', type: '', city: '', unique: '', desc: '' };
+let step = 0;
+let answered = 0;
+
+const $ = s => document.querySelector(s);
+const stage = $('#stage');
+const backBtn = $('#backBtn');
+const devState = $('#devState');
+
+function updateProgress() {
+  const pct = Math.round(((step + 1) / QUESTIONS.length) * 100);
+  $('#pFill').style.width = pct + '%';
+  $('#pLabel').textContent = `Pyetja ${step + 1} nga ${QUESTIONS.length}`;
+  $('#pPct').textContent = pct + '%';
+  backBtn.disabled = step === 0;
+}
+
+function buildScreen(idx) {
+  const q = QUESTIONS[idx];
+  const lineText = typeof q.line === 'function' ? q.line(state) : q.line;
+  const qText = typeof q.q === 'function' ? q.q(state) : q.q;
+
+  const screen = document.createElement('section');
+  screen.className = 'screen';
+  screen.dataset.idx = idx;
+
+  const inputHtml = q.type === 'textarea'
+    ? `<textarea class="text-input" id="inp" rows="1" placeholder="${esc(q.placeholder)}">${esc(state[q.key])}</textarea>`
+    : `<input type="text" class="text-input" id="inp" placeholder="${esc(q.placeholder)}" value="${esc(state[q.key])}" autocomplete="off" />`;
+
+  const wordMeta = q.type === 'textarea'
+    ? `<div class="reply-meta"><span>Sa më shumë detaje, aq më e mirë faqja</span><span class="word-count" id="wc">0 fjalë</span></div>`
+    : '';
+
+  const suggestionHtml = q.suggestion
+    ? `<div class="suggestion"><button class="suggestion-chip" id="sugBtn"><span class="bulb">💡</span><span>${esc(q.suggestion)}</span></button></div>`
+    : '';
+
+  const finishBtn = answered >= MIN_QUESTIONS
+    ? `<button class="mini-btn finish" id="finishBtn">✓ Mjafton kaq, ndërtoje</button>`
+    : `<div class="kbd-hint">Shtyp <span class="kbd">Enter</span> kur je gati</div>`;
+
+  screen.innerHTML = `
+    <div class="liki-bubble">
+      <div class="liki-tab" id="likiTab">
+        <span class="dot"></span>
+        <span class="nm">Liki</span>
+      </div>
+      <div class="liki-line">${lineText}</div>
+      <h1 class="question">${qText}</h1>
+    </div>
+
+    <div class="connector"></div>
+
+    <div class="reply-zone">
+      <div class="input-shell">
+        ${inputHtml}
+        <button class="send-btn" id="nextBtn" aria-label="Dërgo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+          </svg>
+        </button>
+      </div>
+      ${wordMeta}
+      ${suggestionHtml}
+      <div class="actions">
+        <button class="mini-btn" id="skipBtn">Kalo këtë</button>
+        ${finishBtn}
+      </div>
+    </div>
+  `;
+  return screen;
+}
+
+function showScreen(idx) {
+  const old = stage.querySelector('.screen.active');
+  const render = () => {
+    stage.innerHTML = '';
+    const sc = buildScreen(idx);
+    stage.appendChild(sc);
+    sc.classList.add('active', 'entering');
+    step = idx;
+    updateProgress();
+    bindScreen(sc, idx);
+    const tab = sc.querySelector('#likiTab');
+    tab.classList.add('thinking');
+    setTimeout(() => tab.classList.remove('thinking'), 900);
+    setTimeout(() => {
+      const inp = sc.querySelector('#inp');
+      if (inp) { inp.focus(); autoGrow(inp); }
+    }, 280);
+  };
+  if (old) {
+    old.classList.add('exiting');
+    setTimeout(render, 290);
+  } else {
+    render();
+  }
+}
+
+function autoGrow(el) {
+  if (el.tagName !== 'TEXTAREA') return;
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+
+function bindScreen(sc, idx) {
+  const q = QUESTIONS[idx];
+  const inp = sc.querySelector('#inp');
+  const nextBtn = sc.querySelector('#nextBtn');
+  const skipBtn = sc.querySelector('#skipBtn');
+  const finishBtn = sc.querySelector('#finishBtn');
+  const sugBtn = sc.querySelector('#sugBtn');
+  const wc = sc.querySelector('#wc');
+
+  function updateWC() {
+    if (!wc) return;
+    const n = inp.value.trim().split(/\s+/).filter(Boolean).length;
+    wc.textContent = n + ' fjalë';
+    wc.className = 'word-count' + (n >= 15 ? ' good' : '');
+  }
+  updateWC();
+
+  inp.addEventListener('input', () => {
+    state[q.key] = inp.value;
+    updateWC();
+    autoGrow(inp);
+    updateDev();
+  });
+
+  inp.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      goNext();
+    } else if (e.key === 'Escape') {
+      goBack();
+    }
+  });
+
+  nextBtn.addEventListener('click', goNext);
+  skipBtn.addEventListener('click', () => { state[q.key] = ''; advance(); });
+  if (finishBtn) finishBtn.addEventListener('click', showTransition);
+  if (sugBtn) sugBtn.addEventListener('click', () => {
+    inp.focus();
+    sugBtn.style.opacity = '0.45';
+    sugBtn.style.pointerEvents = 'none';
+  });
+
+  function goNext() {
+    state[q.key] = inp.value.trim();
+    if (inp.value.trim()) answered = Math.max(answered, step + 1);
+    updateDev();
+    advance();
+  }
+}
+
+function advance() {
+  if (step + 1 >= QUESTIONS.length) setTimeout(showTransition, 320);
+  else showScreen(step + 1);
+}
+
+function goBack() { if (step > 0) showScreen(step - 1); }
+backBtn.addEventListener('click', goBack);
+
+function showTransition() {
+  const rows = [
+    ['Biznesi', state.name],
+    ['Lloji', state.type],
+    ['Lokacioni', state.city],
+    ['Çfarë e bën ndryshe', state.unique],
+    ['Përshkrimi', state.desc]
+  ];
+  $('#tSummary').innerHTML = rows.map(([l, v]) => `
+    <div class="ts-row">
+      <div class="ts-label">${l}</div>
+      <div class="ts-value">${v ? esc(v) : '<em style="color:var(--lw-muted-2)">— e kalova —</em>'}</div>
+    </div>
+  `).join('');
+  $('#transitionOverlay').classList.add('active');
+}
+
+$('#continueBtn').addEventListener('click', () => {
+  alert('PROTOTIP: Këtu fillon FAZA 2 — pjesa e shpejtë (shërbime, gjuhë, ton, stil vizual, layout).');
+});
+$('#editBtn').addEventListener('click', () => {
+  $('#transitionOverlay').classList.remove('active');
+  showScreen(0);
+});
+
+function updateDev() { devState.textContent = JSON.stringify(state, null, 2); }
+const devPanel = $('#devPanel');
+$('#devToggle').addEventListener('click', () => {
+  devPanel.classList.toggle('collapsed');
+  $('#devToggle').textContent = devPanel.classList.contains('collapsed') ? '[show]' : '[hide]';
+});
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+updateDev();
+showScreen(0);
+</script>
+
+</body>
+</html>
